@@ -24,7 +24,7 @@ export default async function SiteHeader() {
         <nav aria-label="User navigation" className="header-auth-nav">
           {user ? (
             <>
-              <Link href="/auth" className="header-auth-link">
+              <Link href="/account/bookings" className="header-auth-link">
                 Account
               </Link>
               {isAdmin ? (

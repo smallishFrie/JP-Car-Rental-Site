@@ -7,13 +7,15 @@ import { createClient } from "@/lib/supabase/server";
 type CreateAccountPageProps = {
   searchParams: Promise<{
     message?: string;
+    returnTo?: string;
   }>;
 };
 
 export default async function CreateAccountPage({
   searchParams,
 }: CreateAccountPageProps) {
-  const { message } = await searchParams;
+  const { message, returnTo } = await searchParams;
+  const safeReturnTo = returnTo?.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/";
 
   if (hasSupabaseEnv()) {
     const supabase = await createClient();
@@ -56,7 +58,7 @@ export default async function CreateAccountPage({
           <Link href="/">← Back to home</Link>
         </p>
         <p className="auth-back-link">
-          Already have an account? <Link href="/auth/sign-in">→ Sign in</Link>
+          Already have an account? <Link href={`/auth/sign-in?returnTo=${encodeURIComponent(safeReturnTo)}`}>→ Sign in</Link>
         </p>
       </section>
     </main>

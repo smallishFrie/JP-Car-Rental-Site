@@ -15,6 +15,7 @@ type FormState = {
   tagline: string;
   description: string;
   dayRate: string;
+  isActive: boolean;
   existingCardImage: string;
   existingGalleryImages: string[];
 };
@@ -26,6 +27,7 @@ const emptyForm: FormState = {
   tagline: "",
   description: "",
   dayRate: "",
+  isActive: true,
   existingCardImage: "",
   existingGalleryImages: [],
 };
@@ -38,12 +40,14 @@ function mapCarToForm(car: CarRecord): FormState {
     tagline: car.tagline,
     description: car.description,
     dayRate: String(car.day_rate),
+    isActive: car.is_active,
     existingCardImage: car.card_image_url,
     existingGalleryImages: car.gallery_image_urls ?? [],
   };
 }
 
 export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
+  const [cars, setCars] = useState<CarRecord[]>(initialCars);
   const [selectedCarId, setSelectedCarId] = useState<string>("");
   const [form, setForm] = useState<FormState>(emptyForm);
   const [message, setMessage] = useState("");
@@ -51,15 +55,15 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
   const [isPending, startTransition] = useTransition();
 
   const selectedCar = useMemo(
-    () => initialCars.find((car) => car.id === selectedCarId) ?? null,
-    [initialCars, selectedCarId],
+    () => cars.find((car) => car.id === selectedCarId) ?? null,
+    [cars, selectedCarId],
   );
 
   const isEditMode = Boolean(form.id);
 
   function chooseCar(carId: string) {
     setSelectedCarId(carId);
-    const car = initialCars.find((item) => item.id === carId);
+    const car = cars.find((item) => item.id === carId);
     setForm(car ? mapCarToForm(car) : emptyForm);
     setMessage("");
     setIsConfirmingDelete(false);
@@ -73,9 +77,30 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
   }
 
   async function handleSubmit(formData: FormData) {
+    const formSnapshot = { ...form };
     startTransition(async () => {
       try {
-        await saveCarAction(formData);
+        const savedId = await saveCarAction(formData);
+        setCars((currentCars) => {
+          const existingCar = currentCars.find((car) => car.id === savedId);
+          if (!existingCar) {
+            return currentCars;
+          }
+
+          return currentCars.map((car) =>
+            car.id === savedId
+              ? {
+                  ...car,
+                  name: formSnapshot.name.trim(),
+                  category: formSnapshot.category.trim(),
+                  tagline: formSnapshot.tagline.trim(),
+                  description: formSnapshot.description.trim(),
+                  day_rate: Number(formSnapshot.dayRate),
+                  is_active: formSnapshot.isActive,
+                }
+              : car,
+          );
+        });
         setMessage("Car saved successfully.");
       } catch (error) {
         const errMessage = error instanceof Error ? error.message : "Something went wrong.";
@@ -98,6 +123,7 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
       try {
         await deleteCarAction(deleteFormData);
         setMessage("Car deleted successfully.");
+        setCars((currentCars) => currentCars.filter((car) => car.id !== id));
         setSelectedCarId("");
         setForm(emptyForm);
         setIsConfirmingDelete(false);
@@ -121,7 +147,7 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
           </div>
         ) : null}
         <ul className="admin-list">
-          {initialCars.map((car) => (
+          {cars.map((car) => (
             <li key={car.id}>
               <button
                 type="button"
@@ -130,7 +156,10 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
                 aria-current={selectedCar?.id === car.id}
               >
                 <strong>{car.name}</strong>
-                <span>{car.category} - {car.tagline}</span>
+                <span>
+                  {car.category} - {car.tagline}
+                  {!car.is_active ? " (Unavailable)" : ""}
+                </span>
               </button>
             </li>
           ))}
@@ -199,6 +228,18 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
               onChange={(event) => setForm((current) => ({ ...current, dayRate: event.target.value }))}
               required
             />
+          </label>
+
+          <label className="admin-availability-field">
+            <input type="hidden" name="isActive" value="false" />
+            <input
+              name="isActive"
+              type="checkbox"
+              value="true"
+              checked={form.isActive}
+              onChange={(event) => setForm((current) => ({ ...current, isActive: event.target.checked }))}
+            />
+            Available for booking
           </label>
 
           <label>

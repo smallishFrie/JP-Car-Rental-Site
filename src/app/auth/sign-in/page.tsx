@@ -7,11 +7,13 @@ import { createClient } from "@/lib/supabase/server";
 type SignInPageProps = {
   searchParams: Promise<{
     message?: string;
+    returnTo?: string;
   }>;
 };
 
 export default async function SignInPage({ searchParams }: SignInPageProps) {
-  const { message } = await searchParams;
+  const { message, returnTo } = await searchParams;
+  const safeReturnTo = returnTo?.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/";
 
   if (hasSupabaseEnv()) {
     const supabase = await createClient();
@@ -20,7 +22,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
     } = await supabase.auth.getUser();
 
     if (user) {
-      redirect("/");
+      redirect(safeReturnTo);
     }
   }
 
@@ -36,6 +38,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
 
         <form action={signInWithEmail} className="auth-form">
           <input type="hidden" name="returnPath" value="/auth/sign-in" />
+          <input type="hidden" name="redirectTo" value={safeReturnTo} />
           <h2>Sign in</h2>
           <label>
             Email
@@ -54,7 +57,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
           <Link href="/">← Back to home</Link>
         </p>
         <p className="auth-back-link">
-          New here? <Link href="/auth/create-account">→ Create an account</Link>
+          New here? <Link href={`/auth/create-account?returnTo=${encodeURIComponent(safeReturnTo)}`}>→ Create an account</Link>
         </p>
       </section>
     </main>

@@ -2,6 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { deleteCarById, requireAdmin, uploadCarImage, upsertCar } from "@/lib/cars";
+import {
+  cleanupExpiredPendingBookings,
+  confirmCancellationForAdmin,
+  syncDerivedStatusForBooking,
+} from "@/lib/bookings";
 
 function parseNumber(value: FormDataEntryValue | null, fieldName: string) {
   const parsed = Number(String(value ?? "").trim());
@@ -25,6 +30,8 @@ export async function saveCarAction(formData: FormData) {
   const tagline = String(formData.get("tagline") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const dayRate = parseNumber(formData.get("dayRate"), "Day rate");
+  const isActiveValues = formData.getAll("isActive").map((value) => String(value).trim().toLowerCase());
+  const isActive = isActiveValues.includes("true") || isActiveValues.includes("on");
   const existingCardImage = String(formData.get("existingCardImage") ?? "").trim();
   const existingGalleryImages = formData
     .getAll("existingGalleryImages")
@@ -62,12 +69,14 @@ export async function saveCarAction(formData: FormData) {
     dayRate,
     cardImageUrl,
     galleryImageUrls,
-    isActive: true,
+    isActive,
   });
 
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath(`/cars/${savedId}`);
+
+  return savedId;
 }
 
 export async function deleteCarAction(formData: FormData) {
@@ -83,4 +92,31 @@ export async function deleteCarAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath(`/cars/${id}`);
+}
+
+export async function syncBookingStatusAction(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) {
+    throw new Error("Booking id is required.");
+  }
+  await syncDerivedStatusForBooking(id);
+  revalidatePath("/admin");
+}
+
+export async function cleanupExpiredSessionsAction() {
+  await requireAdmin();
+  const result = await cleanupExpiredPendingBookings();
+  revalidatePath("/admin");
+  return result;
+}
+
+export async function confirmCancellationAction(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) {
+    throw new Error("Booking id is required.");
+  }
+  await confirmCancellationForAdmin(id);
+  revalidatePath("/admin");
 }

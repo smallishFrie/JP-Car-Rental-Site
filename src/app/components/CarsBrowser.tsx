@@ -9,30 +9,48 @@ type CarsBrowserProps = {
   cars: Car[];
 };
 
+function parseCategories(categoryText: string) {
+  return categoryText
+    .split(",")
+    .map((category) => category.trim())
+    .filter(Boolean);
+}
+
 export default function CarsBrowser({ cars }: CarsBrowserProps) {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
   const categories = useMemo(() => {
-    return Array.from(new Set(cars.map((car) => car.category.trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+    return Array.from(new Set(cars.flatMap((car) => parseCategories(car.category)))).sort((a, b) => a.localeCompare(b));
   }, [cars]);
 
   const filteredCars = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return cars.filter((car) => {
-      const categoryMatch = selectedCategory === "all" || car.category === selectedCategory;
-      if (!categoryMatch) {
-        return false;
-      }
-      if (!query) {
-        return true;
-      }
-      return (
-        car.name.toLowerCase().includes(query) ||
-        car.tagline.toLowerCase().includes(query) ||
-        car.category.toLowerCase().includes(query)
-      );
-    });
+    return cars
+      .filter((car) => {
+        const carCategories = parseCategories(car.category);
+        const categoryMatch = selectedCategory === "all" || carCategories.includes(selectedCategory);
+        if (!categoryMatch) {
+          return false;
+        }
+        if (!query) {
+          return true;
+        }
+        return (
+          car.name.toLowerCase().includes(query) ||
+          car.tagline.toLowerCase().includes(query) ||
+          car.category.toLowerCase().includes(query)
+        );
+      })
+      .sort((a, b) => {
+        const firstCategoryA = parseCategories(a.category)[0] ?? "";
+        const firstCategoryB = parseCategories(b.category)[0] ?? "";
+        const categoryCompare = firstCategoryA.localeCompare(firstCategoryB);
+        if (categoryCompare !== 0) {
+          return categoryCompare;
+        }
+        return a.name.localeCompare(b.name);
+      });
   }, [cars, search, selectedCategory]);
 
   return (
@@ -79,7 +97,13 @@ export default function CarsBrowser({ cars }: CarsBrowserProps) {
               />
             </div>
             <div className="car-card-body">
-              <p className="car-card-category">{car.category}</p>
+              <div className="car-card-categories" aria-label="Car categories">
+                {parseCategories(car.category).map((category) => (
+                  <span key={`${car.id}-${category}`} className="car-card-category-pill">
+                    {category}
+                  </span>
+                ))}
+              </div>
               <h4>{car.name}</h4>
               <p>{car.tagline}</p>
               <Link href={`/cars/${car.id}`} className="car-card-link">

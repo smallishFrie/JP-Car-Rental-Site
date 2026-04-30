@@ -5,12 +5,24 @@ import { redirect } from "next/navigation";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
+function isSafePath(path: string) {
+  return path.startsWith("/") && !path.startsWith("//");
+}
+
 function getReturnPath(formData: FormData, fallbackPath: string) {
   const rawPath = String(formData.get("returnPath") ?? "");
-  if (rawPath === "/auth/sign-in" || rawPath === "/auth/create-account") {
+  if (isSafePath(rawPath)) {
     return rawPath;
   }
 
+  return fallbackPath;
+}
+
+function getRedirectTo(formData: FormData, fallbackPath: string) {
+  const rawPath = String(formData.get("redirectTo") ?? "");
+  if (isSafePath(rawPath)) {
+    return rawPath;
+  }
   return fallbackPath;
 }
 
@@ -56,6 +68,7 @@ export async function signUpWithEmail(formData: FormData) {
 
 export async function signInWithEmail(formData: FormData) {
   const returnPath = getReturnPath(formData, "/auth/sign-in");
+  const redirectTo = getRedirectTo(formData, "/");
 
   if (!hasSupabaseEnv()) {
     redirect(`${returnPath}?message=Supabase environment variables are not configured yet.`);
@@ -71,7 +84,7 @@ export async function signInWithEmail(formData: FormData) {
     redirect(`${returnPath}?message=${encodeURIComponent(error.message)}`);
   }
 
-  redirect("/");
+  redirect(redirectTo);
 }
 
 export async function signOut() {

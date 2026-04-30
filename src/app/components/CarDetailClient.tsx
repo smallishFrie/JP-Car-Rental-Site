@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import type { Car } from "@/lib/cars";
+import { beginCheckoutAction } from "@/app/cars/[id]/actions";
 
 type CarDetailClientProps = {
   car: Car;
@@ -19,8 +20,12 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
   const [location, setLocation] = useState(car.locations[0]?.value ?? "");
   const [fullName, setFullName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [email, setEmail] = useState("");
+  const [driverLicenseNumber, setDriverLicenseNumber] = useState("");
+  const [driverNotes, setDriverNotes] = useState("");
   const [startDate, setStartDate] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState("");
 
   const totalImages = car.images.length;
 
@@ -38,6 +43,14 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
     () => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(totalPrice),
     [totalPrice],
   );
+  const endDate = useMemo(() => {
+    if (!startDate) {
+      return "";
+    }
+    const start = new Date(startDate);
+    start.setDate(start.getDate() + Math.max(1, rentalDays - 1));
+    return start.toISOString().slice(0, 10);
+  }, [startDate, rentalDays]);
 
   const goToNext = () => {
     setActiveImageIndex((current) => (current + 1) % totalImages);
@@ -78,9 +91,37 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
     };
   }, [isZooming]);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSubmitted(true);
+    setFeedback("");
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.set("carId", car.id);
+      formData.set("rentalDays", String(rentalDays));
+      formData.set("pickupLocation", location);
+      formData.set("startDate", startDate);
+      formData.set("endDate", endDate);
+      formData.set("customerName", fullName);
+      formData.set("customerPhone", phoneNumber);
+      formData.set("customerEmail", email);
+      formData.set("driverLicenseNumber", driverLicenseNumber);
+      formData.set("driverNotes", driverNotes);
+      formData.set("totalPrice", String(totalPrice));
+
+      const result = await beginCheckoutAction(formData);
+      if (!result.ok) {
+        setFeedback(result.message);
+        if (result.redirectTo) {
+          window.location.href = result.redirectTo;
+        }
+        return;
+      }
+
+      window.location.href = result.checkoutUrl;
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handleZoomMove(event: React.MouseEvent<HTMLDivElement>) {
@@ -181,13 +222,32 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
         <h2>Booking Details</h2>
         <form className="booking-form" onSubmit={handleSubmit}>
           <label>
-            Full name
-            <input type="text" value={fullName} onChange={(event) => setFullName(event.target.value)} required />
+            Rental days
+            <input
+              type="number"
+              min={2}
+              value={rentalDays}
+              onChange={(event) => {
+                const parsedDays = Number(event.target.value);
+                if (Number.isNaN(parsedDays)) {
+                  setRentalDays(2);
+                  return;
+                }
+                setRentalDays(Math.max(2, parsedDays));
+              }}
+              required
+            />
           </label>
 
           <label>
-            Phone number
-            <input type="tel" value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} required />
+            Pickup location
+            <select value={location} onChange={(event) => setLocation(event.target.value)} required>
+              {car.locations.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label>
@@ -201,50 +261,55 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
             />
           </label>
 
+          <label>
+            End date
+            <input type="date" value={endDate} readOnly disabled />
+          </label>
+
           <div className="booking-inline-fields">
             <label>
-              Rental days
-              <input
-                type="number"
-                min={2}
-                value={rentalDays}
-                onChange={(event) => {
-                  const parsedDays = Number(event.target.value);
-                  if (Number.isNaN(parsedDays)) {
-                    setRentalDays(2);
-                    return;
-                  }
-                  setRentalDays(Math.max(2, parsedDays));
-                }}
-                required
-              />
+              Full name
+              <input type="text" value={fullName} onChange={(event) => setFullName(event.target.value)} required />
             </label>
 
             <label>
-              Pickup location
-              <select value={location} onChange={(event) => setLocation(event.target.value)} required>
-                {car.locations.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              Phone number
+              <input type="tel" value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} required />
             </label>
           </div>
+
+          <div className="booking-inline-fields">
+            <label>
+              Email (for receipt)
+              <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+            </label>
+            <label>
+              Driver license number
+              <input
+                type="text"
+                value={driverLicenseNumber}
+                onChange={(event) => setDriverLicenseNumber(event.target.value)}
+              />
+            </label>
+          </div>
+
+          <label className="booking-notes-field">
+            Driver notes (optional)
+            <input type="text" value={driverNotes} onChange={(event) => setDriverNotes(event.target.value)} />
+          </label>
 
           <p className="booking-total">
             {formattedDayRate} per day x {rentalDays} days = <strong>{formattedTotalPrice}</strong>
           </p>
 
-          <button type="submit" className="booking-submit">
-            Proceed to checkout
+          <button type="submit" className="booking-submit" disabled={isSubmitting}>
+            {isSubmitting ? "Preparing checkout..." : "Proceed to checkout"}
           </button>
         </form>
 
-        {submitted ? (
+        {feedback ? (
           <p className="booking-feedback" role="status">
-            Booking request received for {fullName} on {car.name} ({rentalDays} day{rentalDays > 1 ? "s" : ""}).
-            Estimated total is {formattedTotalPrice}. We will contact you at {phoneNumber} shortly.
+            {feedback}
           </p>
         ) : null}
       </section>
