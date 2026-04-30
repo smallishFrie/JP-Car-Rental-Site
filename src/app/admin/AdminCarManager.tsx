@@ -1,0 +1,279 @@
+"use client";
+
+import { useMemo, useState, useTransition } from "react";
+import type { CarRecord } from "@/lib/cars";
+import { deleteCarAction, saveCarAction } from "@/app/admin/actions";
+
+type AdminCarManagerProps = {
+  initialCars: CarRecord[];
+};
+
+type FormState = {
+  id: string;
+  name: string;
+  category: string;
+  tagline: string;
+  description: string;
+  dayRate: string;
+  existingCardImage: string;
+  existingGalleryImages: string[];
+};
+
+const emptyForm: FormState = {
+  id: "",
+  name: "",
+  category: "",
+  tagline: "",
+  description: "",
+  dayRate: "",
+  existingCardImage: "",
+  existingGalleryImages: [],
+};
+
+function mapCarToForm(car: CarRecord): FormState {
+  return {
+    id: car.id,
+    name: car.name,
+    category: car.category,
+    tagline: car.tagline,
+    description: car.description,
+    dayRate: String(car.day_rate),
+    existingCardImage: car.card_image_url,
+    existingGalleryImages: car.gallery_image_urls ?? [],
+  };
+}
+
+export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
+  const [selectedCarId, setSelectedCarId] = useState<string>("");
+  const [form, setForm] = useState<FormState>(emptyForm);
+  const [message, setMessage] = useState("");
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  const selectedCar = useMemo(
+    () => initialCars.find((car) => car.id === selectedCarId) ?? null,
+    [initialCars, selectedCarId],
+  );
+
+  const isEditMode = Boolean(form.id);
+
+  function chooseCar(carId: string) {
+    setSelectedCarId(carId);
+    const car = initialCars.find((item) => item.id === carId);
+    setForm(car ? mapCarToForm(car) : emptyForm);
+    setMessage("");
+    setIsConfirmingDelete(false);
+  }
+
+  function removeExistingGalleryImage(url: string) {
+    setForm((current) => ({
+      ...current,
+      existingGalleryImages: current.existingGalleryImages.filter((item) => item !== url),
+    }));
+  }
+
+  async function handleSubmit(formData: FormData) {
+    startTransition(async () => {
+      try {
+        await saveCarAction(formData);
+        setMessage("Car saved successfully.");
+      } catch (error) {
+        const errMessage = error instanceof Error ? error.message : "Something went wrong.";
+        setMessage(errMessage);
+      }
+    });
+  }
+
+  async function handleDelete() {
+    const id = form.id.trim();
+    if (!id) {
+      setMessage("Select a car first.");
+      return;
+    }
+
+    const deleteFormData = new FormData();
+    deleteFormData.set("id", id);
+
+    startTransition(async () => {
+      try {
+        await deleteCarAction(deleteFormData);
+        setMessage("Car deleted successfully.");
+        setSelectedCarId("");
+        setForm(emptyForm);
+        setIsConfirmingDelete(false);
+      } catch (error) {
+        const errMessage = error instanceof Error ? error.message : "Something went wrong.";
+        setMessage(errMessage);
+      }
+    });
+  }
+
+  return (
+    <section className="admin-manager">
+      <aside className="admin-card">
+        <h2>Inventory</h2>
+        <p className="admin-empty">Select a car to edit or create a new one.</p>
+        {isEditMode ? (
+          <div className="admin-actions">
+            <button type="button" className="admin-secondary-button" onClick={() => chooseCar("")}>
+              + Add new car
+            </button>
+          </div>
+        ) : null}
+        <ul className="admin-list">
+          {initialCars.map((car) => (
+            <li key={car.id}>
+              <button
+                type="button"
+                className="admin-select-button"
+                onClick={() => chooseCar(car.id)}
+                aria-current={selectedCar?.id === car.id}
+              >
+                <strong>{car.name}</strong>
+                <span>{car.category} - {car.tagline}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </aside>
+
+      <article className="admin-card">
+        <h2>{isEditMode ? "Edit car" : "Create car"}</h2>
+        <form className="admin-form" action={handleSubmit}>
+          <input type="hidden" name="id" value={form.id} />
+          <input type="hidden" name="existingCardImage" value={form.existingCardImage} />
+          {form.existingGalleryImages.map((url) => (
+            <input key={url} type="hidden" name="existingGalleryImages" value={url} />
+          ))}
+
+          <label>
+            Car name
+            <input
+              name="name"
+              value={form.name}
+              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+              required
+            />
+          </label>
+
+          <label>
+            Category
+            <input
+              name="category"
+              value={form.category}
+              onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
+              placeholder="Sedan, SUV, Van, Pickup..."
+              required
+            />
+          </label>
+
+          <label>
+            Tagline
+            <input
+              name="tagline"
+              value={form.tagline}
+              onChange={(event) => setForm((current) => ({ ...current, tagline: event.target.value }))}
+              required
+            />
+          </label>
+
+          <label>
+            Description
+            <textarea
+              name="description"
+              value={form.description}
+              onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+              rows={4}
+              required
+            />
+          </label>
+
+          <label>
+            Day rate (PHP)
+            <input
+              name="dayRate"
+              type="number"
+              min={0}
+              step="0.01"
+              value={form.dayRate}
+              onChange={(event) => setForm((current) => ({ ...current, dayRate: event.target.value }))}
+              required
+            />
+          </label>
+
+          <label>
+            List image
+            <input name="cardImage" type="file" accept="image/*" />
+          </label>
+
+          {form.existingCardImage ? (
+            <p className="admin-file-note">Current list image is saved. Upload a new file to replace it.</p>
+          ) : null}
+
+          <label>
+            Slideshow images
+            <input name="galleryImages" type="file" accept="image/*" multiple />
+          </label>
+
+          {form.existingGalleryImages.length ? (
+            <div className="admin-existing-images">
+              <p className="admin-existing-images-title">Existing slideshow images</p>
+              <ul>
+                {form.existingGalleryImages.map((url) => (
+                  <li key={url}>
+                    <img src={url} alt="Existing slideshow image" loading="lazy" />
+                    <div className="admin-existing-images-meta">
+                      <span>{url.split("/").pop() ?? "Image file"}</span>
+                      <small>{url}</small>
+                    </div>
+                    <button type="button" onClick={() => removeExistingGalleryImage(url)}>
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          <button type="submit" className="auth-primary" disabled={isPending}>
+            {isPending ? "Saving..." : isEditMode ? "Save changes" : "Create car"}
+          </button>
+          {isEditMode ? (
+            isConfirmingDelete ? (
+              <div className="admin-delete-confirm">
+                <p>Delete this car permanently?</p>
+                <div>
+                  <button type="button" className="admin-danger-button" onClick={handleDelete} disabled={isPending}>
+                    {isPending ? "Working..." : "Confirm delete"}
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-cancel-button"
+                    onClick={() => setIsConfirmingDelete(false)}
+                    disabled={isPending}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="admin-danger-button"
+                onClick={() => setIsConfirmingDelete(true)}
+                disabled={isPending}
+              >
+                Delete car
+              </button>
+            )
+          ) : null}
+          {message ? (
+            <p className="booking-feedback" role="status">
+              {message}
+            </p>
+          ) : null}
+        </form>
+      </article>
+    </section>
+  );
+}
