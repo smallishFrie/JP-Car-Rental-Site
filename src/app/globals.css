@@ -927,6 +927,33 @@ body::-webkit-scrollbar,
   margin-top: 0.35rem;
 }
 
+.booking-calendar {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  padding: 0.75rem;
+}
+
+.booking-calendar-label {
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.booking-calendar-summary {
+  margin-top: 0.6rem;
+  color: #111827;
+}
+
+.booking-day-preview {
+  background: rgba(17, 24, 39, 0.12) !important;
+  color: #111827 !important;
+}
+
+.booking-day-selectedrange {
+  background: rgba(17, 24, 39, 0.18) !important;
+  color: #111827 !important;
+}
+
 .auth-main {
   min-height: 100vh;
   background: #ffffff;

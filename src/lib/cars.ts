@@ -2,6 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { testCars } from "@/app/data/cars";
+import sharp from "sharp";
 
 const CAR_IMAGES_BUCKET = "car-images";
 
@@ -118,12 +119,23 @@ function slugifyName(name: string) {
 
 export async function uploadCarImage(file: File, prefix: string): Promise<string> {
   const supabase = await createClient();
-  const fileExt = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-  const path = `${prefix}/${crypto.randomUUID()}.${fileExt}`;
+  const path = `${prefix}/${crypto.randomUUID()}.webp`;
   const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
 
-  const { error } = await supabase.storage.from(CAR_IMAGES_BUCKET).upload(path, bytes, {
-    contentType: file.type || "image/jpeg",
+  const resized = await sharp(buffer)
+    .rotate()
+    .resize({
+      width: 1920,
+      height: 1080,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .webp({ quality: 78 })
+    .toBuffer();
+
+  const { error } = await supabase.storage.from(CAR_IMAGES_BUCKET).upload(path, resized, {
+    contentType: "image/webp",
     upsert: false,
   });
 

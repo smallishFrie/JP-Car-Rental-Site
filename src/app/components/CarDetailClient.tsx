@@ -1,15 +1,29 @@
 "use client";
 
 import Image from "next/image";
+import { DayPicker, type DateRange } from "react-day-picker";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import type { Car } from "@/lib/cars";
 import { beginCheckoutAction } from "@/app/cars/[id]/actions";
+import "react-day-picker/style.css";
 
 type CarDetailClientProps = {
   car: Car;
 };
 
 const AUTOPLAY_MS = 4200;
+
+type BookedRange = { startDate: string; endDate: string };
+
+function toIsoDate(value: Date) {
+  return value.toISOString().slice(0, 10);
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next;
+}
 
 export default function CarDetailClient({ car }: CarDetailClientProps) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -24,6 +38,8 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
   const [driverLicenseNumber, setDriverLicenseNumber] = useState("");
   const [driverNotes, setDriverNotes] = useState("");
   const [startDate, setStartDate] = useState("");
+  const [bookedRanges, setBookedRanges] = useState<BookedRange[]>([]);
+  const [hoverDay, setHoverDay] = useState<Date | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState("");
 
@@ -34,6 +50,7 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
     [activeImageIndex, totalImages],
   );
   const todayIso = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const todayDate = useMemo(() => new Date(`${todayIso}T00:00:00.000Z`), [todayIso]);
   const totalPrice = useMemo(() => rentalDays * car.dayRate, [rentalDays, car.dayRate]);
   const formattedDayRate = useMemo(
     () => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(car.dayRate),
@@ -47,10 +64,63 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
     if (!startDate) {
       return "";
     }
-    const start = new Date(startDate);
-    start.setDate(start.getDate() + Math.max(1, rentalDays - 1));
-    return start.toISOString().slice(0, 10);
+    const start = new Date(`${startDate}T00:00:00.000Z`);
+    const end = addDays(start, Math.max(0, rentalDays - 1));
+    return toIsoDate(end);
   }, [startDate, rentalDays]);
+
+  const disabledMatchers = useMemo(() => {
+    const ranges: { from: Date; to: Date }[] = bookedRanges
+      .map((range) => {
+        const from = new Date(`${range.startDate}T00:00:00.000Z`);
+        const to = new Date(`${range.endDate}T00:00:00.000Z`);
+        if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+          return null;
+        }
+        return { from, to };
+      })
+      .filter((value): value is { from: Date; to: Date } => value !== null);
+    return [{ before: todayDate }, ...ranges];
+  }, [bookedRanges, todayDate]);
+
+  const isDayDisabled = (day: Date) => {
+    if (day < todayDate) {
+      return true;
+    }
+    for (const range of bookedRanges) {
+      const from = new Date(`${range.startDate}T00:00:00.000Z`);
+      const to = new Date(`${range.endDate}T00:00:00.000Z`);
+      if (day >= from && day <= to) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const selectedStartDay = useMemo(() => {
+    if (!startDate) return undefined;
+    const parsed = new Date(`${startDate}T00:00:00.000Z`);
+    return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+  }, [startDate]);
+
+  const selectedRange = useMemo<DateRange | undefined>(() => {
+    if (!selectedStartDay) return undefined;
+    const to = addDays(selectedStartDay, Math.max(0, rentalDays - 1));
+    return { from: selectedStartDay, to };
+  }, [selectedStartDay, rentalDays]);
+
+  const hoverPreviewRange = useMemo<DateRange | undefined>(() => {
+    if (!hoverDay) return undefined;
+    if (isDayDisabled(hoverDay)) return undefined;
+    const to = addDays(hoverDay, Math.max(0, rentalDays - 1));
+    for (let offset = 0; offset < rentalDays; offset += 1) {
+      const candidate = addDays(hoverDay, offset);
+      if (isDayDisabled(candidate)) {
+        return undefined;
+      }
+    }
+    return { from: hoverDay, to };
+  }, [hoverDay, rentalDays, bookedRanges, todayDate]);
 
   const goToNext = () => {
     setActiveImageIndex((current) => (current + 1) % totalImages);
@@ -77,6 +147,29 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
   }, [autoplayTick, totalImages, isZooming]);
 
   useEffect(() => {
+    let isActive = true;
+    const run = async () => {
+      try {
+        const response = await fetch(`/api/cars/${car.id}/booked-dates`, { cache: "no-store" });
+        if (!response.ok) {
+          return;
+        }
+        const payload = (await response.json()) as { ranges?: BookedRange[] };
+        if (!isActive) {
+          return;
+        }
+        setBookedRanges(payload.ranges ?? []);
+      } catch {
+        // ignore
+      }
+    };
+    run();
+    return () => {
+      isActive = false;
+    };
+  }, [car.id]);
+
+  useEffect(() => {
     if (!isZooming) {
       return;
     }
@@ -96,18 +189,34 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
     setFeedback("");
     setIsSubmitting(true);
     try {
+      if (!startDate) {
+        setFeedback("Please select a start date.");
+        return;
+      }
+
+      if (!selectedStartDay || !selectedRange?.to) {
+        setFeedback("Please select a valid start date.");
+        return;
+      }
+
+      for (let offset = 0; offset < rentalDays; offset += 1) {
+        const candidate = addDays(selectedStartDay, offset);
+        if (isDayDisabled(candidate)) {
+          setFeedback("That range includes unavailable dates. Please choose another start date.");
+          return;
+        }
+      }
+
       const formData = new FormData();
       formData.set("carId", car.id);
       formData.set("rentalDays", String(rentalDays));
       formData.set("pickupLocation", location);
       formData.set("startDate", startDate);
-      formData.set("endDate", endDate);
       formData.set("customerName", fullName);
       formData.set("customerPhone", phoneNumber);
       formData.set("customerEmail", email);
       formData.set("driverLicenseNumber", driverLicenseNumber);
       formData.set("driverNotes", driverNotes);
-      formData.set("totalPrice", String(totalPrice));
 
       const result = await beginCheckoutAction(formData);
       if (!result.ok) {
@@ -118,7 +227,7 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
         return;
       }
 
-      window.location.href = result.checkoutUrl;
+      window.location.href = result.redirectTo;
     } finally {
       setIsSubmitting(false);
     }
@@ -250,21 +359,46 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
             </select>
           </label>
 
-          <label>
-            Start date
-            <input
-              type="date"
-              min={todayIso}
-              value={startDate}
-              onChange={(event) => setStartDate(event.target.value)}
-              required
+          <div className="booking-calendar">
+            <p className="booking-calendar-label">Select start date</p>
+            <DayPicker
+              mode="single"
+              selected={selectedStartDay}
+              onSelect={(day) => {
+                setFeedback("");
+                if (!day) {
+                  setStartDate("");
+                  return;
+                }
+                if (isDayDisabled(day)) {
+                  setFeedback("That date is unavailable.");
+                  return;
+                }
+                for (let offset = 0; offset < rentalDays; offset += 1) {
+                  const candidate = addDays(day, offset);
+                  if (isDayDisabled(candidate)) {
+                    setFeedback("That range includes unavailable dates. Please choose another start date.");
+                    return;
+                  }
+                }
+                setStartDate(toIsoDate(day));
+              }}
+              disabled={disabledMatchers}
+              onDayMouseEnter={(day) => setHoverDay(day)}
+              onDayMouseLeave={() => setHoverDay(undefined)}
+              modifiers={{
+                preview: hoverPreviewRange ? hoverPreviewRange : undefined,
+                selectedrange: selectedRange ? selectedRange : undefined,
+              }}
+              modifiersClassNames={{
+                preview: "booking-day-preview",
+                selectedrange: "booking-day-selectedrange",
+              }}
             />
-          </label>
-
-          <label>
-            End date
-            <input type="date" value={endDate} readOnly disabled />
-          </label>
+            <p className="booking-calendar-summary">
+              <strong>Dates:</strong> {startDate ? `${startDate} → ${endDate}` : "Select a start date"}
+            </p>
+          </div>
 
           <div className="booking-inline-fields">
             <label>

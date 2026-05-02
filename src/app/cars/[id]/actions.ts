@@ -2,27 +2,21 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getCarById } from "@/lib/cars";
-import { attachPaymentReference, checkCarAvailability, createPendingBooking } from "@/lib/bookings";
-import { createXenditInvoice } from "@/lib/xendit";
+import { checkCarAvailability, createPendingBooking } from "@/lib/bookings";
+import { rateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
 
 type CheckoutResult =
-  | { ok: true; checkoutUrl: string }
+  | { ok: true; redirectTo: string }
   | { ok: false; message: string; redirectTo?: string };
 
-function parseDate(value: FormDataEntryValue | null, label: string) {
-  const raw = String(value ?? "").trim();
-  if (!raw) {
-    throw new Error(`${label} is required.`);
+function addDaysToIsoDate(dateIso: string, days: number) {
+  const parsed = new Date(dateIso);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error("Invalid start date.");
   }
-  return raw;
-}
-
-function parsePositiveNumber(value: FormDataEntryValue | null, label: string) {
-  const parsed = Number(String(value ?? ""));
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    throw new Error(`${label} must be a valid positive number.`);
-  }
-  return parsed;
+  parsed.setUTCDate(parsed.getUTCDate() + days);
+  return parsed.toISOString().slice(0, 10);
 }
 
 export async function beginCheckoutAction(formData: FormData): Promise<CheckoutResult> {
@@ -45,29 +39,63 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
       };
     }
 
+    const limitResult = rateLimit(`beginCheckout:${user.id}`, 5, 60_000);
+    if (!limitResult.ok) {
+      return {
+        ok: false,
+        message: "Too many checkout attempts. Please wait a minute and try again.",
+      };
+    }
+
     const car = await getCarById(carId);
     if (!car) {
       throw new Error("Car not found.");
     }
 
-    const startDate = parseDate(formData.get("startDate"), "Start date");
-    const endDate = parseDate(formData.get("endDate"), "End date");
-    const rentalDays = parsePositiveNumber(formData.get("rentalDays"), "Rental days");
-    const totalPrice = parsePositiveNumber(formData.get("totalPrice"), "Total price");
-    const customerName = String(formData.get("customerName") ?? "").trim();
-    const customerPhone = String(formData.get("customerPhone") ?? "").trim();
-    const customerEmail = String(formData.get("customerEmail") ?? "").trim();
-    const pickupLocation = String(formData.get("pickupLocation") ?? "").trim();
-    const driverLicenseNumber = String(formData.get("driverLicenseNumber") ?? "").trim();
-    const driverNotes = String(formData.get("driverNotes") ?? "").trim();
+    const schema = z.object({
+      startDate: z.string().trim().min(1, "Start date is required."),
+      rentalDays: z.coerce.number().int().min(1, "Rental days must be at least 1."),
+      customerName: z.string().trim().min(1, "Customer name is required."),
+      customerPhone: z.string().trim().min(1, "Customer phone is required."),
+      customerEmail: z
+        .string()
+        .trim()
+        .optional()
+        .transform((value) => (value ? value : undefined))
+        .refine((value) => !value || z.string().email().safeParse(value).success, "Customer email must be valid."),
+      pickupLocation: z.string().trim().min(1, "Pickup location is required."),
+      driverLicenseNumber: z
+        .string()
+        .trim()
+        .optional()
+        .transform((value) => (value ? value : undefined)),
+      driverNotes: z
+        .string()
+        .trim()
+        .optional()
+        .transform((value) => (value ? value : undefined)),
+    });
 
-    if (!customerName || !customerPhone || !pickupLocation) {
-      throw new Error("Customer name, phone, and pickup location are required.");
+    const parsed = schema.safeParse({
+      startDate: formData.get("startDate"),
+      rentalDays: formData.get("rentalDays"),
+      customerName: formData.get("customerName"),
+      customerPhone: formData.get("customerPhone"),
+      customerEmail: formData.get("customerEmail"),
+      pickupLocation: formData.get("pickupLocation"),
+      driverLicenseNumber: formData.get("driverLicenseNumber"),
+      driverNotes: formData.get("driverNotes"),
+    });
+
+    if (!parsed.success) {
+      return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid checkout details." };
     }
 
-    if (rentalDays < 1) {
-      throw new Error("Rental days must be at least 1.");
-    }
+    const { startDate, rentalDays, customerName, customerPhone, customerEmail, pickupLocation, driverLicenseNumber, driverNotes } =
+      parsed.data;
+
+    const endDate = addDaysToIsoDate(startDate, Math.max(0, rentalDays - 1));
+    const totalPrice = Number((rentalDays * car.dayRate).toFixed(2));
 
     const isAvailable = await checkCarAvailability(carId, startDate, endDate);
     if (!isAvailable) {
@@ -87,20 +115,7 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
       driverLicenseNumber,
       driverNotes,
     });
-
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-    const checkout = await createXenditInvoice({
-      bookingId: booking.id,
-      carName: car.name,
-      amountPhp: totalPrice,
-      customerEmail,
-      customerName,
-      successUrl: `${siteUrl}/cars/${carId}?checkout=success`,
-      cancelUrl: `${siteUrl}/cars/${carId}?checkout=canceled`,
-    });
-
-    await attachPaymentReference(booking.id, checkout.invoiceId);
-    return { ok: true, checkoutUrl: checkout.checkoutUrl };
+    return { ok: true, redirectTo: `/checkout/${booking.id}` };
   } catch (error) {
     return {
       ok: false,

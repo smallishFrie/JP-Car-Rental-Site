@@ -2,6 +2,7 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createXenditRefund } from "@/lib/xendit";
 
 export const bookingStatuses =["pending", "upcoming", "active", "completed", "cancel_requested", "canceled"] as const;
 export type BookingStatus = (typeof bookingStatuses)[number];
@@ -350,6 +351,42 @@ export async function confirmCancellationForAdmin(bookingId: string) {
   const booking = existing as BookingRecord;
   if (booking.status !== "cancel_requested") {
     throw new Error("Only cancel requested bookings can be confirmed.");
+  }
+
+  const shouldRefund =
+    booking.payment_status === "paid" &&
+    Boolean(booking.payment_reference) &&
+    (() => {
+      const start = new Date(`${booking.start_date}T00:00:00.000Z`).getTime();
+      if (Number.isNaN(start)) return false;
+      return start - Date.now() > 48 * 60 * 60 * 1000;
+    })();
+
+  if (shouldRefund) {
+    const metadata = booking.payment_metadata ?? {};
+    const alreadyRefunded = Boolean((metadata as any).refund);
+    if (!alreadyRefunded) {
+      const kind: "payment_request" | "invoice" =
+        (metadata as any)?.payment_request ? "payment_request" : "invoice";
+
+      const refund = await createXenditRefund({
+        bookingId: booking.id,
+        amountPhp: Number(booking.total_price),
+        paymentReference: booking.payment_reference as string,
+        paymentReferenceKind: kind,
+        reason: "CANCELLATION",
+      });
+
+      await supabase
+        .from("bookings")
+        .update({
+          payment_metadata: {
+            ...(metadata as Record<string, unknown>),
+            refund,
+          },
+        })
+        .eq("id", booking.id);
+    }
   }
 
   const { data, error } = await supabase
