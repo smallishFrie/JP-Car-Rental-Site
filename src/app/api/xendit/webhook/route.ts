@@ -26,6 +26,47 @@ export async function POST(request: NextRequest) {
 
   const raw = (await request.json()) as unknown;
 
+  const outer = raw as Record<string, unknown>;
+  const eventName = String(outer.event ?? "");
+  if (eventName === "refund.succeeded" || eventName === "refund.failed") {
+    const dataLayer = (outer.data ?? {}) as Record<string, unknown>;
+    const nested = dataLayer.data;
+    const refundRow =
+      typeof nested === "object" && nested !== null
+        ? (nested as Record<string, unknown>)
+        : dataLayer;
+    const referenceId = String(refundRow.reference_id ?? dataLayer.reference_id ?? "").trim();
+    if (!referenceId) {
+      return NextResponse.json({ error: "Missing refund reference_id." }, { status: 400 });
+    }
+
+    const supabase = createAdminClient();
+    const { data: existing } = await supabase.from("bookings").select("id, payment_metadata, refund_status").eq("id", referenceId).maybeSingle();
+    if (!existing) {
+      return NextResponse.json({ ok: true });
+    }
+
+    const row = existing as { id: string; payment_metadata: Record<string, unknown> | null; refund_status: string };
+    const meta = { ...(row.payment_metadata ?? {}), refund_webhook_event: raw } as Record<string, unknown>;
+    const nextRefundStatus = eventName === "refund.succeeded" ? "succeeded" : "failed";
+
+    if (nextRefundStatus === "succeeded") {
+      await supabase
+        .from("bookings")
+        .update({ refund_status: "succeeded", payment_metadata: meta })
+        .eq("id", referenceId)
+        .in("refund_status", ["pending"]);
+    } else {
+      await supabase
+        .from("bookings")
+        .update({ refund_status: "failed", payment_metadata: meta })
+        .eq("id", referenceId)
+        .in("refund_status", ["pending"]);
+    }
+
+    return NextResponse.json({ ok: true });
+  }
+
   const payPayload = raw as XenditPaymentCaptureWebhookPayload;
   if (payPayload.event && payPayload.event.startsWith("payment.")) {
     if (payPayload.event !== "payment.capture") {

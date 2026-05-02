@@ -36,7 +36,9 @@ export async function requestCancellationAction(formData: FormData) {
     throw new Error("Booking id is required.");
   }
 
-  await requestBookingCancellationForUser(id, userId);
+  const cancellationReason = String(formData.get("cancellationReason") ?? "").trim() || null;
+
+  await requestBookingCancellationForUser(id, userId, cancellationReason);
   revalidatePath("/account/bookings");
   revalidatePath("/admin");
 }

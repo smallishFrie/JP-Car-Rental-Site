@@ -1,0 +1,25 @@
+-- Optional: run cleanup-expired-pending-bookings Edge Function every 15 minutes using pg_cron + pg_net.
+-- Prerequisites: enable extensions `pg_cron` and `pg_net` in Supabase Dashboard → Database → Extensions.
+-- Deploy the function first: `supabase functions deploy cleanup-expired-pending-bookings`
+-- Set secret CRON_SECRET on the Edge Function (or omit CRON_SECRET in the function to allow unauthenticated calls — not recommended).
+--
+-- Replace placeholders:
+--   YOUR_PROJECT_REF  — Supabase project ref (from project URL)
+--   YOUR_CRON_SECRET  — same value as Edge Function secret CRON_SECRET (if used)
+--
+-- Example (uncomment and adjust after deploy):
+--
+-- select cron.schedule(
+--   'cleanup-expired-pending-bookings',
+--   '*/15 * * * *',
+--   $$
+--   select net.http_post(
+--     url := 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/cleanup-expired-pending-bookings',
+--     headers := jsonb_build_object(
+--       'Content-Type', 'application/json',
+--       'Authorization', 'Bearer YOUR_CRON_SECRET'
+--     ),
+--     body := '{}'::jsonb
+--   ) as request_id;
+--   $$
+-- );

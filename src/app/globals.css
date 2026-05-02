@@ -508,6 +508,22 @@ body::-webkit-scrollbar,
   color: #0a0a0a;
 }
 
+.booking-policy-callout {
+  font-size: 0.9rem;
+  color: #374151;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.booking-policy-callout a {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
 .booking-form {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -830,6 +846,35 @@ body::-webkit-scrollbar,
   display: flex;
   gap: 0.55rem;
   flex-wrap: wrap;
+}
+
+.admin-refund-amount-label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #881337;
+}
+
+.admin-refund-amount-label input {
+  max-width: 12rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+}
+
+.booking-cancel-request {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.booking-cancel-request textarea {
+  width: 100%;
+  max-width: 28rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font: inherit;
 }
 
 .admin-cancel-button {

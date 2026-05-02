@@ -89,3 +89,11 @@ using (
 with check (
   coalesce(auth.jwt() -> 'app_metadata' ->> 'role', auth.jwt() ->> 'role') = 'admin'
 );
+
+drop policy if exists "Users can update own bookings" on public.bookings;
+create policy "Users can update own bookings"
+on public.bookings
+for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);

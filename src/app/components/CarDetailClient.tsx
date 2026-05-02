@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { DayPicker, type DateRange } from "react-day-picker";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Car } from "@/lib/cars";
@@ -386,6 +387,11 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
 
       <section className="booking-panel" aria-label="Booking details">
         <h2>Booking Details</h2>
+        <p className="booking-policy-callout">
+          <strong>Cancellation and refunds:</strong> Cancellations at least 48 hours before pickup may qualify for a full
+          refund; within 48 hours fees may apply. No-shows are non-refundable. Read section 6 in our{" "}
+          <Link href="/terms-of-service#cancellation">Terms of Service</Link>.
+        </p>
         <form className="booking-form" onSubmit={handleSubmit}>
           <label>
             Rental days

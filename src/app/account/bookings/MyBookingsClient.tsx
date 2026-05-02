@@ -27,6 +27,7 @@ export default function MyBookingsClient({ initialBookings }: { initialBookings:
   const [bookings, setBookings] = useState(initialBookings);
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
+  const [cancelReasonById, setCancelReasonById] = useState<Record<string, string>>({});
 
   function cancelPendingBooking(id: string) {
     startTransition(async () => {
@@ -49,6 +50,10 @@ export default function MyBookingsClient({ initialBookings }: { initialBookings:
       try {
         const fd = new FormData();
         fd.set("id", id);
+        const reason = cancelReasonById[id]?.trim();
+        if (reason) {
+          fd.set("cancellationReason", reason);
+        }
         await requestCancellationAction(fd);
         setBookings((current) => current.map((booking) => (booking.id === id ? { ...booking, status: "cancel_requested" } : booking)));
         setMessage("Cancellation requested. Admin has been notified.");
@@ -61,6 +66,14 @@ export default function MyBookingsClient({ initialBookings }: { initialBookings:
   return (
     <section className="admin-card">
       <h2>My Bookings</h2>
+      <p className="admin-empty" style={{ marginBottom: 16 }}>
+        <strong>Cancellations and refunds:</strong> Cancellations at least 48 hours before pickup may be eligible for a
+        full refund; within 48 hours a fee may apply. See our{" "}
+        <a href="/terms-of-service#cancellation" className="auth-back-link">
+          terms (section 6)
+        </a>{" "}
+        for details.
+      </p>
       {!bookings.length ? <p className="admin-empty">No bookings yet.</p> : null}
       <ul className="admin-list">
         {bookings.map((booking) => {
@@ -80,9 +93,26 @@ export default function MyBookingsClient({ initialBookings }: { initialBookings:
                 </button>
               ) : null}
               {actionKind === "request" ? (
-                <button type="button" className="admin-cancel-button" disabled={isPending} onClick={() => requestCancellation(booking.id)}>
-                  Request Cancellation
-                </button>
+                <div className="booking-cancel-request">
+                  <label className="booking-notes-field">
+                    Reason (optional)
+                    <textarea
+                      rows={2}
+                      value={cancelReasonById[booking.id] ?? ""}
+                      onChange={(e) =>
+                        setCancelReasonById((prev) => ({
+                          ...prev,
+                          [booking.id]: e.target.value,
+                        }))
+                      }
+                      placeholder="Tell us why you need to cancel"
+                      disabled={isPending}
+                    />
+                  </label>
+                  <button type="button" className="admin-cancel-button" disabled={isPending} onClick={() => requestCancellation(booking.id)}>
+                    Request Cancellation
+                  </button>
+                </div>
               ) : null}
               {actionKind === "requested" ? <p className="admin-empty">Cancellation request pending admin review.</p> : null}
             </li>

@@ -7,6 +7,9 @@ import { createXenditRefund } from "@/lib/xendit";
 export const bookingStatuses =["pending", "upcoming", "active", "completed", "cancel_requested", "canceled"] as const;
 export type BookingStatus = (typeof bookingStatuses)[number];
 
+export const refundStatuses = ["none", "pending", "succeeded", "failed", "not_applicable"] as const;
+export type RefundStatus = (typeof refundStatuses)[number];
+
 export type BookingRecord = {
   id: string;
   user_id: string;
@@ -25,6 +28,9 @@ export type BookingRecord = {
   payment_reference: string | null;
   payment_status: string;
   payment_metadata: Record<string, unknown> | null;
+  refund_status?: RefundStatus;
+  refund_amount_php?: number | null;
+  cancellation_reason?: string | null;
   canceled_at: string | null;
   paid_at: string | null;
   created_at: string;
@@ -37,6 +43,36 @@ function toDateOnly(value: string) {
     throw new Error("Invalid date value.");
   }
   return parsed.toISOString().slice(0, 10);
+}
+
+/** Maps stored payment metadata + payment_reference to Xendit refund API fields. */
+export function resolveXenditRefundReference(booking: BookingRecord): {
+  paymentReference: string;
+  paymentReferenceKind: "payment_request" | "invoice" | "payment_id";
+} {
+  const meta = (booking.payment_metadata ?? {}) as Record<string, unknown>;
+  const data = (meta.data ?? {}) as Record<string, unknown>;
+  const pr =
+    (typeof data.payment_request_id === "string" && data.payment_request_id) ||
+    (typeof meta.payment_request_id === "string" && meta.payment_request_id);
+  if (pr) {
+    return { paymentReference: pr, paymentReferenceKind: "payment_request" };
+  }
+  const ref = booking.payment_reference;
+  if (!ref) {
+    throw new Error("Missing payment reference for refund.");
+  }
+  if (meta.components_session || meta.payment_session || String(meta.event ?? "").includes("payment_session")) {
+    const payId =
+      (typeof data.payment_id === "string" && data.payment_id) ||
+      (typeof meta.payment_id === "string" && meta.payment_id) ||
+      ref;
+    return { paymentReference: String(payId), paymentReferenceKind: "payment_id" };
+  }
+  if (String(ref).startsWith("pr-")) {
+    return { paymentReference: ref, paymentReferenceKind: "payment_request" };
+  }
+  return { paymentReference: ref, paymentReferenceKind: "invoice" };
 }
 
 export function computeDerivedStatus(input: {
@@ -255,7 +291,7 @@ export async function cleanupExpiredPendingBookings() {
 
   const { data, error } = await supabase
     .from("bookings")
-    .update({ status: "canceled", canceled_at: canceledAt })
+    .update({ status: "canceled", canceled_at: canceledAt, refund_status: "not_applicable" })
     .eq("status", "pending")
     .eq("payment_status", "unpaid")
     .lte("created_at", cutoff)
@@ -265,7 +301,8 @@ export async function cleanupExpiredPendingBookings() {
     throw new Error(error.message);
   }
 
-  return { cleaned: data?.length ?? 0 };
+  const rows = data ?? [];
+  return { cleaned: rows.length, canceledIds: rows.map((r) => r.id) };
 }
 
 export async function cancelPendingUnpaidBookingForUser(bookingId: string, userId: string) {
@@ -286,9 +323,10 @@ export async function cancelPendingUnpaidBookingForUser(bookingId: string, userI
     throw new Error("Only pending unpaid bookings can be canceled directly.");
   }
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("bookings")
-    .update({ status: "canceled", canceled_at: new Date().toISOString() })
+    .update({ status: "canceled", canceled_at: new Date().toISOString(), refund_status: "not_applicable" })
     .eq("id", bookingId)
     .eq("user_id", userId)
     .select("*")
@@ -301,7 +339,13 @@ export async function cancelPendingUnpaidBookingForUser(bookingId: string, userI
   return data as BookingRecord;
 }
 
-export async function requestBookingCancellationForUser(bookingId: string, userId: string) {
+const MAX_CANCELLATION_REASON_LENGTH = 2000;
+
+export async function requestBookingCancellationForUser(
+  bookingId: string,
+  userId: string,
+  cancellationReason?: string | null,
+) {
   const supabase = await createClient();
   const { data: existing, error: fetchError } = await supabase
     .from("bookings")
@@ -326,9 +370,15 @@ export async function requestBookingCancellationForUser(bookingId: string, userI
     throw new Error("Only upcoming bookings can request cancellation.");
   }
 
-  const { data, error } = await supabase
+  const reason =
+    cancellationReason === undefined || cancellationReason === null
+      ? null
+      : cancellationReason.trim().slice(0, MAX_CANCELLATION_REASON_LENGTH) || null;
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("bookings")
-    .update({ status: "cancel_requested" })
+    .update({ status: "cancel_requested", cancellation_reason: reason })
     .eq("id", bookingId)
     .eq("user_id", userId)
     .select("*")
@@ -341,64 +391,112 @@ export async function requestBookingCancellationForUser(bookingId: string, userI
   return data as BookingRecord;
 }
 
-export async function confirmCancellationForAdmin(bookingId: string) {
-  const supabase = await createClient();
-  const { data: existing, error: fetchError } = await supabase.from("bookings").select("*").eq("id", bookingId).single();
-  if (fetchError || !existing) {
-    throw new Error(fetchError?.message ?? "Booking not found.");
+export async function confirmCancellationForAdmin(bookingId: string, refundAmountPhpInput: number) {
+  const admin = createAdminClient();
+  const amount = Number(Number(refundAmountPhpInput).toFixed(2));
+  if (!Number.isFinite(amount) || amount < 0) {
+    throw new Error("Refund amount must be a valid non-negative number.");
   }
 
-  const booking = existing as BookingRecord;
-  if (booking.status !== "cancel_requested") {
+  const { data: preRow, error: preErr } = await admin.from("bookings").select("*").eq("id", bookingId).maybeSingle();
+  if (preErr) {
+    throw new Error(preErr.message);
+  }
+  if (!preRow) {
+    throw new Error("Booking not found.");
+  }
+
+  const pre = preRow as BookingRecord;
+  if (pre.status === "canceled") {
+    return pre;
+  }
+  if (pre.status !== "cancel_requested") {
     throw new Error("Only cancel requested bookings can be confirmed.");
   }
 
-  const shouldRefund =
-    booking.payment_status === "paid" &&
-    Boolean(booking.payment_reference) &&
-    (() => {
-      const start = new Date(`${booking.start_date}T00:00:00.000Z`).getTime();
-      if (Number.isNaN(start)) return false;
-      return start - Date.now() > 48 * 60 * 60 * 1000;
-    })();
+  if (amount > Number(pre.total_price)) {
+    throw new Error("Refund amount cannot exceed the booking total.");
+  }
 
-  if (shouldRefund) {
-    const metadata = booking.payment_metadata ?? {};
-    const alreadyRefunded = Boolean((metadata as any).refund);
-    if (!alreadyRefunded) {
-      const kind: "payment_request" | "invoice" =
-        (metadata as any)?.payment_request ? "payment_request" : "invoice";
+  const paid = pre.payment_status === "paid" && Boolean(pre.payment_reference);
+  const willCallXendit = paid && amount > 0;
 
+  const { data: claimed, error: claimErr } = await admin
+    .from("bookings")
+    .update({
+      refund_status: willCallXendit ? "pending" : "not_applicable",
+      refund_amount_php: amount,
+    })
+    .eq("id", bookingId)
+    .eq("status", "cancel_requested")
+    .or("refund_status.is.null,refund_status.eq.none,refund_status.eq.failed")
+    .select("*")
+    .maybeSingle();
+
+  if (claimErr) {
+    throw new Error(claimErr.message);
+  }
+
+  if (!claimed) {
+    const { data: cur } = await admin.from("bookings").select("*").eq("id", bookingId).single();
+    const b = cur as BookingRecord;
+    if (b.status === "canceled") {
+      return b;
+    }
+    if (b.status === "cancel_requested" && b.refund_status === "pending") {
+      throw new Error("This cancellation is already being processed. Please refresh.");
+    }
+    throw new Error("Unable to confirm cancellation. Please refresh and try again.");
+  }
+
+  const booking = claimed as BookingRecord;
+  const canceledAt = new Date().toISOString();
+
+  if (willCallXendit) {
+    try {
+      const { paymentReference, paymentReferenceKind } = resolveXenditRefundReference(booking);
       const refund = await createXenditRefund({
         bookingId: booking.id,
-        amountPhp: Number(booking.total_price),
-        paymentReference: booking.payment_reference as string,
-        paymentReferenceKind: kind,
+        amountPhp: amount,
+        paymentReference,
+        paymentReferenceKind,
         reason: "CANCELLATION",
       });
-
-      await supabase
+      const metadata = { ...(booking.payment_metadata ?? {}), refund } as Record<string, unknown>;
+      const { data: finalized, error: finErr } = await admin
         .from("bookings")
         .update({
-          payment_metadata: {
-            ...(metadata as Record<string, unknown>),
-            refund,
-          },
+          status: "canceled",
+          canceled_at: canceledAt,
+          payment_metadata: metadata,
         })
-        .eq("id", booking.id);
+        .eq("id", bookingId)
+        .eq("status", "cancel_requested")
+        .select("*")
+        .single();
+      if (finErr || !finalized) {
+        throw new Error(finErr?.message ?? "Failed to finalize cancellation.");
+      }
+      return finalized as BookingRecord;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Refund failed.";
+      const metadata = { ...(booking.payment_metadata ?? {}), refund_last_error: message } as Record<string, unknown>;
+      await admin.from("bookings").update({ refund_status: "failed", payment_metadata: metadata }).eq("id", bookingId);
+      throw new Error(message);
     }
   }
 
-  const { data, error } = await supabase
+  const { data: finalized, error: finErr } = await admin
     .from("bookings")
-    .update({ status: "canceled", canceled_at: new Date().toISOString() })
+    .update({ status: "canceled", canceled_at: canceledAt })
     .eq("id", bookingId)
+    .eq("status", "cancel_requested")
     .select("*")
     .single();
-  if (error || !data) {
-    throw new Error(error?.message ?? "Failed to confirm cancellation.");
+  if (finErr || !finalized) {
+    throw new Error(finErr?.message ?? "Failed to confirm cancellation.");
   }
-  return data as BookingRecord;
+  return finalized as BookingRecord;
 }
 
 export async function getBookingByPaymentReference(paymentReference: string) {

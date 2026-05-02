@@ -117,6 +117,9 @@ export async function confirmCancellationAction(formData: FormData) {
   if (!id) {
     throw new Error("Booking id is required.");
   }
-  await confirmCancellationForAdmin(id);
+  const rawAmount = formData.get("refundAmountPhp");
+  const refundAmountPhp =
+    rawAmount === null || String(rawAmount).trim() === "" ? 0 : parseNumber(rawAmount, "Refund amount");
+  await confirmCancellationForAdmin(id, refundAmountPhp);
   revalidatePath("/admin");
 }

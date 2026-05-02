@@ -144,10 +144,16 @@ export async function createXenditRefund(input: {
   amountPhp: number;
   currency?: string;
   paymentReference: string;
-  paymentReferenceKind: "payment_request" | "invoice";
+  paymentReferenceKind: "payment_request" | "invoice" | "payment_id";
   reason?: string;
 }) {
   const secretKey = readServerEnv("XENDIT_SECRET_KEY");
+  const idField =
+    input.paymentReferenceKind === "payment_request"
+      ? { payment_request_id: input.paymentReference }
+      : input.paymentReferenceKind === "invoice"
+        ? { invoice_id: input.paymentReference }
+        : { payment_id: input.paymentReference };
   const response = await fetch("https://api.xendit.co/refunds", {
     method: "POST",
     headers: {
@@ -160,9 +166,7 @@ export async function createXenditRefund(input: {
       amount: Number(input.amountPhp.toFixed(2)),
       currency: input.currency ?? "PHP",
       reason: input.reason ?? "CANCELLATION",
-      ...(input.paymentReferenceKind === "payment_request"
-        ? { payment_request_id: input.paymentReference }
-        : { invoice_id: input.paymentReference }),
+      ...idField,
       metadata: {
         booking_id: input.bookingId,
       },

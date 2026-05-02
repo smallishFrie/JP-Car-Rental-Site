@@ -54,7 +54,7 @@ export default function TermsOfServicePage() {
         </p>
       </section>
 
-      <section>
+      <section id="cancellation">
         <h2>6. Cancellation and Refunds</h2>
         <p>
           Cancellations made 48 hours or more before the pickup time are eligible for a full refund. Cancellations made
