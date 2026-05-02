@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { startPaymentAction } from "@/app/checkout/[bookingId]/actions";
+import { initCheckoutComponentsSessionAction } from "@/app/checkout/[bookingId]/actions";
 import { XenditComponents } from "xendit-components-web";
 
 export default function CheckoutClient(props: {
@@ -13,36 +13,62 @@ export default function CheckoutClient(props: {
   customerName: string;
   customerEmail?: string | null;
 }) {
-  const [channelCode, setChannelCode] = useState<"GCASH" | "MAYA" | "CARDS">("GCASH");
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
   const [componentsSdkKey, setComponentsSdkKey] = useState<string | null>(null);
   const componentsRef = useRef<any>(null);
   const [isReadyToSubmit, setIsReadyToSubmit] = useState(false);
-  const [isHttps, setIsHttps] = useState(true);
+  /** null until we read window (avoids wrong loading/HTTPS message on first paint). */
+  const [isHttps, setIsHttps] = useState<boolean | null>(null);
 
   const formattedTotal = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(props.totalPrice);
 
-  const isCards = channelCode === "CARDS";
-
-  useEffect(() => {
-    setIsHttps(window.location.protocol === "https:");
-  }, []);
-
-  useEffect(() => {
-    setMessage("");
-    setComponentsSdkKey(null);
-    setIsReadyToSubmit(false);
-    componentsRef.current = null;
-  }, [channelCode]);
-
   const payButtonLabel = useMemo(() => {
-    if (isCards && componentsSdkKey) return isPending ? "Processing..." : "Pay with card";
-    return isPending ? "Starting payment..." : "Pay now";
-  }, [isCards, componentsSdkKey, isPending]);
+    if (!componentsSdkKey) return message ? "Payment unavailable" : "Loading…";
+    if (isPending) return "Processing…";
+    return "Pay now";
+  }, [componentsSdkKey, isPending, message]);
 
   useEffect(() => {
-    if (!isCards || !componentsSdkKey) {
+    const https = window.location.protocol === "https:";
+    setIsHttps(https);
+    if (!https) {
+      return;
+    }
+
+    let cancelled = false;
+    startTransition(() => {
+      void (async () => {
+        setMessage("");
+        const result = await initCheckoutComponentsSessionAction({
+          bookingId: props.bookingId,
+          origin: window.location.origin,
+        });
+        if (cancelled) return;
+        if (!result.ok) {
+          setMessage(result.message);
+          if (result.redirectTo) {
+            window.location.href = result.redirectTo;
+          }
+          return;
+        }
+        if (result.nextUrl) {
+          window.location.href = result.nextUrl;
+          return;
+        }
+        if (result.componentsSdkKey) {
+          setComponentsSdkKey(result.componentsSdkKey);
+        }
+      })();
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [props.bookingId]);
+
+  useEffect(() => {
+    if (!componentsSdkKey) {
       return;
     }
 
@@ -53,8 +79,8 @@ export default function CheckoutClient(props: {
         componentsRef.current = components;
 
         components.addEventListener("fatal-error", (event: any) => {
-          const message = event?.detail?.message || event?.message || "A payment error occurred. Please try again.";
-          if (mounted) setMessage(String(message));
+          const msg = event?.detail?.message || event?.message || "A payment error occurred. Please try again.";
+          if (mounted) setMessage(String(msg));
         });
 
         components.addEventListener("init", () => {
@@ -81,15 +107,15 @@ export default function CheckoutClient(props: {
           if (mounted) setMessage("Payment session expired or was canceled. Please try again.");
         });
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : "Failed to initialize card payment.");
+        setMessage(error instanceof Error ? error.message : "Failed to initialize payment.");
       }
     };
 
-    run();
+    void run();
     return () => {
       mounted = false;
     };
-  }, [isCards, componentsSdkKey]);
+  }, [componentsSdkKey]);
 
   return (
     <section className="auth-shell">
@@ -114,67 +140,37 @@ export default function CheckoutClient(props: {
         </p>
       </section>
 
-      <form
-        className="auth-form"
-        action={(formData) => {
-          setMessage("");
-          formData.set("bookingId", props.bookingId);
-          formData.set("channelCode", channelCode);
-          formData.set("origin", window.location.origin);
-          startTransition(async () => {
-            const result = await startPaymentAction(formData);
-            if (!result.ok) {
-              setMessage(result.message);
-              if (result.redirectTo) {
-                window.location.href = result.redirectTo;
-              }
-              return;
-            }
-            if (result.componentsSdkKey) {
-              setComponentsSdkKey(result.componentsSdkKey);
-              return;
-            }
-            if (result.nextUrl) {
-              window.location.href = result.nextUrl;
-            }
-          });
-        }}
-      >
-        <h2>Payment method</h2>
+      <div className="auth-form">
+        <h2>Payment</h2>
 
-        <label>
-          Choose payment method
-          <select value={channelCode} onChange={(e) => setChannelCode(e.target.value as "GCASH" | "MAYA" | "CARDS")} required>
-            <option value="GCASH">GCash</option>
-            <option value="MAYA">Maya</option>
-            <option value="CARDS">Card</option>
-          </select>
-        </label>
-
-        {!isHttps ? (
+        {isHttps === false ? (
           <p className="admin-empty">
-            Card payments require HTTPS. You’re currently on <strong>HTTP</strong> (localhost). Use an HTTPS domain/tunnel to test cards.
+            Embedded checkout requires HTTPS. You’re currently on <strong>HTTP</strong> (localhost). Use an HTTPS domain or tunnel to pay.
           </p>
         ) : null}
 
-        {isCards && componentsSdkKey ? <div id="xendit-components-container" /> : null}
+        {isHttps === true && !componentsSdkKey && !message ? (
+          <p className="admin-empty" aria-live="polite">
+            Loading secure payment…
+          </p>
+        ) : null}
+
+        {componentsSdkKey ? <div id="xendit-components-container" /> : null}
 
         <button
-          type={isCards && componentsSdkKey ? "button" : "submit"}
+          type="button"
           className="auth-primary"
-          disabled={isPending || !isHttps || (isCards && componentsSdkKey ? !isReadyToSubmit : false)}
-          onClick={
-            isCards && componentsSdkKey
-              ? () => {
-                  setMessage("");
-                  try {
-                    componentsRef.current?.submit?.();
-                  } catch (error) {
-                    setMessage(error instanceof Error ? error.message : "Unable to submit card payment.");
-                  }
-                }
-              : undefined
+          disabled={
+            isPending || isHttps !== true || !componentsSdkKey || !isReadyToSubmit
           }
+          onClick={() => {
+            setMessage("");
+            try {
+              componentsRef.current?.submit?.();
+            } catch (error) {
+              setMessage(error instanceof Error ? error.message : "Unable to submit payment.");
+            }
+          }}
         >
           {payButtonLabel}
         </button>
@@ -183,8 +179,7 @@ export default function CheckoutClient(props: {
         <p className="admin-empty">
           Note: some wallets may open an approval step in-app. After payment, we’ll email your confirmation receipt.
         </p>
-      </form>
+      </div>
     </section>
   );
 }
-
