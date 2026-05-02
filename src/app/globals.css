@@ -264,10 +264,15 @@ body::-webkit-scrollbar,
   background: #ffffff;
   color: #111827;
   padding: 0.7rem 0.85rem;
+  transition: border-color 160ms ease;
 }
 
+.cars-browser-controls input:hover,
+.cars-browser-controls select:hover,
 .cars-browser-controls input:focus,
-.cars-browser-controls select:focus {
+.cars-browser-controls select:focus,
+.cars-browser-controls input:focus-visible,
+.cars-browser-controls select:focus-visible {
   border-color: #111827;
   outline: none;
 }
@@ -530,10 +535,15 @@ body::-webkit-scrollbar,
   background: #ffffff;
   color: #111827;
   padding: 0.7rem 0.85rem;
+  transition: border-color 160ms ease;
 }
 
+.booking-form select:hover,
+.booking-form input:hover,
 .booking-form select:focus,
-.booking-form input:focus {
+.booking-form input:focus,
+.booking-form select:focus-visible,
+.booking-form input:focus-visible {
   border-color: #111827;
   outline: none;
 }
@@ -927,31 +937,150 @@ body::-webkit-scrollbar,
   margin-top: 0.35rem;
 }
 
-.booking-calendar {
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  padding: 0.75rem;
+.booking-date-field {
+  position: relative;
+  display: grid;
+  gap: 0.35rem;
+  align-self: start;
 }
 
 .booking-calendar-label {
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 0.5rem;
+  margin: 0;
+  color: #374151;
+  font-size: 0.92rem;
 }
 
-.booking-calendar-summary {
-  margin-top: 0.6rem;
+.booking-date-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 2.65rem;
+  text-align: left;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  padding: 0.7rem 0.85rem;
+  font: inherit;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: border-color 160ms ease;
+}
+
+.booking-date-trigger:hover,
+.booking-date-trigger:focus-visible {
+  border-color: #111827;
+  outline: none;
+}
+
+.booking-date-trigger-chevron {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: #4b5563;
+  transition: transform 200ms ease;
+}
+
+.booking-date-trigger-chevron-open {
+  transform: rotate(180deg);
+}
+
+.booking-calendar-dropdown {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  z-index: 40;
+  min-width: min(100%, 20.5rem);
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  padding: 0.75rem;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+}
+
+.booking-calendar-dropdown .rdp-root {
+  --rdp-accent-color: #111827;
+  --rdp-accent-background-color: #e5e7eb;
+  --rdp-today-color: #111827;
+  --rdp-selected-border: 2px solid transparent;
+  --rdp-day_button-border-radius: 0;
+  /* Match button to cell so hover/preview fills the cell (default 42px in 44px cell leaves a visible gap). */
+  --rdp-day_button-width: var(--rdp-day-width);
+  --rdp-day_button-height: var(--rdp-day-height);
+  --booking-range-fill: #273f4f;
+  --booking-range-text: #f9fafb;
   color: #111827;
 }
 
-.booking-day-preview {
-  background: rgba(17, 24, 39, 0.12) !important;
+.booking-calendar-dropdown .rdp-selected {
+  font-size: inherit;
+  font-weight: normal;
+}
+
+.booking-calendar-dropdown .rdp-month_caption {
+  color: #111827;
+}
+
+.booking-calendar-dropdown .rdp-weekday {
+  color: #374151;
+  opacity: 1;
+}
+
+.booking-calendar-dropdown .rdp-day_button:not([disabled]):hover {
+  background-color: rgba(17, 24, 39, 0.1);
+  color: #111827;
+  box-shadow: none;
+}
+
+.booking-calendar-dropdown .rdp-selected .rdp-day_button {
+  background-color: var(--booking-range-fill);
+  color: var(--booking-range-text);
+  outline: none;
+  box-shadow: none;
+}
+
+.booking-calendar-dropdown
+  .rdp-today:not(.rdp-outside):not(.rdp-selected):not(.booking-day-selectedrange)
+  .rdp-day_button {
+  background-color: #f3f4f6;
+  color: #111827;
+  font-weight: 400;
+  box-shadow: none;
+}
+
+.booking-calendar-dropdown
+  .rdp-today:not(.rdp-outside):not(.rdp-selected):not(.booking-day-selectedrange)
+  .rdp-day_button:hover {
+  background-color: rgba(17, 24, 39, 0.1);
+}
+
+.booking-calendar-dropdown .booking-day-preview {
+  background: transparent !important;
+}
+
+.booking-calendar-dropdown .booking-day-preview .rdp-day_button {
+  background-color: rgba(17, 24, 39, 0.12) !important;
   color: #111827 !important;
 }
 
-.booking-day-selectedrange {
-  background: rgba(17, 24, 39, 0.18) !important;
-  color: #111827 !important;
+.booking-calendar-dropdown .booking-day-selectedrange {
+  background: var(--booking-range-fill) !important;
+}
+
+.booking-calendar-dropdown .booking-day-selectedrange .rdp-day_button {
+  background-color: var(--booking-range-fill) !important;
+  color: var(--booking-range-text) !important;
+  border-color: transparent !important;
+  border-radius: 0 !important;
+}
+
+.booking-calendar-dropdown .rdp-selected.booking-day-selectedrange .rdp-day_button {
+  background-color: var(--booking-range-fill) !important;
+  color: var(--booking-range-text) !important;
+  border-radius: 0 !important;
+  border: 2px solid transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .auth-main {
@@ -1154,6 +1283,14 @@ body::-webkit-scrollbar,
   .booking-submit {
     transition: none;
     color: inherit;
+  }
+
+  .booking-form select,
+  .booking-form input,
+  .booking-date-trigger,
+  .cars-browser-controls input,
+  .cars-browser-controls select {
+    transition: none;
   }
 
   .header-auth-link:hover,
