@@ -22,12 +22,8 @@ export default async function AccountBookingsPage() {
   const bookings = await listBookingsForUser(user.id);
 
   return (
-    <main className="auth-main">
+    <main className="auth-main auth-main--no-site-header">
       <section className="auth-shell">
-        <header className="auth-header">
-          <h1>Account</h1>
-          <p>Manage your bookings and cancellation requests.</p>
-        </header>
         <MyBookingsClient initialBookings={bookings} />
         <p className="auth-back-link">
           <Link href="/">← Back to home</Link>

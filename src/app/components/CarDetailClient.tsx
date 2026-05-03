@@ -2,10 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { enUS } from "date-fns/locale";
 import { DayPicker, type DateRange } from "react-day-picker";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Car } from "@/lib/cars";
 import { beginCheckoutAction } from "@/app/cars/[id]/actions";
+import CustomSelect from "@/app/components/CustomSelect";
+import RevealOnScroll from "@/app/components/RevealOnScroll";
 import "react-day-picker/style.css";
 
 type CarDetailClientProps = {
@@ -47,6 +50,21 @@ function addDaysLocal(date: Date, days: number) {
 function localTodayStart() {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+function dateInRange(date: Date, range: DateRange | undefined): boolean {
+  if (!range?.from || !range?.to) {
+    return false;
+  }
+  const t = startOfLocalDay(date).getTime();
+  const from = startOfLocalDay(range.from).getTime();
+  const to = startOfLocalDay(range.to).getTime();
+  return t >= from && t <= to;
+}
+
+/** True when both dates fall in the same month/year, i.e. rendered in the same calendar grid. */
+function sameMonth(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
 }
 
 export default function CarDetailClient({ car }: CarDetailClientProps) {
@@ -154,6 +172,56 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
     }
     return { from, to };
   }, [hoverDay, rentalDays, isDayDisabled]);
+
+  const inSelectedRange = useCallback(
+    (date: Date) => dateInRange(date, selectedRange),
+    [selectedRange],
+  );
+
+  /** Effective preview = hover range minus any day already in the committed selection.
+   * Each calendar cell ends up with at most one of `preview` / `selectedrange`,
+   * which keeps the strip-cap CSS unambiguous when the two ranges overlap. */
+  const isPreviewDay = useCallback(
+    (date: Date) => {
+      if (!hoverPreviewRange) return false;
+      if (!dateInRange(date, hoverPreviewRange)) return false;
+      return !inSelectedRange(date);
+    },
+    [hoverPreviewRange, inSelectedRange],
+  );
+
+  /** Single object so strip-join matchers always close over the latest hover/selection (same rules for both strips). */
+  const bookingCalendarModifiers = useMemo(
+    () => ({
+      preview: hoverPreviewRange ? isPreviewDay : undefined,
+      selectedrange: selectedRange ? selectedRange : undefined,
+      /** Cell directly below (same column, next row) is in the same strip. */
+      stripjoindown: (date: Date) => {
+        const d = startOfLocalDay(date);
+        const below = addDaysLocal(d, 7);
+        if (!sameMonth(d, below)) {
+          return false;
+        }
+        return (
+          (isPreviewDay(d) && isPreviewDay(below)) ||
+          (inSelectedRange(d) && inSelectedRange(below))
+        );
+      },
+      /** Cell directly above (same column, previous row) is in the same strip. */
+      stripjoinup: (date: Date) => {
+        const d = startOfLocalDay(date);
+        const above = addDaysLocal(d, -7);
+        if (!sameMonth(d, above)) {
+          return false;
+        }
+        return (
+          (isPreviewDay(d) && isPreviewDay(above)) ||
+          (inSelectedRange(d) && inSelectedRange(above))
+        );
+      },
+    }),
+    [hoverPreviewRange, selectedRange, isPreviewDay, inSelectedRange],
+  );
 
   const goToNext = () => {
     setActiveImageIndex((current) => (current + 1) % totalImages);
@@ -323,6 +391,7 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
 
   return (
     <div className="car-detail-shell">
+      <RevealOnScroll>
       <section className="car-gallery" aria-label={`${car.name} image gallery`}>
         <div className="car-gallery-track">
           {car.images.map((image, index) => (
@@ -379,12 +448,16 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
         ) : null}
         <p className="gallery-caption">{activeSlideLabel}</p>
       </section>
+      </RevealOnScroll>
 
+      <RevealOnScroll>
       <section className="car-detail-copy">
-        <h1>{car.name}</h1>
+        <h1 className="page-intro-fade">{car.name}</h1>
         <p>{car.description}</p>
       </section>
+      </RevealOnScroll>
 
+      <RevealOnScroll>
       <section className="booking-panel" aria-label="Booking details">
         <h2>Booking Details</h2>
         <p className="booking-policy-callout">
@@ -413,13 +486,12 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
 
           <label>
             Pickup location
-            <select value={location} onChange={(event) => setLocation(event.target.value)} required>
-              {car.locations.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <CustomSelect
+              options={car.locations.map((option) => ({ value: option.value, label: option.label }))}
+              value={location}
+              onChange={setLocation}
+              optionsAriaLabel="Pickup locations"
+            />
           </label>
 
           <div className="booking-date-field" ref={bookingDateFieldRef}>
@@ -450,6 +522,7 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
               >
                 <DayPicker
                   mode="single"
+                  locale={enUS}
                   className="booking-daypicker-root"
                   selected={selectedStartDay}
                   defaultMonth={selectedStartDay ?? todayDate}
@@ -475,13 +548,12 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
                   }}
                   disabled={disabledMatchers}
                   onDayMouseEnter={(d) => setHoverDay(d)}
-                  modifiers={{
-                    preview: hoverPreviewRange ? hoverPreviewRange : undefined,
-                    selectedrange: selectedRange ? selectedRange : undefined,
-                  }}
+                  modifiers={bookingCalendarModifiers}
                   modifiersClassNames={{
                     preview: "booking-day-preview",
                     selectedrange: "booking-day-selectedrange",
+                    stripjoindown: "booking-day-strip-join-down",
+                    stripjoinup: "booking-day-strip-join-up",
                   }}
                 />
               </div>
@@ -535,6 +607,7 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
           </p>
         ) : null}
       </section>
+      </RevealOnScroll>
     </div>
   );
 }

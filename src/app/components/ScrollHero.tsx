@@ -8,11 +8,15 @@ type ScrollHeroProps = {
 
 export default function ScrollHero({ children }: ScrollHeroProps) {
   const [headerVisible, setHeaderVisible] = useState(false);
+  const [footerVisible, setFooterVisible] = useState(false);
   const [heroTextColor, setHeroTextColor] = useState("#ffffff");
 
   useEffect(() => {
-    let mouseOverride = false;
+    let headerMouseOverride = false;
+    let footerMouseOverride = false;
     const headerActivationY = 90;
+    const footerActivationMargin = 90;
+    const footerNearBottomPx = 420;
 
     const evaluateScrollVisibility = () => {
       const availableCarsHeader = document.getElementById("available-cars-header");
@@ -21,23 +25,46 @@ export default function ScrollHero({ children }: ScrollHeroProps) {
         : window.scrollY >= window.innerHeight;
     };
 
-    const handleScroll = () => {
-      if (mouseOverride) {
-        return;
+    const evaluateFooterVisibility = () => {
+      const root = document.documentElement;
+      const threshold = 80;
+      if (root.scrollHeight <= root.clientHeight + 8) {
+        return true;
       }
+      return window.scrollY + window.innerHeight >= root.scrollHeight - threshold;
+    };
 
-      setHeaderVisible(evaluateScrollVisibility());
+    const handleScroll = () => {
+      if (!headerMouseOverride) {
+        setHeaderVisible(evaluateScrollVisibility());
+      }
+      if (!footerMouseOverride) {
+        setFooterVisible(evaluateFooterVisibility());
+      }
     };
 
     const handleMouseMove = (event: MouseEvent) => {
-      const isInHeaderAccessZone = event.clientY <= headerActivationY;
+      const innerH = window.innerHeight;
+      const root = document.documentElement;
+      const distanceFromBottom = root.scrollHeight - (window.scrollY + innerH);
+      const isNearDocumentBottom = distanceFromBottom <= footerNearBottomPx;
 
-      if (isInHeaderAccessZone && !mouseOverride) {
-        mouseOverride = true;
+      const isInHeaderAccessZone = event.clientY <= headerActivationY;
+      if (isInHeaderAccessZone && !headerMouseOverride) {
+        headerMouseOverride = true;
         setHeaderVisible(true);
-      } else if (!isInHeaderAccessZone && mouseOverride) {
-        mouseOverride = false;
+      } else if (!isInHeaderAccessZone && headerMouseOverride) {
+        headerMouseOverride = false;
         setHeaderVisible(evaluateScrollVisibility());
+      }
+
+      const isInFooterAccessZone = event.clientY >= innerH - footerActivationMargin;
+      if (isInFooterAccessZone && isNearDocumentBottom && !footerMouseOverride) {
+        footerMouseOverride = true;
+        setFooterVisible(true);
+      } else if ((!isInFooterAccessZone || !isNearDocumentBottom) && footerMouseOverride) {
+        footerMouseOverride = false;
+        setFooterVisible(evaluateFooterVisibility());
       }
     };
 
@@ -91,6 +118,7 @@ export default function ScrollHero({ children }: ScrollHeroProps) {
       style={
         {
           "--header-visible": headerVisible ? "1" : "0",
+          "--footer-visible": footerVisible ? "1" : "0",
           "--hero-text-color": heroTextColor,
         } as React.CSSProperties
       }

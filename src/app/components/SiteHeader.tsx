@@ -19,7 +19,9 @@ export default async function SiteHeader() {
   return (
     <header className="site-header">
       <div className="site-header-inner">
-        <h1 className="site-header-title">JP Car Rental</h1>
+        <Link href="/" className="site-header-brand">
+          <h1 className="site-header-title">JP Car Rental</h1>
+        </Link>
 
         <nav aria-label="User navigation" className="header-auth-nav">
           {user ? (
@@ -43,7 +45,7 @@ export default async function SiteHeader() {
               <Link href="/auth/sign-in" className="header-auth-link">
                 Sign in
               </Link>
-              <Link href="/auth/create-account" className="header-auth-button">
+              <Link href="/auth/create-account" className="header-auth-button header-auth-cta">
                 Create account
               </Link>
             </>

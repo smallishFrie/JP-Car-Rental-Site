@@ -238,17 +238,17 @@ export default function AdminBookingManager({ initialBookings }: { initialBookin
     <section className="admin-booking-shell">
       <h2>Bookings</h2>
       <p className="admin-empty">Pipeline is auto-computed using payment + booking dates.</p>
-      <div className="admin-actions">
-        <button type="button" className="admin-secondary-button" onClick={refreshAllBookings} disabled={isPending}>
+      <div className="admin-toolbar-actions">
+        <button type="button" className="admin-tool-button" onClick={refreshAllBookings} disabled={isPending}>
           Refresh bookings
         </button>
-        <button type="button" className="admin-secondary-button" onClick={cleanupExpiredSessions} disabled={isPending}>
+        <button type="button" className="admin-tool-button" onClick={cleanupExpiredSessions} disabled={isPending}>
           Clean up expired sessions
         </button>
       </div>
 
       <section className="admin-card">
-        <h3>Booking management</h3>
+        <h3 className="admin-booking-manage-heading">Booking management</h3>
         <div className="booking-status-filters">
           {filterStatuses.map((status) => (
             <button

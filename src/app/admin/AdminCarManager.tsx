@@ -191,7 +191,6 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
               name="category"
               value={form.category}
               onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
-              placeholder="Sedan, SUV, Van, Pickup..."
               required
             />
           </label>

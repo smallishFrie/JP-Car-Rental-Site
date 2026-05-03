@@ -16,7 +16,7 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
   }
 
   return (
-    <main className="car-page-main">
+    <main className="car-page-main car-page-main--no-site-header">
       <section className="car-page-shell">
         <p className="car-page-back">
           <Link href="/">← Back to cars</Link>

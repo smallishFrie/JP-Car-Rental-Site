@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
-import { listCarsForAdmin, requireAdmin } from "@/lib/cars";
-import { listBookingsForAdmin } from "@/lib/bookings";
 import AdminCarManager from "@/app/admin/AdminCarManager";
 import AdminBookingManager from "@/app/admin/AdminBookingManager";
+import { listBookingsForAdmin } from "@/lib/bookings";
+import { listCarsForAdmin, requireAdmin } from "@/lib/cars";
+import { hasSupabaseEnv } from "@/lib/supabase/env";
 
 export default async function AdminPage() {
   if (!hasSupabaseEnv()) {
@@ -35,11 +35,9 @@ export default async function AdminPage() {
   }
 
   return (
-    <main className="auth-main">
+    <main className="auth-main auth-main--no-site-header">
       <section className="auth-shell">
-        <header className="auth-header">
-          <h1>Admin panel</h1>
-        </header>
+        <h1 className="admin-page-heading">Admin panel</h1>
         <AdminCarManager initialCars={cars} />
         <AdminBookingManager initialBookings={bookings} />
         <p className="auth-back-link">

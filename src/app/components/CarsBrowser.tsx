@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Car } from "@/lib/cars";
+import CustomSelect from "@/app/components/CustomSelect";
+import RevealOnScroll from "@/app/components/RevealOnScroll";
 
 type CarsBrowserProps = {
   cars: Car[];
@@ -14,6 +16,16 @@ function parseCategories(categoryText: string) {
     .split(",")
     .map((category) => category.trim())
     .filter(Boolean);
+}
+
+const dayRateFormatter = new Intl.NumberFormat("en-PH", {
+  style: "currency",
+  currency: "PHP",
+  maximumFractionDigits: 0,
+});
+
+function formatDayRate(amount: number) {
+  return dayRateFormatter.format(amount);
 }
 
 export default function CarsBrowser({ cars }: CarsBrowserProps) {
@@ -55,36 +67,40 @@ export default function CarsBrowser({ cars }: CarsBrowserProps) {
 
   return (
     <div className="cars-grid-shell">
-      <header className="cars-grid-header" id="available-cars-header">
-        <h3>Available Cars</h3>
-        <p>Choose your ride and continue to booking details.</p>
-      </header>
+      <RevealOnScroll className="cars-intro-reveal">
+        <header className="cars-grid-header" id="available-cars-header">
+          <h3>Available Cars</h3>
+          <p>Choose your ride and continue to booking details.</p>
+        </header>
 
-      <div className="cars-browser-controls">
-        <label>
-          Search
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by name, category, or tagline"
-            aria-label="Search cars"
-          />
-        </label>
-        <label>
-          Filter by category
-          <select value={selectedCategory} onChange={(event) => setSelectedCategory(event.target.value)} aria-label="Filter by category">
-            <option value="all">All categories</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+        <div className="cars-browser-controls">
+          <label>
+            Search
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search by name, category, or tagline"
+              aria-label="Search cars"
+            />
+          </label>
+          <label>
+            Filter by category
+            <CustomSelect
+              options={[
+                { value: "all", label: "All categories" },
+                ...categories.map((category) => ({ value: category, label: category })),
+              ]}
+              value={selectedCategory}
+              onChange={setSelectedCategory}
+              optionsAriaLabel="Car categories"
+            />
+          </label>
+        </div>
+      </RevealOnScroll>
 
-      <div className="cars-grid">
+      <RevealOnScroll className="cars-grid-reveal">
+        <div className="cars-grid">
         {filteredCars.map((car) => (
           <article key={car.id} className="car-card">
             <div className="car-card-image-wrap">
@@ -97,22 +113,29 @@ export default function CarsBrowser({ cars }: CarsBrowserProps) {
               />
             </div>
             <div className="car-card-body">
-              <div className="car-card-categories" aria-label="Car categories">
-                {parseCategories(car.category).map((category) => (
-                  <span key={`${car.id}-${category}`} className="car-card-category-pill">
-                    {category}
-                  </span>
-                ))}
+              <div className="car-card-top">
+                <div className="car-card-categories" aria-label="Car categories">
+                  {parseCategories(car.category).map((category) => (
+                    <span key={`${car.id}-${category}`} className="car-card-category-pill">
+                      {category}
+                    </span>
+                  ))}
+                </div>
+                <div className="car-card-price" aria-label={`From ${formatDayRate(car.dayRate)} per day`}>
+                  <span className="car-card-price-amount">{formatDayRate(car.dayRate)}</span>
+                  <span className="car-card-price-unit">per day</span>
+                </div>
               </div>
               <h4>{car.name}</h4>
               <p>{car.tagline}</p>
               <Link href={`/cars/${car.id}`} className="car-card-link">
-                Learn more
+                View details
               </Link>
             </div>
           </article>
         ))}
-      </div>
+        </div>
+      </RevealOnScroll>
 
       {!filteredCars.length ? <p className="admin-empty">No cars match your current search/filter.</p> : null}
     </div>

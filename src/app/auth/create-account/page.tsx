@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signUpWithEmail } from "@/app/auth/actions";
+import SiteHeader from "@/app/components/SiteHeader";
+import RevealOnScroll from "@/app/components/RevealOnScroll";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -29,38 +31,44 @@ export default async function CreateAccountPage({
   }
 
   return (
+    <>
+      <SiteHeader />
     <main className="auth-main">
       <section className="auth-shell">
-        <header className="auth-header">
-          <h1>Create account</h1>
-          <p>Set up your account to start managing bookings.</p>
-        </header>
+        <RevealOnScroll className="auth-shell-reveal">
+          <header className="auth-header">
+            <h1 className="page-intro-fade">Create account</h1>
+            <p>Set up your account to start managing bookings.</p>
+          </header>
 
-        {message ? <p className="auth-message">{message}</p> : null}
+          {message ? <p className="auth-message">{message}</p> : null}
 
-        <form action={signUpWithEmail} className="auth-form">
-          <input type="hidden" name="returnPath" value="/auth/create-account" />
-          <h2>Create account</h2>
-          <label>
-            Email
-            <input type="email" name="email" required />
-          </label>
-          <label>
-            Password
-            <input type="password" name="password" required minLength={6} />
-          </label>
-          <button type="submit" className="auth-primary">
-            Create account
-          </button>
-        </form>
+          <form action={signUpWithEmail} className="auth-form">
+            <input type="hidden" name="returnPath" value="/auth/create-account" />
+            <h2>Create account</h2>
+            <label>
+              Email
+              <input type="email" name="email" required />
+            </label>
+            <label>
+              Password
+              <input type="password" name="password" required minLength={6} />
+            </label>
+            <button type="submit" className="auth-primary">
+              Create account
+            </button>
+          </form>
 
-        <p className="auth-back-link">
-          <Link href="/">← Back to home</Link>
-        </p>
-        <p className="auth-back-link">
-          Already have an account? <Link href={`/auth/sign-in?returnTo=${encodeURIComponent(safeReturnTo)}`}>→ Sign in</Link>
-        </p>
+          <p className="auth-back-link">
+            <Link href="/">← Back to home</Link>
+          </p>
+          <p className="auth-back-link">
+            Already have an account?{" "}
+            <Link href={`/auth/sign-in?returnTo=${encodeURIComponent(safeReturnTo)}`}>→ Sign in</Link>
+          </p>
+        </RevealOnScroll>
       </section>
     </main>
+    </>
   );
 }

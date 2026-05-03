@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import RevealOnScroll from "@/app/components/RevealOnScroll";
 import { initCheckoutComponentsSessionAction } from "@/app/checkout/[bookingId]/actions";
 import { XenditComponents } from "xendit-components-web";
 
@@ -16,7 +17,7 @@ export default function CheckoutClient(props: {
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
   const [componentsSdkKey, setComponentsSdkKey] = useState<string | null>(null);
-  const componentsRef = useRef<any>(null);
+  const componentsRef = useRef<{ submit?: () => void } | null>(null);
   const [isReadyToSubmit, setIsReadyToSubmit] = useState(false);
   /** null until we read window (avoids wrong loading/HTTPS message on first paint). */
   const [isHttps, setIsHttps] = useState<boolean | null>(null);
@@ -31,7 +32,9 @@ export default function CheckoutClient(props: {
 
   useEffect(() => {
     const https = window.location.protocol === "https:";
-    setIsHttps(https);
+    queueMicrotask(() => {
+      setIsHttps(https);
+    });
     if (!https) {
       return;
     }
@@ -78,9 +81,14 @@ export default function CheckoutClient(props: {
         const components = new XenditComponents({ componentsSdkKey });
         componentsRef.current = components;
 
-        components.addEventListener("fatal-error", (event: any) => {
-          const msg = event?.detail?.message || event?.message || "A payment error occurred. Please try again.";
-          if (mounted) setMessage(String(msg));
+        components.addEventListener("fatal-error", (event: Event) => {
+          const custom = event as CustomEvent<{ message?: string }>;
+          const fromDetail = custom.detail?.message;
+          const msg =
+            typeof fromDetail === "string" && fromDetail.trim()
+              ? fromDetail
+              : "A payment error occurred. Please try again.";
+          if (mounted) setMessage(msg);
         });
 
         components.addEventListener("init", () => {
@@ -119,28 +127,31 @@ export default function CheckoutClient(props: {
 
   return (
     <section className="auth-shell">
-      <header className="auth-header">
-        <h1>Checkout</h1>
-        <p>Complete your payment without leaving JP Car Rental.</p>
-      </header>
+      <RevealOnScroll className="auth-shell-reveal">
+        <header className="auth-header">
+          <h1 className="page-intro-fade">Checkout</h1>
+          <p>Complete your payment without leaving JP Car Rental.</p>
+        </header>
 
-      <section className="auth-message" aria-label="Booking summary">
-        <p>
-          <strong>Car:</strong> {props.carName}
-        </p>
-        <p>
-          <strong>Rental dates:</strong> {props.startDate} → {props.endDate}
-        </p>
-        <p>
-          <strong>Total:</strong> {formattedTotal}
-        </p>
-        <p>
-          <strong>Customer:</strong> {props.customerName}
-          {props.customerEmail ? ` (${props.customerEmail})` : ""}
-        </p>
-      </section>
+        <section className="auth-message" aria-label="Booking summary">
+          <p>
+            <strong>Car:</strong> {props.carName}
+          </p>
+          <p>
+            <strong>Rental dates:</strong> {props.startDate} → {props.endDate}
+          </p>
+          <p>
+            <strong>Total:</strong> {formattedTotal}
+          </p>
+          <p>
+            <strong>Customer:</strong> {props.customerName}
+            {props.customerEmail ? ` (${props.customerEmail})` : ""}
+          </p>
+        </section>
+      </RevealOnScroll>
 
-      <div className="auth-form">
+      <RevealOnScroll className="auth-shell-reveal">
+        <div className="auth-form">
         <h2>Payment</h2>
 
         {isHttps === false ? (
@@ -179,7 +190,8 @@ export default function CheckoutClient(props: {
         <p className="admin-empty">
           Note: some wallets may open an approval step in-app. After payment, we’ll email your confirmation receipt.
         </p>
-      </div>
+        </div>
+      </RevealOnScroll>
     </section>
   );
 }

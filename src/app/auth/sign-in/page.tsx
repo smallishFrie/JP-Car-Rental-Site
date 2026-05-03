@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signInWithEmail } from "@/app/auth/actions";
+import SiteHeader from "@/app/components/SiteHeader";
+import RevealOnScroll from "@/app/components/RevealOnScroll";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -27,39 +29,45 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   }
 
   return (
+    <>
+      <SiteHeader />
     <main className="auth-main">
       <section className="auth-shell">
-        <header className="auth-header">
-          <h1>Welcome back</h1>
-          <p>Sign in to manage your bookings.</p>
-        </header>
+        <RevealOnScroll className="auth-shell-reveal">
+          <header className="auth-header">
+            <h1 className="page-intro-fade">Welcome back</h1>
+            <p>Sign in to manage your bookings.</p>
+          </header>
 
-        {message ? <p className="auth-message">{message}</p> : null}
+          {message ? <p className="auth-message">{message}</p> : null}
 
-        <form action={signInWithEmail} className="auth-form">
-          <input type="hidden" name="returnPath" value="/auth/sign-in" />
-          <input type="hidden" name="redirectTo" value={safeReturnTo} />
-          <h2>Sign in</h2>
-          <label>
-            Email
-            <input type="email" name="email" required />
-          </label>
-          <label>
-            Password
-            <input type="password" name="password" required minLength={6} />
-          </label>
-          <button type="submit" className="auth-primary">
-            Sign in
-          </button>
-        </form>
+          <form action={signInWithEmail} className="auth-form">
+            <input type="hidden" name="returnPath" value="/auth/sign-in" />
+            <input type="hidden" name="redirectTo" value={safeReturnTo} />
+            <h2>Sign in</h2>
+            <label>
+              Email
+              <input type="email" name="email" required />
+            </label>
+            <label>
+              Password
+              <input type="password" name="password" required minLength={6} />
+            </label>
+            <button type="submit" className="auth-primary">
+              Sign in
+            </button>
+          </form>
 
-        <p className="auth-back-link">
-          <Link href="/">← Back to home</Link>
-        </p>
-        <p className="auth-back-link">
-          New here? <Link href={`/auth/create-account?returnTo=${encodeURIComponent(safeReturnTo)}`}>→ Create an account</Link>
-        </p>
+          <p className="auth-back-link">
+            <Link href="/">← Back to home</Link>
+          </p>
+          <p className="auth-back-link">
+            New here?{" "}
+            <Link href={`/auth/create-account?returnTo=${encodeURIComponent(safeReturnTo)}`}>→ Create an account</Link>
+          </p>
+        </RevealOnScroll>
       </section>
     </main>
+    </>
   );
 }

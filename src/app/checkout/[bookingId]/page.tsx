@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import CheckoutClient from "@/app/checkout/[bookingId]/CheckoutClient";
+import SiteHeader from "@/app/components/SiteHeader";
 import { getCarById } from "@/lib/cars";
+import { createClient } from "@/lib/supabase/server";
 
 type CheckoutPageProps = {
   params: Promise<{ bookingId: string }>;
@@ -30,6 +31,8 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
   const car = await getCarById(String((booking as any).car_id));
 
   return (
+    <>
+      <SiteHeader />
     <main className="auth-main">
       <CheckoutClient
         bookingId={id}
@@ -41,6 +44,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
         customerEmail={String((booking as any).customer_email ?? "") || null}
       />
     </main>
+    </>
   );
 }
 

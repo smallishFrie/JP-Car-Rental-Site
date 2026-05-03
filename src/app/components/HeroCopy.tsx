@@ -18,12 +18,21 @@ export default function HeroCopy() {
   return (
     <div className="hero-copy">
       <div className="hero-copy-text">
+        <span className="hero-eyebrow">Drive with confidence</span>
         <h2 className="hero-title">JP Car Rental</h2>
-        <p>Fast booking. Clean vehicles. Easy travel.</p>
+        <div className="hero-sublines">
+          <p className="hero-subline">Clean cars. Clear rates. Booking that takes minutes.</p>
+          <p className="hero-subline">Pick the dates, choose a location, and you are on your way.</p>
+        </div>
       </div>
-      <Link href="#cars" className="learn-more-box" onClick={scrollToCars}>
-        Book Now
-      </Link>
+      <div className="hero-ctas">
+        <Link href="#cars" className="learn-more-box" onClick={scrollToCars}>
+          Book now
+        </Link>
+        <Link href="/auth/sign-in" className="hero-cta-secondary">
+          Sign in
+        </Link>
+      </div>
     </div>
   );
 }

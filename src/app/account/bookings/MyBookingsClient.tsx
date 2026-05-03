@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import RevealOnScroll from "@/app/components/RevealOnScroll";
 import type { BookingRecord } from "@/lib/bookings";
 import { cancelPendingBookingAction, requestCancellationAction } from "@/app/account/bookings/actions";
 
@@ -64,18 +65,21 @@ export default function MyBookingsClient({ initialBookings }: { initialBookings:
   }
 
   return (
-    <section className="admin-card">
-      <h2>My Bookings</h2>
-      <p className="admin-empty" style={{ marginBottom: 16 }}>
-        <strong>Cancellations and refunds:</strong> Cancellations at least 48 hours before pickup may be eligible for a
-        full refund; within 48 hours a fee may apply. See our{" "}
-        <a href="/terms-of-service#cancellation" className="auth-back-link">
-          terms (section 6)
-        </a>{" "}
-        for details.
-      </p>
-      {!bookings.length ? <p className="admin-empty">No bookings yet.</p> : null}
-      <ul className="admin-list">
+    <section className="admin-card admin-card-bookings">
+      <RevealOnScroll className="auth-shell-reveal">
+        <h2 className="page-intro-fade">My Bookings</h2>
+        <p className="admin-empty" style={{ marginBottom: 16 }}>
+          <strong>Cancellations and refunds:</strong> Cancellations at least 48 hours before pickup may be eligible for a
+          full refund; within 48 hours a fee may apply. See our{" "}
+          <a href="/terms-of-service#cancellation" className="auth-back-link">
+            terms (section 6)
+          </a>{" "}
+          for details.
+        </p>
+        {!bookings.length ? <p className="admin-empty">No bookings yet.</p> : null}
+      </RevealOnScroll>
+      <RevealOnScroll className="auth-shell-reveal">
+        <ul className="admin-list">
         {bookings.map((booking) => {
           const actionKind = getActionKind(booking);
           return (
@@ -118,8 +122,9 @@ export default function MyBookingsClient({ initialBookings }: { initialBookings:
             </li>
           );
         })}
-      </ul>
-      {message ? <p className="booking-feedback">{message}</p> : null}
+        </ul>
+        {message ? <p className="booking-feedback">{message}</p> : null}
+      </RevealOnScroll>
     </section>
   );
 }
