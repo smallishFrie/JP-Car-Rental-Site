@@ -62,6 +62,10 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
     [cars, selectedCarId],
   );
 
+  /** Bookings that are not completed/canceled (still tied to live inventory). */
+  const blockingBookingCount = selectedCar?.booking_count ?? 0;
+  const canHardDelete = blockingBookingCount === 0;
+
   const isEditMode = Boolean(form.id);
 
   function chooseCar(carId: string) {
@@ -299,9 +303,17 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
             {isPending ? "Saving..." : isEditMode ? "Save changes" : "Create car"}
           </button>
           {isEditMode ? (
-            isConfirmingDelete ? (
+            !canHardDelete ? (
+              <div className="admin-delete-blocked" role="note">
+                <p>
+                  This car has {blockingBookingCount} open reservation
+                  {blockingBookingCount === 1 ? "" : "s"}, so it cannot be removed from the database yet.
+                </p>
+              </div>
+            ) : isConfirmingDelete ? (
               <div className="admin-delete-confirm">
                 <p>Delete this car permanently?</p>
+                <p className="admin-delete-confirm-detail">This cannot be undone. Images in storage will be removed.</p>
                 <div>
                   <button type="button" className="admin-danger-button" onClick={handleDelete} disabled={isPending}>
                     {isPending ? "Working..." : "Confirm delete"}

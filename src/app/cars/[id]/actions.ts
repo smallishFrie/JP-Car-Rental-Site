@@ -105,6 +105,7 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
     const booking = await createPendingBooking({
       userId: user.id,
       carId,
+      carDisplayName: car.name,
       startDate,
       endDate,
       totalPrice,

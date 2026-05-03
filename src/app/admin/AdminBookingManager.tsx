@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { BookingRecord, RefundStatus } from "@/lib/bookings";
+import type { BookingRecord, RefundStatus } from "@/lib/booking-model";
+import { formatBookingVehicleName } from "@/lib/booking-model";
 import { cleanupExpiredSessionsAction, confirmCancellationAction } from "@/app/admin/actions";
 
 type BookingWithCar = BookingRecord & { car: { id: string; name: string; category: string } | null };
@@ -281,7 +282,7 @@ export default function AdminBookingManager({ initialBookings }: { initialBookin
                     <strong>Email:</strong> {booking.customer_email || "N/A"}
                   </p>
                   <p>
-                    <strong>Car:</strong> {booking.car?.name ?? booking.car_id}
+                    <strong>Car:</strong> {formatBookingVehicleName(booking)}
                   </p>
                   <p>
                     <strong>Schedule:</strong> {toDate(booking.start_date)} - {toDate(booking.end_date)}

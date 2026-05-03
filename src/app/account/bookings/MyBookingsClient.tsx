@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import RevealOnScroll from "@/app/components/RevealOnScroll";
-import type { BookingRecord } from "@/lib/bookings";
+import type { BookingRecord } from "@/lib/booking-model";
+import { formatBookingVehicleName } from "@/lib/booking-model";
 import { cancelPendingBookingAction, requestCancellationAction } from "@/app/account/bookings/actions";
 
 type BookingWithCar = BookingRecord & { car: { id: string; name: string; category: string } | null };
@@ -84,7 +85,7 @@ export default function MyBookingsClient({ initialBookings }: { initialBookings:
           const actionKind = getActionKind(booking);
           return (
             <li key={booking.id} className="booking-user-item">
-              <strong>{booking.car?.name ?? booking.car_id}</strong>
+              <strong>{formatBookingVehicleName(booking)}</strong>
               <span>
                 {toDate(booking.start_date)} - {toDate(booking.end_date)}
               </span>

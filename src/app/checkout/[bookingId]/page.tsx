@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import CheckoutClient from "@/app/checkout/[bookingId]/CheckoutClient";
 import SiteHeader from "@/app/components/SiteHeader";
 import { getCarById } from "@/lib/cars";
+import type { BookingRecord } from "@/lib/booking-model";
 import { createClient } from "@/lib/supabase/server";
 
 type CheckoutPageProps = {
@@ -28,7 +29,10 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
     notFound();
   }
 
-  const car = await getCarById(String((booking as any).car_id));
+  const row = booking as BookingRecord;
+  const carId = row.car_id;
+  const car = carId ? await getCarById(carId) : null;
+  const carName = car?.name ?? row.car_display_name?.trim() ?? "Vehicle";
 
   return (
     <>
@@ -36,12 +40,12 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
     <main className="auth-main">
       <CheckoutClient
         bookingId={id}
-        carName={car?.name ?? String((booking as any).car_id)}
-        startDate={String((booking as any).start_date)}
-        endDate={String((booking as any).end_date)}
-        totalPrice={Number((booking as any).total_price)}
-        customerName={String((booking as any).customer_name)}
-        customerEmail={String((booking as any).customer_email ?? "") || null}
+        carName={carName}
+        startDate={String(row.start_date)}
+        endDate={String(row.end_date)}
+        totalPrice={Number(row.total_price)}
+        customerName={String(row.customer_name)}
+        customerEmail={String(row.customer_email ?? "") || null}
       />
     </main>
     </>

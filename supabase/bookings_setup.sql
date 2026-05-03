@@ -4,7 +4,8 @@
 create table if not exists public.bookings (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete restrict,
-  car_id text not null references public.cars(id) on delete restrict,
+  car_id text references public.cars(id) on delete set null,
+  car_display_name text not null default '',
   start_date date not null,
   end_date date not null,
   total_price numeric(10, 2) not null check (total_price >= 0),

@@ -3,39 +3,11 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createXenditRefund } from "@/lib/xendit";
+import type { BookingRecord, BookingStatus, RefundStatus } from "./booking-model";
+import { computeDerivedStatus } from "./booking-model";
 
-export const bookingStatuses =["pending", "upcoming", "active", "completed", "cancel_requested", "canceled"] as const;
-export type BookingStatus = (typeof bookingStatuses)[number];
-
-export const refundStatuses = ["none", "pending", "succeeded", "failed", "not_applicable"] as const;
-export type RefundStatus = (typeof refundStatuses)[number];
-
-export type BookingRecord = {
-  id: string;
-  user_id: string;
-  car_id: string;
-  start_date: string;
-  end_date: string;
-  total_price: number;
-  status: BookingStatus;
-  customer_name: string;
-  customer_phone: string;
-  customer_email: string | null;
-  pickup_location: string;
-  driver_license_number: string | null;
-  driver_notes: string | null;
-  payment_provider: string;
-  payment_reference: string | null;
-  payment_status: string;
-  payment_metadata: Record<string, unknown> | null;
-  refund_status?: RefundStatus;
-  refund_amount_php?: number | null;
-  cancellation_reason?: string | null;
-  canceled_at: string | null;
-  paid_at: string | null;
-  created_at: string;
-  updated_at: string;
-};
+export type { BookingRecord, BookingStatus, RefundStatus } from "./booking-model";
+export { computeDerivedStatus } from "./booking-model";
 
 function toDateOnly(value: string) {
   const parsed = new Date(value);
@@ -75,35 +47,6 @@ export function resolveXenditRefundReference(booking: BookingRecord): {
   return { paymentReference: ref, paymentReferenceKind: "invoice" };
 }
 
-export function computeDerivedStatus(input: {
-  currentStatus: BookingStatus;
-  paymentStatus: string;
-  startDate: string;
-  endDate: string;
-  now?: Date;
-}): BookingStatus {
-  if (input.currentStatus === "canceled" || input.currentStatus === "cancel_requested") {
-    return input.currentStatus;
-  }
-
-  if (input.paymentStatus !== "paid") {
-    return "pending";
-  }
-
-  const now = input.now ?? new Date();
-  const today = now.toISOString().slice(0, 10);
-  const start = toDateOnly(input.startDate);
-  const end = toDateOnly(input.endDate);
-
-  if (today < start) {
-    return "upcoming";
-  }
-  if (today > end) {
-    return "completed";
-  }
-  return "active";
-}
-
 export async function checkCarAvailability(carId: string, startDate: string, endDate: string, excludeBookingId?: string) {
   const supabase = await createClient();
 
@@ -124,6 +67,7 @@ export async function checkCarAvailability(carId: string, startDate: string, end
 export async function createPendingBooking(input: {
   userId: string;
   carId: string;
+  carDisplayName: string;
   startDate: string;
   endDate: string;
   totalPrice: number;
@@ -138,6 +82,7 @@ export async function createPendingBooking(input: {
   const payload = {
     user_id: input.userId,
     car_id: input.carId,
+    car_display_name: input.carDisplayName.trim() || "Vehicle",
     start_date: toDateOnly(input.startDate),
     end_date: toDateOnly(input.endDate),
     total_price: input.totalPrice,

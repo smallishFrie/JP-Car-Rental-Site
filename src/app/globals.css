@@ -64,16 +64,6 @@
     border-color: color-mix(in srgb, #fb7185 45%, var(--border-strong));
   }
 
-  .admin-delete-confirm {
-    border-color: color-mix(in srgb, #f87171 42%, var(--border-subtle));
-    background: color-mix(in srgb, #7f1d1d 35%, var(--bg-muted));
-    color: #fecaca;
-  }
-
-  .admin-delete-confirm p {
-    color: #fecdd3;
-  }
-
   .admin-refund-amount-label {
     color: #fda4af;
   }
@@ -1857,23 +1847,49 @@ a.car-card:focus-visible {
 }
 
 .admin-delete-confirm {
-  border: 1px solid #fecaca;
-  background: #fff1f2;
-  color: #881337;
-  padding: 0.75rem;
+  border: 1px solid color-mix(in srgb, #f87171 55%, var(--border-strong));
+  background: var(--bg-elevated);
+  color: var(--text);
+  padding: 0.85rem 0.95rem;
+  border-radius: var(--radius-sm);
   display: grid;
-  gap: 0.6rem;
+  gap: 0.45rem;
+  box-shadow: var(--shadow-sm);
 }
 
 .admin-delete-confirm p {
+  margin: 0;
   font-size: 0.88rem;
   font-weight: 600;
+}
+
+.admin-delete-confirm-detail {
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+  color: var(--text-muted) !important;
 }
 
 .admin-delete-confirm > div {
   display: flex;
   gap: 0.55rem;
   flex-wrap: wrap;
+  margin-top: 0.2rem;
+}
+
+.admin-delete-blocked {
+  border: 1px solid var(--border-strong);
+  background: var(--bg-muted);
+  color: var(--text);
+  padding: 0.75rem 0.85rem;
+  border-radius: var(--radius-sm);
+  display: grid;
+  gap: 0.45rem;
+}
+
+.admin-delete-blocked p {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
 }
 
 .admin-refund-amount-label {

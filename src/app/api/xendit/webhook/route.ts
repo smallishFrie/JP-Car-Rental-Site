@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendBookingEmail } from "@/lib/notifications/email";
 import { sendBookingSms } from "@/lib/notifications/sms";
+import type { BookingRecord } from "@/lib/booking-model";
+import { formatBookingVehicleName } from "@/lib/booking-model";
 import { setBookingPaid } from "@/lib/bookings";
 import { verifyXenditWebhookToken } from "@/lib/xendit";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -17,6 +19,14 @@ type XenditPaymentCaptureWebhookPayload = {
     status?: string;
   };
 };
+
+async function carLabelForBookingReceipt(booking: BookingRecord, supabase: ReturnType<typeof createAdminClient>) {
+  const { data: car } =
+    booking.car_id != null
+      ? await supabase.from("cars").select("name").eq("id", booking.car_id).maybeSingle()
+      : { data: null };
+  return formatBookingVehicleName({ ...booking, car: car as { name: string } | null });
+}
 
 export async function POST(request: NextRequest) {
   const callbackToken = request.headers.get("x-callback-token");
@@ -87,8 +97,7 @@ export async function POST(request: NextRequest) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
     const myBookingsUrl = `${siteUrl}/account/bookings`;
     const supabase = createAdminClient();
-    const { data: car } = await supabase.from("cars").select("name").eq("id", booking.car_id).maybeSingle();
-    const carName = String((car as any)?.name ?? booking.car_id);
+    const carName = await carLabelForBookingReceipt(booking as BookingRecord, supabase);
     const formattedTotal = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(
       Number(booking.total_price),
     );
@@ -157,8 +166,7 @@ export async function POST(request: NextRequest) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
     const myBookingsUrl = `${siteUrl}/account/bookings`;
     const supabase = createAdminClient();
-    const { data: car } = await supabase.from("cars").select("name").eq("id", booking.car_id).maybeSingle();
-    const carName = String((car as any)?.name ?? booking.car_id);
+    const carName = await carLabelForBookingReceipt(booking as BookingRecord, supabase);
     const formattedTotal = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(
       Number(booking.total_price),
     );
@@ -231,8 +239,7 @@ export async function POST(request: NextRequest) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const myBookingsUrl = `${siteUrl}/account/bookings`;
   const supabase = createAdminClient();
-  const { data: car } = await supabase.from("cars").select("name").eq("id", booking.car_id).maybeSingle();
-  const carName = String((car as any)?.name ?? booking.car_id);
+  const carName = await carLabelForBookingReceipt(booking as BookingRecord, supabase);
   const formattedTotal = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(
     Number(booking.total_price),
   );

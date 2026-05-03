@@ -2,6 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { testCars } from "@/app/data/cars";
+import { BOOKING_STATUSES_BLOCKING_CAR_DELETE } from "@/lib/booking-model";
 import sharp from "sharp";
 
 const CAR_IMAGES_BUCKET = "car-images";
@@ -22,6 +23,8 @@ export type CarRecord = {
   gallery_image_urls: string[];
   is_active: boolean;
   passenger_capacity?: number | null;
+  /** Admin only: bookings whose status still requires the car row (not completed/canceled). */
+  booking_count?: number;
 };
 
 export type Car = {
@@ -241,8 +244,25 @@ function storagePathFromPublicUrl(url: string): string | null {
   }
 }
 
+const BOOKING_BLOCK_DELETE_MESSAGE =
+  "This car still has pending, upcoming, active, or cancellation-requested bookings and cannot be permanently deleted. Finish or cancel those first, or uncheck “Available for booking” to hide the car from the site.";
+
 export async function deleteCarById(id: string) {
   const supabase = await createClient();
+
+  const { count: blockingBookingCount, error: countError } = await supabase
+    .from("bookings")
+    .select("id", { count: "exact", head: true })
+    .eq("car_id", id)
+    .in("status", [...BOOKING_STATUSES_BLOCKING_CAR_DELETE]);
+
+  if (countError) {
+    throw new Error(countError.message);
+  }
+
+  if ((blockingBookingCount ?? 0) > 0) {
+    throw new Error(BOOKING_BLOCK_DELETE_MESSAGE);
+  }
 
   const { data: car, error: fetchError } = await supabase
     .from("cars")
@@ -256,6 +276,12 @@ export async function deleteCarById(id: string) {
 
   const { error: deleteError } = await supabase.from("cars").delete().eq("id", id);
   if (deleteError) {
+    const raw = deleteError.message ?? "";
+    if (raw.includes("bookings_car_id_fkey") || raw.includes("foreign key")) {
+      throw new Error(
+        "The database still links every booking row to this car. Run supabase/bookings_car_delete_set_null.sql in the Supabase SQL editor (one-time), then try again—after that, only pending/upcoming/active/cancellation-requested bookings block delete.",
+      );
+    }
     throw new Error(deleteError.message);
   }
 

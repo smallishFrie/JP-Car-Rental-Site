@@ -32,6 +32,7 @@ begin
   insert into public.bookings (
     user_id, 
     car_id, 
+    car_display_name,
     start_date, 
     end_date, 
     total_price, 
@@ -48,6 +49,7 @@ begin
   values (
     p_user_id, 
     p_car_id, 
+    coalesce((select c.name from public.cars c where c.id = p_car_id limit 1), ''),
     p_start_date, 
     p_end_date, 
     p_total_price, 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import AdminCarManager from "@/app/admin/AdminCarManager";
 import AdminBookingManager from "@/app/admin/AdminBookingManager";
+import { bookingStatusBlocksCarDelete } from "@/lib/booking-model";
 import { listBookingsForAdmin } from "@/lib/bookings";
 import { listCarsForAdmin, requireAdmin } from "@/lib/cars";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
@@ -21,8 +22,8 @@ export default async function AdminPage() {
     redirect("/?message=Unauthorized");
   }
 
-  let cars = [];
-  let bookings = [];
+  let cars: Awaited<ReturnType<typeof listCarsForAdmin>> = [];
+  let bookings: Awaited<ReturnType<typeof listBookingsForAdmin>> = [];
   try {
     cars = await listCarsForAdmin();
     bookings = await listBookingsForAdmin();
@@ -34,11 +35,25 @@ export default async function AdminPage() {
     throw error;
   }
 
+  const bookingCountByCarId = bookings.reduce<Record<string, number>>((acc, booking) => {
+    const carKey = booking.car_id;
+    if (!carKey || !bookingStatusBlocksCarDelete(booking.status)) {
+      return acc;
+    }
+    acc[carKey] = (acc[carKey] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const carsWithBookingCounts = cars.map((car) => ({
+    ...car,
+    booking_count: bookingCountByCarId[car.id] ?? 0,
+  }));
+
   return (
     <main className="auth-main auth-main--no-site-header">
       <section className="auth-shell">
         <h1 className="admin-page-heading">Admin panel</h1>
-        <AdminCarManager initialCars={cars} />
+        <AdminCarManager initialCars={carsWithBookingCounts} />
         <AdminBookingManager initialBookings={bookings} />
         <p className="auth-back-link">
           <Link href="/">← Back to home</Link>
