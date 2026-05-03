@@ -97,31 +97,31 @@ export default function CustomSelect({
           ▾
         </span>
       </button>
-      {open ? (
-        <div
-          className="custom-select-dropdown"
-          id={listId}
-          role="listbox"
-          aria-label={optionsAriaLabel}
-        >
-          {options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              role="option"
-              aria-selected={option.value === value}
-              className={`custom-select-option${option.value === value ? " custom-select-option-selected" : ""}`}
-              onClick={() => {
-                onChange(option.value);
-                setOpen(false);
-                triggerRef.current?.focus();
-              }}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      ) : null}
+      <div
+        className={`custom-select-dropdown${open ? " custom-select-dropdown--open" : ""}`}
+        id={listId}
+        role="listbox"
+        aria-label={optionsAriaLabel}
+        aria-hidden={!open}
+        inert={!open ? true : undefined}
+      >
+        {options.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            role="option"
+            aria-selected={option.value === value}
+            className={`custom-select-option${option.value === value ? " custom-select-option-selected" : ""}`}
+            onClick={() => {
+              onChange(option.value);
+              setOpen(false);
+              triggerRef.current?.focus();
+            }}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

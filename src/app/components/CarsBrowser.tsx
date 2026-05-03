@@ -4,19 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Car } from "@/lib/cars";
+import { categoryTokensWithoutTransmission, parseCategoryTokens } from "@/lib/carDisplay";
+import CarSpecsRow from "@/app/components/CarSpecsRow";
 import CustomSelect from "@/app/components/CustomSelect";
 import RevealOnScroll from "@/app/components/RevealOnScroll";
 
 type CarsBrowserProps = {
   cars: Car[];
 };
-
-function parseCategories(categoryText: string) {
-  return categoryText
-    .split(",")
-    .map((category) => category.trim())
-    .filter(Boolean);
-}
 
 const dayRateFormatter = new Intl.NumberFormat("en-PH", {
   style: "currency",
@@ -33,14 +28,16 @@ export default function CarsBrowser({ cars }: CarsBrowserProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
 
   const categories = useMemo(() => {
-    return Array.from(new Set(cars.flatMap((car) => parseCategories(car.category)))).sort((a, b) => a.localeCompare(b));
+    return Array.from(new Set(cars.flatMap((car) => parseCategoryTokens(car.category)))).sort((a, b) =>
+      a.localeCompare(b),
+    );
   }, [cars]);
 
   const filteredCars = useMemo(() => {
     const query = search.trim().toLowerCase();
     return cars
       .filter((car) => {
-        const carCategories = parseCategories(car.category);
+        const carCategories = parseCategoryTokens(car.category);
         const categoryMatch = selectedCategory === "all" || carCategories.includes(selectedCategory);
         if (!categoryMatch) {
           return false;
@@ -55,8 +52,8 @@ export default function CarsBrowser({ cars }: CarsBrowserProps) {
         );
       })
       .sort((a, b) => {
-        const firstCategoryA = parseCategories(a.category)[0] ?? "";
-        const firstCategoryB = parseCategories(b.category)[0] ?? "";
+        const firstCategoryA = categoryTokensWithoutTransmission(parseCategoryTokens(a.category))[0] ?? "";
+        const firstCategoryB = categoryTokensWithoutTransmission(parseCategoryTokens(b.category))[0] ?? "";
         const categoryCompare = firstCategoryA.localeCompare(firstCategoryB);
         if (categoryCompare !== 0) {
           return categoryCompare;
@@ -115,7 +112,7 @@ export default function CarsBrowser({ cars }: CarsBrowserProps) {
             <div className="car-card-body">
               <div className="car-card-top">
                 <div className="car-card-categories" aria-label="Car categories">
-                  {parseCategories(car.category).map((category) => (
+                  {categoryTokensWithoutTransmission(parseCategoryTokens(car.category)).map((category) => (
                     <span key={`${car.id}-${category}`} className="car-card-category-pill">
                       {category}
                     </span>
@@ -126,6 +123,7 @@ export default function CarsBrowser({ cars }: CarsBrowserProps) {
                   <span className="car-card-price-unit">per day</span>
                 </div>
               </div>
+              <CarSpecsRow category={car.category} passengerCapacity={car.passengerCapacity} className="car-card-specs" />
               <h4>{car.name}</h4>
               <p>{car.tagline}</p>
               <Link href={`/cars/${car.id}`} className="car-card-link">

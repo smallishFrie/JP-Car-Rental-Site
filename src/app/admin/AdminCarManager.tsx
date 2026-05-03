@@ -15,6 +15,7 @@ type FormState = {
   tagline: string;
   description: string;
   dayRate: string;
+  passengerCapacity: string;
   isActive: boolean;
   existingCardImage: string;
   existingGalleryImages: string[];
@@ -27,6 +28,7 @@ const emptyForm: FormState = {
   tagline: "",
   description: "",
   dayRate: "",
+  passengerCapacity: "",
   isActive: true,
   existingCardImage: "",
   existingGalleryImages: [],
@@ -40,6 +42,7 @@ function mapCarToForm(car: CarRecord): FormState {
     tagline: car.tagline,
     description: car.description,
     dayRate: String(car.day_rate),
+    passengerCapacity: car.passenger_capacity != null ? String(car.passenger_capacity) : "",
     isActive: car.is_active,
     existingCardImage: car.card_image_url,
     existingGalleryImages: car.gallery_image_urls ?? [],
@@ -96,6 +99,10 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
                   tagline: formSnapshot.tagline.trim(),
                   description: formSnapshot.description.trim(),
                   day_rate: Number(formSnapshot.dayRate),
+                  passenger_capacity:
+                    formSnapshot.passengerCapacity.trim() === ""
+                      ? null
+                      : Number(formSnapshot.passengerCapacity),
                   is_active: formSnapshot.isActive,
                 }
               : car,
@@ -192,6 +199,19 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
               value={form.category}
               onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
               required
+            />
+          </label>
+
+          <label>
+            Passenger capacity
+            <input
+              name="passengerCapacity"
+              type="number"
+              min={1}
+              max={55}
+              step={1}
+              value={form.passengerCapacity}
+              onChange={(event) => setForm((current) => ({ ...current, passengerCapacity: event.target.value }))}
             />
           </label>
 

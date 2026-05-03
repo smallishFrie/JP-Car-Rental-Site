@@ -17,6 +17,20 @@ function parseNumber(value: FormDataEntryValue | null, fieldName: string) {
   return parsed;
 }
 
+function parseOptionalPassengerCapacity(value: FormDataEntryValue | null, fieldName: string) {
+  const raw = String(value ?? "").trim();
+  if (raw === "") {
+    return null;
+  }
+
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 55) {
+    throw new Error(`${fieldName} must be a whole number from 1 to 55, or left blank.`);
+  }
+
+  return parsed;
+}
+
 function asFile(value: FormDataEntryValue | null) {
   return value instanceof File && value.size > 0 ? value : null;
 }
@@ -30,6 +44,7 @@ export async function saveCarAction(formData: FormData) {
   const tagline = String(formData.get("tagline") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const dayRate = parseNumber(formData.get("dayRate"), "Day rate");
+  const passengerCapacity = parseOptionalPassengerCapacity(formData.get("passengerCapacity"), "Passenger capacity");
   const isActiveValues = formData.getAll("isActive").map((value) => String(value).trim().toLowerCase());
   const isActive = isActiveValues.includes("true") || isActiveValues.includes("on");
   const existingCardImage = String(formData.get("existingCardImage") ?? "").trim();
@@ -70,6 +85,7 @@ export async function saveCarAction(formData: FormData) {
     cardImageUrl,
     galleryImageUrls,
     isActive,
+    passengerCapacity,
   });
 
   revalidatePath("/");

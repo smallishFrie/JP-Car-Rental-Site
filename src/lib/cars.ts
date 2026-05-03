@@ -21,6 +21,7 @@ export type CarRecord = {
   card_image_url: string;
   gallery_image_urls: string[];
   is_active: boolean;
+  passenger_capacity?: number | null;
 };
 
 export type Car = {
@@ -33,6 +34,7 @@ export type Car = {
   cardImage: string;
   images: string[];
   locations: CarOption[];
+  passengerCapacity: number | null;
 };
 
 export const defaultLocations: CarOption[] = [
@@ -42,6 +44,9 @@ export const defaultLocations: CarOption[] = [
 ];
 
 function toAppCar(record: CarRecord): Car {
+  const rawPassenger = record.passenger_capacity;
+  const passengerCapacity = rawPassenger == null ? null : Number(rawPassenger);
+
   return {
     id: record.id,
     name: record.name,
@@ -52,6 +57,10 @@ function toAppCar(record: CarRecord): Car {
     cardImage: record.card_image_url,
     images: record.gallery_image_urls?.length ? record.gallery_image_urls : [record.card_image_url],
     locations: defaultLocations,
+    passengerCapacity:
+      passengerCapacity != null && Number.isFinite(passengerCapacity) && Number.isInteger(passengerCapacity)
+        ? passengerCapacity
+        : null,
   };
 }
 
@@ -66,6 +75,7 @@ function fallbackCars(): Car[] {
     cardImage: car.cardImage,
     images: car.images,
     locations: car.locations,
+    passengerCapacity: car.passengerCapacity ?? null,
   }));
 }
 
@@ -157,6 +167,7 @@ export async function upsertCar(input: {
   cardImageUrl: string;
   galleryImageUrls: string[];
   isActive?: boolean;
+  passengerCapacity: number | null;
 }): Promise<string> {
   const supabase = await createClient();
   const id = input.id?.trim() || slugifyName(input.name);
@@ -171,6 +182,7 @@ export async function upsertCar(input: {
     card_image_url: input.cardImageUrl,
     gallery_image_urls: input.galleryImageUrls,
     is_active: input.isActive ?? true,
+    passenger_capacity: input.passengerCapacity,
   };
 
   const { error } = await supabase.from("cars").upsert(payload, { onConflict: "id" });

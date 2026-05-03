@@ -1,3 +1,6 @@
+"use client";
+
+import { useId, useState } from "react";
 import RevealOnScroll from "./RevealOnScroll";
 
 const FAQ_ITEMS: { question: string; answer: string }[] = [
@@ -34,6 +37,21 @@ const FAQ_ITEMS: { question: string; answer: string }[] = [
 ];
 
 export default function HomeFaq() {
+  const baseId = useId();
+  const [openRows, setOpenRows] = useState<ReadonlySet<number>>(() => new Set());
+
+  function toggleRow(index: number) {
+    setOpenRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  }
+
   return (
     <section className="home-bottom-section home-faq" aria-labelledby="home-faq-heading">
       <RevealOnScroll>
@@ -41,12 +59,39 @@ export default function HomeFaq() {
           Frequently asked questions
         </h2>
         <div className="home-faq-list">
-          {FAQ_ITEMS.map((item) => (
-            <details key={item.question} className="home-faq-item">
-              <summary className="home-faq-summary">{item.question}</summary>
-              <p className="home-faq-answer">{item.answer}</p>
-            </details>
-          ))}
+          {FAQ_ITEMS.map((item, index) => {
+            const isOpen = openRows.has(index);
+            const triggerId = `${baseId}-t-${index}`;
+            const panelId = `${baseId}-p-${index}`;
+            return (
+              <div
+                key={item.question}
+                className={`home-faq-item${isOpen ? " home-faq-item--open" : ""}`}
+              >
+                <button
+                  type="button"
+                  id={triggerId}
+                  className="home-faq-trigger"
+                  aria-expanded={isOpen}
+                  aria-controls={panelId}
+                  onClick={() => toggleRow(index)}
+                >
+                  <span className="home-faq-trigger-label">{item.question}</span>
+                </button>
+                <div
+                  id={panelId}
+                  role="region"
+                  aria-labelledby={triggerId}
+                  className="home-faq-panel"
+                  aria-hidden={!isOpen}
+                >
+                  <div className="home-faq-panel-inner">
+                    <p className="home-faq-answer">{item.answer}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </RevealOnScroll>
     </section>

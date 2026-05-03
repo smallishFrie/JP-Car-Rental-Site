@@ -6,6 +6,8 @@ import { enUS } from "date-fns/locale";
 import { DayPicker, type DateRange } from "react-day-picker";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Car } from "@/lib/cars";
+import { categoryTokensWithoutTransmission, parseCategoryTokens } from "@/lib/carDisplay";
+import CarSpecsRow from "@/app/components/CarSpecsRow";
 import { beginCheckoutAction } from "@/app/cars/[id]/actions";
 import CustomSelect from "@/app/components/CustomSelect";
 import RevealOnScroll from "@/app/components/RevealOnScroll";
@@ -453,6 +455,17 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
       <RevealOnScroll>
       <section className="car-detail-copy">
         <h1 className="page-intro-fade">{car.name}</h1>
+        <p className="car-detail-tagline">{car.tagline}</p>
+        {categoryTokensWithoutTransmission(parseCategoryTokens(car.category)).length ? (
+          <div className="car-detail-categories" aria-label="Car categories">
+            {categoryTokensWithoutTransmission(parseCategoryTokens(car.category)).map((pill) => (
+              <span key={pill} className="car-card-category-pill">
+                {pill}
+              </span>
+            ))}
+          </div>
+        ) : null}
+        <CarSpecsRow category={car.category} passengerCapacity={car.passengerCapacity} className="car-detail-specs" />
         <p>{car.description}</p>
       </section>
       </RevealOnScroll>
@@ -512,52 +525,52 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
                 ▾
               </span>
             </button>
-            {calendarOpen ? (
-              <div
-                className="booking-calendar-dropdown"
-                id="booking-date-dialog"
-                role="dialog"
-                aria-label="Rental calendar"
-                onMouseLeave={() => setHoverDay(undefined)}
-              >
-                <DayPicker
-                  mode="single"
-                  locale={enUS}
-                  className="booking-daypicker-root"
-                  selected={selectedStartDay}
-                  defaultMonth={selectedStartDay ?? todayDate}
-                  onSelect={(day) => {
-                    setFeedback("");
-                    if (!day) {
-                      setStartDate("");
+            <div
+              className={`booking-calendar-dropdown${calendarOpen ? " booking-calendar-dropdown--open" : ""}`}
+              id="booking-date-dialog"
+              role="dialog"
+              aria-label="Rental calendar"
+              aria-hidden={!calendarOpen}
+              inert={!calendarOpen ? true : undefined}
+              onMouseLeave={() => setHoverDay(undefined)}
+            >
+              <DayPicker
+                mode="single"
+                locale={enUS}
+                className="booking-daypicker-root"
+                selected={selectedStartDay}
+                defaultMonth={selectedStartDay ?? todayDate}
+                onSelect={(day) => {
+                  setFeedback("");
+                  if (!day) {
+                    setStartDate("");
+                    return;
+                  }
+                  if (isDayDisabled(day)) {
+                    setFeedback("That date is unavailable.");
+                    return;
+                  }
+                  for (let offset = 0; offset < rentalDays; offset += 1) {
+                    const candidate = addDaysLocal(startOfLocalDay(day), offset);
+                    if (isDayDisabled(candidate)) {
+                      setFeedback("That range includes unavailable dates. Please choose another start date.");
                       return;
                     }
-                    if (isDayDisabled(day)) {
-                      setFeedback("That date is unavailable.");
-                      return;
-                    }
-                    for (let offset = 0; offset < rentalDays; offset += 1) {
-                      const candidate = addDaysLocal(startOfLocalDay(day), offset);
-                      if (isDayDisabled(candidate)) {
-                        setFeedback("That range includes unavailable dates. Please choose another start date.");
-                        return;
-                      }
-                    }
-                    setStartDate(formatLocalIsoDate(day));
-                    setCalendarOpen(false);
-                  }}
-                  disabled={disabledMatchers}
-                  onDayMouseEnter={(d) => setHoverDay(d)}
-                  modifiers={bookingCalendarModifiers}
-                  modifiersClassNames={{
-                    preview: "booking-day-preview",
-                    selectedrange: "booking-day-selectedrange",
-                    stripjoindown: "booking-day-strip-join-down",
-                    stripjoinup: "booking-day-strip-join-up",
-                  }}
-                />
-              </div>
-            ) : null}
+                  }
+                  setStartDate(formatLocalIsoDate(day));
+                  setCalendarOpen(false);
+                }}
+                disabled={disabledMatchers}
+                onDayMouseEnter={(d) => setHoverDay(d)}
+                modifiers={bookingCalendarModifiers}
+                modifiersClassNames={{
+                  preview: "booking-day-preview",
+                  selectedrange: "booking-day-selectedrange",
+                  stripjoindown: "booking-day-strip-join-down",
+                  stripjoinup: "booking-day-strip-join-up",
+                }}
+              />
+            </div>
           </div>
 
           <div className="booking-inline-fields">

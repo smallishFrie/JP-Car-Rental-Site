@@ -18,6 +18,10 @@ create table if not exists public.cars (
 alter table public.cars
 add column if not exists category text not null default 'Sedan';
 
+alter table public.cars
+add column if not exists passenger_capacity integer
+check (passenger_capacity is null or (passenger_capacity between 1 and 55));
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql

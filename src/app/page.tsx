@@ -29,6 +29,9 @@ export default async function Home() {
               <HomeTrustStrip />
               <HomeHowItWorks />
             </div>
+            <div className="home-cars-faq-split" aria-hidden="true">
+              <span className="home-cars-faq-split-line" />
+            </div>
             <CarsBrowser cars={cars} />
 
             <div className="home-cars-faq-split" aria-hidden="true">

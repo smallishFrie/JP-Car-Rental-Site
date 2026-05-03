@@ -13,6 +13,8 @@ export type Car = {
   cardImage: string;
   images: string[];
   locations: CarOption[];
+  /** When set, shown on listings; omit for demo cars without a value. */
+  passengerCapacity?: number | null;
 };
 
 const defaultLocations: CarOption[] = [
@@ -25,7 +27,8 @@ export const testCars: Car[] = [
   {
     id: "civic-sport",
     name: "Civic Sport",
-    category: "Sedan",
+    category: "Sedan, Manual",
+    passengerCapacity: 5,
     tagline: "Balanced city comfort and highway efficiency.",
     description:
       "A smooth all-rounder with practical luggage room, responsive steering, and excellent fuel economy for everyday travel.",
@@ -41,7 +44,8 @@ export const testCars: Car[] = [
   {
     id: "fortuner-xl",
     name: "Fortuner XL",
-    category: "SUV",
+    category: "SUV, Automatic",
+    passengerCapacity: 7,
     tagline: "Roomy SUV for family trips and weekend escapes.",
     description:
       "Built for comfort over long drives with elevated seating, generous cargo space, and confident road presence.",
@@ -57,7 +61,8 @@ export const testCars: Car[] = [
   {
     id: "vios-prime",
     name: "Vios Prime",
-    category: "Sedan",
+    category: "Sedan, CVT",
+    passengerCapacity: 5,
     tagline: "Compact and easy to drive in busy streets.",
     description:
       "Perfect for quick city movement, featuring a quiet cabin and reliable handling for daily commutes and errands.",
@@ -73,7 +78,8 @@ export const testCars: Car[] = [
   {
     id: "hilux-trail",
     name: "Hilux Trail",
-    category: "Pickup",
+    category: "Pickup, Manual",
+    passengerCapacity: 5,
     tagline: "Tough utility pickup with strong cargo capacity.",
     description:
       "A capable choice for mixed work and travel use, offering stable performance and durable construction.",

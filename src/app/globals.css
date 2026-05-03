@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   --bg-page: #f5f5f7;
   --bg-elevated: #ffffff;
   --bg-muted: #ebebed;
@@ -37,22 +38,55 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-page: #000000;
-    --bg-elevated: #1c1c1e;
-    --bg-muted: #2c2c2e;
-    --border-subtle: rgba(255, 255, 255, 0.1);
-    --border-strong: rgba(255, 255, 255, 0.16);
-    --text: #f5f5f7;
-    --text-muted: #a1a1a6;
+    color-scheme: dark;
+    /* Layered neutrals (avoid pure #000 — reads flat and crushes shadows). */
+    --bg-page: #0c0c0f;
+    --bg-elevated: #16161a;
+    --bg-muted: #242428;
+    --border-subtle: rgba(255, 255, 255, 0.075);
+    --border-strong: rgba(255, 255, 255, 0.14);
+    --text: #f4f4f5;
+    --text-muted: #9b9ba3;
     --accent: #0a84ff;
-    --accent-hover: #64b5ff;
-    --header-text-on-solid: #f5f5f7;
-    --footer-surface: #0a0a0c;
-    --footer-border: rgba(255, 255, 255, 0.1);
-    --footer-highlight: rgba(255, 255, 255, 0.04);
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35);
-    --shadow-md: 0 8px 28px rgba(0, 0, 0, 0.45);
-    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55);
+    --accent-hover: #5eb0ff;
+    --header-text-on-solid: #f4f4f5;
+    --footer-surface: #08080a;
+    --footer-border: rgba(255, 255, 255, 0.09);
+    --footer-highlight: rgba(255, 255, 255, 0.045);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.25);
+    --shadow-md: 0 6px 24px rgba(0, 0, 0, 0.42), 0 2px 8px rgba(0, 0, 0, 0.22);
+    --shadow-lg: 0 14px 44px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.28);
+  }
+
+  .admin-existing-images button:hover,
+  .admin-existing-images button:focus-visible {
+    background: color-mix(in srgb, #fb7185 12%, var(--bg-muted));
+    border-color: color-mix(in srgb, #fb7185 45%, var(--border-strong));
+  }
+
+  .admin-delete-confirm {
+    border-color: color-mix(in srgb, #f87171 42%, var(--border-subtle));
+    background: color-mix(in srgb, #7f1d1d 35%, var(--bg-muted));
+    color: #fecaca;
+  }
+
+  .admin-delete-confirm p {
+    color: #fecdd3;
+  }
+
+  .admin-refund-amount-label {
+    color: #fda4af;
+  }
+
+  .admin-refund-amount-label input {
+    border-color: color-mix(in srgb, #f87171 38%, var(--border-strong));
+    background: var(--bg-elevated);
+    color: var(--text);
+  }
+
+  .booking-calendar-dropdown .rdp-root {
+    --booking-range-fill: color-mix(in srgb, var(--accent) 62%, #2e2e32);
+    --booking-range-text: #f8fafc;
   }
 }
 
@@ -697,7 +731,7 @@ a.header-auth-cta:focus-visible {
   align-self: center;
   flex: 0 1 auto;
   max-width: 100%;
-  width: min(52rem, calc(100% - 3.5rem));
+  width: 100%;
   height: 2px;
   border-radius: 9999px;
   background: color-mix(in srgb, var(--text) 30%, var(--bg-page));
@@ -735,10 +769,24 @@ a.header-auth-cta:focus-visible {
   box-shadow: var(--shadow-sm);
   padding: 0;
   overflow: hidden;
+  transition:
+    border-color 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.38s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.home-faq-summary {
-  list-style: none;
+.home-faq-item--open {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.home-faq-trigger {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  text-align: left;
   cursor: pointer;
   font-size: 0.98rem;
   font-weight: 600;
@@ -752,11 +800,11 @@ a.header-auth-cta:focus-visible {
   transition: background 180ms ease;
 }
 
-.home-faq-summary::-webkit-details-marker {
-  display: none;
+.home-faq-trigger-label {
+  min-width: 0;
 }
 
-.home-faq-summary::after {
+.home-faq-trigger::after {
   content: "";
   width: 0.55rem;
   height: 0.55rem;
@@ -765,28 +813,82 @@ a.header-auth-cta:focus-visible {
   transform: rotate(45deg);
   flex-shrink: 0;
   margin-top: -0.2rem;
-  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.home-faq-item[open] .home-faq-summary::after {
+.home-faq-item--open .home-faq-trigger::after {
   transform: rotate(225deg);
   margin-top: 0.15rem;
 }
 
-.home-faq-summary:hover,
-.home-faq-summary:focus-visible {
+.home-faq-trigger:hover,
+.home-faq-trigger:focus-visible {
   background: color-mix(in srgb, var(--text) 4%, var(--bg-elevated));
   outline: none;
 }
 
+.home-faq-trigger:focus-visible {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* Height: grid 0fr ↔ 1fr (reliable open + close; avoids native <details> transition bugs). */
+.home-faq-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.home-faq-item--open .home-faq-panel {
+  grid-template-rows: 1fr;
+}
+
+.home-faq-panel-inner {
+  overflow: hidden;
+  min-height: 0;
+  border-top: 1px solid var(--border-subtle);
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity 0.32s ease,
+    transform 0.32s ease;
+}
+
+.home-faq-item--open .home-faq-panel-inner {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.05s,
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.05s;
+}
+
 .home-faq-answer {
   margin: 0;
-  padding: 0 1.15rem 1.1rem;
+  padding: 0.85rem 1.15rem 1.1rem;
   font-size: 0.92rem;
   line-height: 1.55;
   color: var(--text-muted);
-  border-top: 1px solid var(--border-subtle);
-  padding-top: 0.85rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-faq-item,
+  .home-faq-panel,
+  .home-faq-panel-inner,
+  .home-faq-trigger::after {
+    transition: none !important;
+  }
+
+  .home-faq-panel {
+    grid-template-rows: 0fr;
+  }
+
+  .home-faq-item--open .home-faq-panel {
+    grid-template-rows: 1fr;
+  }
+
+  .home-faq-panel-inner {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .home-contact-grid {
@@ -940,6 +1042,17 @@ a.header-auth-cta:focus-visible {
   padding: 3rem 1.25rem clamp(2rem, 4vw, 3.25rem);
   border-top: 1px solid var(--border-subtle);
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--bg-elevated) 55%, transparent);
+}
+
+/* Intro block stacks above the grid so the category CustomSelect dropdown is not covered by car cards. */
+.cars-intro-reveal {
+  position: relative;
+  z-index: 3;
+}
+
+.cars-grid-reveal {
+  position: relative;
+  z-index: 1;
 }
 
 .cars-grid-header h3 {
@@ -1105,6 +1218,77 @@ a.header-auth-cta:focus-visible {
   font-weight: 600;
   padding: 0.22rem 0.5rem;
   border-radius: 6px;
+}
+
+.car-card-specs {
+  margin-top: 0.1rem;
+}
+
+.car-specs-row-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.car-spec-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 8px;
+  padding: 0.28rem 0.55rem;
+  border: 1px solid var(--border-subtle);
+}
+
+.car-spec-chip-seats {
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-muted));
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border-subtle));
+}
+
+.car-spec-chip-seats .car-spec-chip-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 1ch;
+}
+
+.car-spec-chip-seats .car-spec-chip-icon {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.car-spec-chip-trans {
+  gap: 0.4rem;
+  text-transform: none;
+  font-weight: 600;
+}
+
+.car-spec-chip-trans-manual {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 12%, var(--bg-muted)),
+    color-mix(in srgb, var(--accent) 4%, var(--bg-elevated))
+  );
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border-subtle));
+  color: var(--text);
+}
+
+.car-spec-chip-trans-automatic {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--text-muted) 18%, var(--bg-muted)),
+    var(--bg-elevated)
+  );
+  color: var(--text);
+}
+
+.car-spec-chip-trans .car-spec-chip-icon {
+  flex-shrink: 0;
+  opacity: 0.92;
 }
 
 .car-card-link {
@@ -1278,6 +1462,23 @@ a.header-auth-cta:focus-visible {
   color: var(--text);
   font-weight: 600;
   letter-spacing: -0.03em;
+}
+
+.car-detail-tagline {
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  line-height: 1.45;
+  margin-top: -0.1rem;
+}
+
+.car-detail-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.car-detail-specs {
+  margin: 0.2rem 0 0.35rem;
 }
 
 .car-detail-copy p {
@@ -1555,8 +1756,12 @@ a.header-auth-cta:focus-visible {
   resize: none;
 }
 
-.admin-form input:focus,
-.admin-form textarea:focus {
+.admin-form input:not([type="checkbox"]):not([type="hidden"]):not([type="file"]):hover,
+.admin-form input:not([type="checkbox"]):not([type="hidden"]):not([type="file"]):focus,
+.admin-form input:not([type="checkbox"]):not([type="hidden"]):not([type="file"]):focus-visible,
+.admin-form textarea:hover,
+.admin-form textarea:focus,
+.admin-form textarea:focus-visible {
   border-color: var(--accent);
   outline: none;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
@@ -1643,6 +1848,7 @@ a.header-auth-cta:focus-visible {
   color: #ffffff;
   padding: 0.72rem 0.95rem;
   font-weight: 700;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -1688,6 +1894,20 @@ a.header-auth-cta:focus-visible {
   padding: 0.5rem 0.65rem;
   border: 1px solid #fecaca;
   border-radius: 6px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  font: inherit;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.admin-refund-amount-label input:hover,
+.admin-refund-amount-label input:focus,
+.admin-refund-amount-label input:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 .booking-cancel-request {
@@ -1930,6 +2150,26 @@ a.header-auth-cta:focus-visible {
   box-shadow: var(--shadow-lg);
   max-height: min(16rem, 45vh);
   overflow-y: auto;
+  transform-origin: top center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-0.4rem) scale(0.98);
+  transition:
+    opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0.26s;
+}
+
+.custom-select-dropdown.custom-select-dropdown--open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s;
 }
 
 .custom-select-option {
@@ -1983,7 +2223,6 @@ a.header-auth-cta:focus-visible {
   position: absolute;
   top: calc(100% + 0.35rem);
   left: 50%;
-  transform: translateX(-50%);
   z-index: 40;
   box-sizing: border-box;
   /* Hug the calendar; padding is the only “gutter” (no wide empty rails). */
@@ -1995,6 +2234,26 @@ a.header-auth-cta:focus-visible {
   padding: 1rem;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
+  transform-origin: top center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(-0.4rem) scale(0.98);
+  transition:
+    opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0.26s;
+}
+
+.booking-calendar-dropdown.booking-calendar-dropdown--open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0) scale(1);
+  transition:
+    opacity 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s;
 }
 
 /* `collapse` clips cell border-radius — use separate + 0 spacing so range cells can round */
@@ -2495,7 +2754,7 @@ a.header-auth-cta:focus-visible {
   }
 
   .home-cars-faq-split-line {
-    width: calc(100% - 2.5rem);
+    width: 100%;
   }
 
   .home-bottom-stack {
@@ -2578,6 +2837,9 @@ a.header-auth-cta:focus-visible {
   }
 
   .booking-form input,
+  .admin-form input,
+  .admin-form textarea,
+  .admin-refund-amount-label input,
   .booking-date-trigger,
   .cars-browser-controls input,
   .custom-select-option {
@@ -2634,5 +2896,10 @@ a.header-auth-cta:focus-visible {
     animation: none;
     opacity: 1;
     transform: none;
+  }
+
+  .custom-select-dropdown,
+  .booking-calendar-dropdown {
+    transition: none !important;
   }
 }
