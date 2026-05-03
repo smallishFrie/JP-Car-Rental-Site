@@ -1109,6 +1109,7 @@ a.header-auth-cta:focus-visible {
 }
 
 .car-card {
+  min-width: 0;
   border: 1px solid var(--border-subtle);
   background: var(--bg-elevated);
   border-radius: var(--radius-lg);
@@ -1120,6 +1121,17 @@ a.header-auth-cta:focus-visible {
     box-shadow 360ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+a.car-card {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+a.car-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
 .car-card:hover,
 .car-card:focus-within {
   transform: translateY(-5px);
@@ -1127,8 +1139,15 @@ a.header-auth-cta:focus-visible {
 }
 
 .car-card-image-wrap {
-  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+  line-height: 0;
+}
+
+.car-card-image-wrap > * {
+  min-width: 0;
+  width: 100%;
 }
 
 .car-card-image {
@@ -1287,28 +1306,6 @@ a.header-auth-cta:focus-visible {
 .car-spec-chip-trans .car-spec-chip-icon {
   flex-shrink: 0;
   opacity: 0.92;
-}
-
-.car-card-link {
-  width: fit-content;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-weight: 600;
-  font-size: 0.92rem;
-  color: var(--accent);
-  text-decoration: none;
-  margin-top: 0.15rem;
-  transition:
-    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
-    color 200ms ease;
-}
-
-.car-card-link:hover,
-.car-card-link:focus-visible {
-  transform: translateX(4px);
-  color: var(--accent-hover);
-  outline: none;
 }
 
 .car-page-main {
@@ -2829,7 +2826,6 @@ a.header-auth-cta:focus-visible {
   .header-auth-link,
   .header-auth-button,
   .car-card,
-  .car-card-link,
   .gallery-nav {
     transition: none;
   }
@@ -2852,8 +2848,6 @@ a.header-auth-cta:focus-visible {
   .auth-primary:focus-visible,
   .car-card:hover,
   .car-card:focus-within,
-  .car-card-link:hover,
-  .car-card-link:focus-visible,
   .gallery-nav:hover,
   .gallery-nav:focus-visible,
   .booking-submit:hover,

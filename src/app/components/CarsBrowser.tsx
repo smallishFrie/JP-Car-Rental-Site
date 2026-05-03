@@ -99,11 +99,16 @@ export default function CarsBrowser({ cars }: CarsBrowserProps) {
       <RevealOnScroll className="cars-grid-reveal">
         <div className="cars-grid">
         {filteredCars.map((car) => (
-          <article key={car.id} className="car-card">
+          <Link
+            key={car.id}
+            href={`/cars/${car.id}`}
+            className="car-card"
+            aria-labelledby={`car-card-title-${car.id}`}
+          >
             <div className="car-card-image-wrap">
               <Image
                 src={car.cardImage}
-                alt={`${car.name} placeholder image`}
+                alt=""
                 width={1280}
                 height={720}
                 className="car-card-image"
@@ -124,13 +129,10 @@ export default function CarsBrowser({ cars }: CarsBrowserProps) {
                 </div>
               </div>
               <CarSpecsRow category={car.category} passengerCapacity={car.passengerCapacity} className="car-card-specs" />
-              <h4>{car.name}</h4>
+              <h4 id={`car-card-title-${car.id}`}>{car.name}</h4>
               <p>{car.tagline}</p>
-              <Link href={`/cars/${car.id}`} className="car-card-link">
-                View details
-              </Link>
             </div>
-          </article>
+          </Link>
         ))}
         </div>
       </RevealOnScroll>

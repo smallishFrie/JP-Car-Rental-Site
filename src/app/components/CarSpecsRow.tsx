@@ -6,7 +6,7 @@ type CarSpecsRowProps = {
   className?: string;
 };
 
-function IconSeats({ className }: { className?: string }) {
+function IconPerson({ className }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -17,8 +17,9 @@ function IconSeats({ className }: { className?: string }) {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
     >
+      <circle cx="12" cy="8" r="3.25" fill="none" stroke="currentColor" strokeWidth="1.75" />
       <path
-        d="M5 11V18M5 11H3.5C2.67 11 2 10.33 2 9.5V8C2 6.34 3.34 5 5 5H7M5 11H9M19 11V18M19 11H20.5C21.33 11 22 10.33 22 9.5V8C22 6.34 20.66 5 19 5H17M19 11H15M9 11H15M9 11V7C9 5.9 9.9 5 11 5H13C14.1 5 15 5.9 15 7V11M7 18V20M17 18V20"
+        d="M6.5 20.25v-.75c0-2.35 2.2-4.25 5.5-4.25s5.5 1.9 5.5 4.25v.75"
         stroke="currentColor"
         strokeWidth="1.75"
         strokeLinecap="round"
@@ -96,7 +97,7 @@ export default function CarSpecsRow({ category, passengerCapacity, className = "
             aria-label={`${passengerCapacity} seats`}
           >
             <span className="car-spec-chip-value">{passengerCapacity}</span>
-            <IconSeats className="car-spec-chip-icon" aria-hidden />
+            <IconPerson className="car-spec-chip-icon" aria-hidden />
           </span>
         ) : null}
 

@@ -1,6 +1,6 @@
 <svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect width="1280" height="720" fill="#E2E8F0"/>
-  <rect x="120" y="120" width="1040" height="480" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="4"/>
+  <rect x="120" y="120" width="1040" height="480" fill="#F8FAFC"/>
   <text x="640" y="360" text-anchor="middle" dominant-baseline="middle" fill="#64748B" font-family="Arial, sans-serif" font-size="56" font-weight="700">
     Car Image Placeholder 02
   </text>
