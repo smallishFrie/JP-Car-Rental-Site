@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signUpWithEmail } from "@/app/auth/actions";
-import SiteHeader from "@/app/components/SiteHeader";
 import RevealOnScroll from "@/app/components/RevealOnScroll";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
@@ -31,9 +30,7 @@ export default async function CreateAccountPage({
   }
 
   return (
-    <>
-      <SiteHeader />
-    <main className="auth-main">
+    <main className="auth-main auth-main--no-site-header">
       <section className="auth-shell">
         <RevealOnScroll className="auth-shell-reveal">
           <header className="auth-header">
@@ -69,6 +66,5 @@ export default async function CreateAccountPage({
         </RevealOnScroll>
       </section>
     </main>
-    </>
   );
 }
