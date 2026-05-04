@@ -22,8 +22,6 @@
   --radius-md: 14px;
   --radius-lg: 20px;
   --radius-pill: 980px;
-  --header-visible: 1;
-  --footer-visible: 0;
   /* Bottom scroll pad: clears fixed footer on wide viewports (taller than 15rem); phones override with in-flow footer */
   --site-content-scroll-pad: clamp(15rem, 30vh, 26rem);
   --background: var(--bg-page);
@@ -113,7 +111,7 @@ body {
 html,
 body {
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -134,8 +132,6 @@ body::-webkit-scrollbar,
 }
 
 .scroll-hero {
-  --header-visible: 0;
-  --footer-visible: 0;
   --content-shift-x: clamp(0rem, 5vw, 4.5rem);
   --hero-text-color: #ffffff;
 }
@@ -190,19 +186,71 @@ body::-webkit-scrollbar,
   overflow-x: clip;
 }
 
-.site-header {
-  --header-text-color: var(--header-text-on-solid);
-  position: fixed;
+/* Homepage: sticky slot stays one height in document flow so opening the bar does not reflow / scroll-anchoring the page. */
+.home-header-chrome {
+  position: sticky;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 20;
+  z-index: 50;
+  pointer-events: auto;
+  height: 2.75rem;
+  overflow: hidden;
+}
+
+.home-header-chrome--open {
+  overflow: visible;
+}
+
+/* Motion uses transform; compositing can leave a 1px hairline above the bar—nudge the panel up slightly. */
+.home-header-chrome--open .home-header-motion-panel {
+  top: -1px;
+}
+
+.home-header-chrome-stack {
+  position: relative;
+  height: 100%;
+}
+
+.home-header-edge-hit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2.75rem;
+  z-index: 2;
+  background: transparent;
+  cursor: default;
+}
+
+.home-header-motion-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 0;
+  transform-origin: top center;
+  will-change: transform;
+}
+
+/* Sticky is on the chrome wrapper; header paints over the hero when open without growing layout height. */
+.home-header-chrome .site-header {
+  position: relative;
+  top: auto;
+  /* Kill subpixel seam above the hero */
+  margin-bottom: -1px;
+  padding-bottom: 1px;
+}
+
+.site-header {
+  --header-text-color: var(--header-text-on-solid);
+  position: sticky;
+  top: 0;
+  z-index: 50;
   color: var(--header-text-color);
   background: var(--bg-elevated);
   border-bottom: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-sm);
-  transform: translateY(calc((1 - var(--header-visible)) * -100%));
-  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .site-header-inner {
@@ -308,8 +356,30 @@ a.header-auth-cta:focus-visible {
   background: var(--footer-surface);
   border-top: 1px solid var(--footer-border);
   box-shadow: 0 -1px 0 var(--footer-highlight);
-  transform: translateY(calc((1 - var(--footer-visible)) * 100%));
-  transition: transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Home (`ScrollHero`): fixed footer only at true document bottom; motion matches `HomeScrollHeader` (0.34s, motionEase). */
+@media (min-width: 781px) {
+  .scroll-hero[data-footer-reveal="0"] .site-footer {
+    transform: translate3d(0, 110%, 0);
+    pointer-events: none;
+    transform-origin: bottom center;
+    transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .scroll-hero[data-footer-reveal="1"] .site-footer {
+    transform: translate3d(0, 0, 0);
+    pointer-events: auto;
+    transform-origin: bottom center;
+    transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+@media (min-width: 781px) and (prefers-reduced-motion: reduce) {
+  .scroll-hero[data-footer-reveal="0"] .site-footer,
+  .scroll-hero[data-footer-reveal="1"] .site-footer {
+    transition: none;
+  }
 }
 
 .site-footer-inner {
@@ -419,11 +489,12 @@ a.header-auth-cta:focus-visible {
   z-index: 0;
   display: flex;
   align-items: center;
+  overflow: hidden;
 }
 
 .hero-image-parallax-fill {
   position: absolute;
-  inset: -12%;
+  inset: -20%;
   z-index: 0;
   background-image: url("/hero.jpg");
   background-size: cover;
@@ -3125,11 +3196,6 @@ a.car-card:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .site-header {
-    transform: translateY(calc((1 - var(--header-visible)) * -100%));
-    transition: none;
-  }
-
   .home-trust-card:hover,
   .home-included-card:hover,
   .home-trust-card:focus-within,
@@ -3137,11 +3203,6 @@ a.car-card:focus-visible {
     transform: none;
     box-shadow: var(--shadow-sm);
     border-color: var(--border-subtle);
-  }
-
-  .site-footer {
-    transform: translateY(calc((1 - var(--footer-visible)) * 100%));
-    transition: none;
   }
 
   .site-header h1 {

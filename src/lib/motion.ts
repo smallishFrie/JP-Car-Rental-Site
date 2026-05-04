@@ -39,25 +39,21 @@ export const staggerItemFadeUp: Variants = {
   },
 };
 
+/**
+ * Page shell transitions must not use transform, filter, or perspective on the
+ * wrapper: those create a fixed-position containing block, so `position: fixed`
+ * (e.g. `.site-header`) would scroll with the page instead of the viewport.
+ */
 export const pageShellVariants: Variants = {
   initial: {
     opacity: 0,
-    y: 12,
-    scale: 0.985,
-    filter: "blur(6px)",
   },
   animate: {
     opacity: 1,
-    y: 0,
-    scale: 1,
-    filter: "blur(0px)",
     transition: { duration: motionDurations.page, ease: motionEase },
   },
   exit: {
     opacity: 0,
-    y: -8,
-    scale: 0.99,
-    filter: "blur(4px)",
     transition: { duration: 0.28, ease: motionEase },
   },
 };

@@ -1,7 +1,7 @@
 "use client";
 
-import { useScroll, useTransform, useReducedMotion } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { HeroMotionContext, type HeroMotionApi } from "./hero-motion-context";
 
 type ScrollHeroProps = {
@@ -9,21 +9,18 @@ type ScrollHeroProps = {
 };
 
 export default function ScrollHero({ children }: ScrollHeroProps) {
-  const scrollRootRef = useRef<HTMLDivElement>(null);
-  const headerMouseOverrideRef = useRef(false);
-  const footerMouseOverrideRef = useRef(false);
-
   const [heroTextColor, setHeroTextColor] = useState("#ffffff");
   const [viewportH, setViewportH] = useState(800);
+  const [footerReveal, setFooterReveal] = useState(false);
   const reduceMotion = useReducedMotion();
 
   const { scrollY } = useScroll();
 
   const scrollSpan = useMemo(() => Math.max(1, viewportH), [viewportH]);
 
-  const bgY = useTransform(scrollY, [0, scrollSpan], [0, reduceMotion ? 0 : 36]);
-  const bgScale = useTransform(scrollY, [0, scrollSpan], [1, reduceMotion ? 1 : 1.045]);
-  const textY = useTransform(scrollY, [0, scrollSpan], [0, reduceMotion ? 0 : -16]);
+  const bgY = useTransform(scrollY, [0, scrollSpan], [0, reduceMotion ? 0 : 28]);
+  const bgScale = useTransform(scrollY, [0, scrollSpan], [1, reduceMotion ? 1 : 1.024]);
+  const textY = useTransform(scrollY, [0, scrollSpan], [0, reduceMotion ? 0 : -14]);
 
   const heroMotionValue = useMemo<HeroMotionApi>(
     () => ({
@@ -41,107 +38,41 @@ export default function ScrollHero({ children }: ScrollHeroProps) {
     return () => window.removeEventListener("resize", updateVh);
   }, []);
 
-  useEffect(() => {
-    const footerActivationMargin = 90;
-    const footerNearBottomPx = 420;
-    const headerRevealOffsetPx = 0;
-
-    const documentScrollTop = () => scrollY.get() || document.documentElement.scrollTop || 0;
-
-    const headerAccessDepthPx = () => {
-      const headerEl = document.querySelector<HTMLElement>(".site-header");
-      const h = headerEl?.offsetHeight;
-      if (typeof h === "number" && h > 0) {
-        return Math.min(200, Math.max(80, h + 28));
-      }
-      return 112;
-    };
-
-    const evaluateHeaderFromLayout = () => {
-      const headerScrollTarget =
-        document.getElementById("available-cars-header") ??
-        document.getElementById("available-cars-scroll-mark");
-      if (headerScrollTarget) {
-        return headerScrollTarget.getBoundingClientRect().top <= headerRevealOffsetPx;
-      }
-      return documentScrollTop() >= window.innerHeight;
-    };
-
-    const evaluateFooterVisibility = () => {
-      const root = document.documentElement;
-      const threshold = 80;
-      if (root.scrollHeight <= root.clientHeight + 8) {
-        return true;
-      }
-      const y = documentScrollTop();
-      return y + window.innerHeight >= root.scrollHeight - threshold;
-    };
-
-    const applyChrome = () => {
-      const header = headerMouseOverrideRef.current ? true : evaluateHeaderFromLayout();
-      const footer = footerMouseOverrideRef.current ? true : evaluateFooterVisibility();
-      const el = scrollRootRef.current;
-      if (el) {
-        el.style.setProperty("--header-visible", header ? "1" : "0");
-        el.style.setProperty("--footer-visible", footer ? "1" : "0");
-      }
-    };
-
-    const handlePointerMove = (event: PointerEvent) => {
-      const innerH = window.innerHeight;
-      const root = document.documentElement;
-      const y = documentScrollTop();
-      const distanceFromBottom = root.scrollHeight - (y + innerH);
-      const isNearDocumentBottom = distanceFromBottom <= footerNearBottomPx;
-
-      const headerEl = document.querySelector<HTMLElement>(".site-header");
-      const isHoveringHeader = headerEl?.matches(":hover") ?? false;
-      const isInHeaderAccessZone = event.clientY <= headerAccessDepthPx() || isHoveringHeader;
-      if (isInHeaderAccessZone && !headerMouseOverrideRef.current) {
-        headerMouseOverrideRef.current = true;
-      } else if (!isInHeaderAccessZone && headerMouseOverrideRef.current) {
-        headerMouseOverrideRef.current = false;
-      }
-
-      const isInFooterAccessZone = event.clientY >= innerH - footerActivationMargin;
-      if (isInFooterAccessZone && isNearDocumentBottom && !footerMouseOverrideRef.current) {
-        footerMouseOverrideRef.current = true;
-      } else if ((!isInFooterAccessZone || !isNearDocumentBottom) && footerMouseOverrideRef.current) {
-        footerMouseOverrideRef.current = false;
-      }
-
-      applyChrome();
-    };
-
-    const unsubscribeScrollY = scrollY.on("change", applyChrome);
-
-    const headerScrollTarget =
-      document.getElementById("available-cars-header") ??
-      document.getElementById("available-cars-scroll-mark");
-    let intersectionObserver: IntersectionObserver | undefined;
-    if (headerScrollTarget) {
-      intersectionObserver = new IntersectionObserver(() => {
-        applyChrome();
-      }, { threshold: [0, 0.01, 0.25, 0.5, 0.75, 1] });
-      intersectionObserver.observe(headerScrollTarget);
+  const syncFooterReveal = useCallback(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    /* In-flow footer (mobile): no fixed chrome — attribute unused by CSS; keep “revealed”. */
+    if (window.matchMedia("(max-width: 780px)").matches) {
+      setFooterReveal(true);
+      return;
     }
 
-    window.addEventListener("scroll", applyChrome, { passive: true });
-    document.addEventListener("pointermove", handlePointerMove, { passive: true, capture: true });
-    window.visualViewport?.addEventListener("scroll", applyChrome, { passive: true });
-    window.visualViewport?.addEventListener("resize", applyChrome, { passive: true });
-
-    applyChrome();
-
-    return () => {
-      unsubscribeScrollY();
-      intersectionObserver?.disconnect();
-      window.removeEventListener("scroll", applyChrome);
-      document.removeEventListener("pointermove", handlePointerMove, true);
-      window.visualViewport?.removeEventListener("scroll", applyChrome);
-      window.visualViewport?.removeEventListener("resize", applyChrome);
-    };
+    const doc = document.documentElement;
+    const body = document.body;
+    const scrollBottom = scrollY.get() + window.innerHeight;
+    const fullHeight = Math.max(doc.scrollHeight, doc.offsetHeight, body.scrollHeight, body.offsetHeight);
+    /* Tight “at the end of the page” band (subpixel + browser slack). */
+    const slackPx = 24;
+    setFooterReveal(scrollBottom >= fullHeight - slackPx);
   }, [scrollY]);
+
+  useLayoutEffect(() => {
+    syncFooterReveal();
+    const unsub = scrollY.on("change", syncFooterReveal);
+    window.addEventListener("resize", syncFooterReveal, { passive: true });
+    const mq = window.matchMedia("(max-width: 780px)");
+    mq.addEventListener("change", syncFooterReveal);
+    const ro = new ResizeObserver(() => syncFooterReveal());
+    ro.observe(document.documentElement);
+    ro.observe(document.body);
+    return () => {
+      unsub();
+      window.removeEventListener("resize", syncFooterReveal);
+      mq.removeEventListener("change", syncFooterReveal);
+      ro.disconnect();
+    };
+  }, [scrollY, syncFooterReveal]);
 
   useEffect(() => {
     const image = new Image();
@@ -180,12 +111,10 @@ export default function ScrollHero({ children }: ScrollHeroProps) {
   return (
     <HeroMotionContext.Provider value={heroMotionValue}>
       <div
-        ref={scrollRootRef}
         className="scroll-hero"
+        data-footer-reveal={footerReveal ? "1" : "0"}
         style={
           {
-            /* Header/footer visibility vars are driven imperatively in an effect so React
-               reconciliation cannot fight scroll-driven updates. Defaults come from `.scroll-hero`. */
             "--hero-text-color": heroTextColor,
           } as React.CSSProperties
         }
