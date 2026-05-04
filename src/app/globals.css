@@ -2600,10 +2600,12 @@ a.car-card:focus-visible {
   transform: rotate(180deg);
 }
 
+/* No horizontal translateX here: Framer Motion sets `transform` on this node and would override it,
+   which used to leave `left: 50%` uncorrected and clip the panel off the right. */
 .booking-calendar-dropdown {
   position: absolute;
   top: calc(100% + 0.35rem);
-  left: 50%;
+  left: 0;
   z-index: 40;
   box-sizing: border-box;
   /* Hug the calendar; padding is the only “gutter” (no wide empty rails). */
@@ -2615,26 +2617,19 @@ a.car-card:focus-visible {
   padding: 1rem;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
-  transform-origin: top center;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transform: translateX(-50%) translateY(-0.4rem) scale(0.98);
-  transition:
-    opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-    visibility 0s linear 0.26s;
+  transform-origin: top left;
 }
 
-.booking-calendar-dropdown.booking-calendar-dropdown--open {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translateX(-50%) translateY(0) scale(1);
-  transition:
-    opacity 0.26s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-    visibility 0s;
+@media (min-width: 781px) {
+  /* Pickup dates sit in the last booking form column; grow left so the panel stays in view. */
+  .booking-calendar-dropdown {
+    left: auto;
+    right: 0;
+  }
+
+  .booking-calendar-dropdown.popover-motion-layer {
+    transform-origin: top right;
+  }
 }
 
 /* `collapse` clips cell border-radius — use separate + 0 spacing so range cells can round */
