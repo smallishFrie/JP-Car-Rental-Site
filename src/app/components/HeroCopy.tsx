@@ -4,17 +4,11 @@ import { motion, useReducedMotion } from "framer-motion";
 import { motionSprings } from "@/lib/motion";
 import { useHeroMotion } from "./hero-motion-context";
 import { MotionPressableLink } from "./MotionPressable";
+import { scrollToAvailableCarsHeader } from "@/lib/scrollToAvailableCars";
 
 function scrollToCars(event: React.MouseEvent<HTMLAnchorElement>) {
   event.preventDefault();
-  const carsHeader = document.getElementById("available-cars-header");
-  if (!carsHeader) {
-    return;
-  }
-
-  const yOffset = 20;
-  const targetTop = carsHeader.getBoundingClientRect().top + window.scrollY - yOffset;
-  window.scrollTo({ top: targetTop, behavior: "smooth" });
+  scrollToAvailableCarsHeader();
 }
 
 const heroContainer = {

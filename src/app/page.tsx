@@ -11,6 +11,7 @@ import ScrollHero from "./components/ScrollHero";
 import SiteFooter from "./components/SiteFooter";
 import SiteHeader from "./components/SiteHeader";
 import CarsBrowser from "./components/CarsBrowser";
+import HomeAvailableCarsHashScroll from "./components/HomeAvailableCarsHashScroll";
 import { listCars } from "@/lib/cars";
 
 export default async function Home() {
@@ -19,6 +20,7 @@ export default async function Home() {
   return (
     <ScrollHero>
       <div className="site-shell">
+        <HomeAvailableCarsHashScroll />
         <HomeScrollHeader>
           <SiteHeader />
         </HomeScrollHeader>
