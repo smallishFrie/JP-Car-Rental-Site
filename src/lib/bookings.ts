@@ -3,8 +3,10 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createXenditRefund } from "@/lib/xendit";
+import { verifyBookingEmailActionToken } from "@/lib/booking-email-token";
+import { notifyAdminsSecurityBookingReport } from "@/lib/notifications/booking-admin-events";
 import type { BookingRecord, BookingStatus, RefundStatus } from "./booking-model";
-import { computeDerivedStatus } from "./booking-model";
+import { computeDerivedStatus, formatBookingVehicleName } from "./booking-model";
 
 export type { BookingRecord, BookingStatus, RefundStatus } from "./booking-model";
 export { computeDerivedStatus } from "./booking-model";
@@ -172,6 +174,8 @@ export async function syncDerivedStatusForBooking(bookingId: string) {
     return booking;
   }
 
+  const prevStatus = booking.status;
+
   const { data: updated, error: updateError } = await supabase
     .from("bookings")
     .update({ status: nextStatus })
@@ -183,10 +187,219 @@ export async function syncDerivedStatusForBooking(bookingId: string) {
     throw new Error(updateError?.message ?? "Failed to sync booking status.");
   }
 
+  if (nextStatus === "completed" && prevStatus === "active" && booking.car_id) {
+    const admin = createAdminClient();
+    const { error: carErr } = await admin.from("cars").update({ pending_turnover: true }).eq("id", booking.car_id);
+    if (carErr) {
+      throw new Error(carErr.message);
+    }
+  }
+
   return updated as BookingRecord;
 }
 
+async function markCarPendingTurnoverIfNeeded(
+  admin: ReturnType<typeof createAdminClient>,
+  carId: string | null | undefined,
+  prevStatus: BookingStatus,
+  nextStatus: BookingStatus,
+) {
+  if (nextStatus === "completed" && prevStatus === "active" && carId) {
+    const { error } = await admin.from("cars").update({ pending_turnover: true }).eq("id", carId);
+    if (error) {
+      throw new Error(error.message);
+    }
+  }
+}
+
+export async function syncStaleDerivedStatusesForUserBookings(userId: string): Promise<{ updated: number }> {
+  const admin = createAdminClient();
+  const { data: rows, error } = await admin
+    .from("bookings")
+    .select("*")
+    .eq("user_id", userId)
+    .in("status", ["pending", "upcoming", "active"]);
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  let updated = 0;
+  for (const row of rows ?? []) {
+    const booking = row as BookingRecord;
+    const nextStatus = computeDerivedStatus({
+      currentStatus: booking.status,
+      paymentStatus: booking.payment_status,
+      startDate: booking.start_date,
+      endDate: booking.end_date,
+    });
+    if (nextStatus === booking.status) {
+      continue;
+    }
+
+    const prevStatus = booking.status;
+    const { data: updatedRow, error: updateError } = await admin
+      .from("bookings")
+      .update({ status: nextStatus })
+      .eq("id", booking.id)
+      .eq("status", booking.status)
+      .select("id")
+      .maybeSingle();
+
+    if (updateError || !updatedRow) {
+      continue;
+    }
+    updated += 1;
+    await markCarPendingTurnoverIfNeeded(admin, booking.car_id, prevStatus, nextStatus);
+  }
+
+  return { updated };
+}
+
+export async function syncStaleDerivedStatusesForAllBookings(): Promise<{ updated: number }> {
+  const admin = createAdminClient();
+  const { data: rows, error } = await admin.from("bookings").select("*").in("status", ["pending", "upcoming", "active"]);
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  let updated = 0;
+  for (const row of rows ?? []) {
+    const booking = row as BookingRecord;
+    const nextStatus = computeDerivedStatus({
+      currentStatus: booking.status,
+      paymentStatus: booking.payment_status,
+      startDate: booking.start_date,
+      endDate: booking.end_date,
+    });
+    if (nextStatus === booking.status) {
+      continue;
+    }
+
+    const prevStatus = booking.status;
+    const { data: updatedRow, error: updateError } = await admin
+      .from("bookings")
+      .update({ status: nextStatus })
+      .eq("id", booking.id)
+      .eq("status", booking.status)
+      .select("id")
+      .maybeSingle();
+
+    if (updateError || !updatedRow) {
+      continue;
+    }
+    updated += 1;
+    await markCarPendingTurnoverIfNeeded(admin, booking.car_id, prevStatus, nextStatus);
+  }
+
+  return { updated };
+}
+
+const DISPUTE_REASON = "Customer reported unrecognized booking via secure email link.";
+
+async function notifySecurityAdminsForBooking(bookingId: string) {
+  const admin = createAdminClient();
+  const { data: latest } = await admin.from("bookings").select("*").eq("id", bookingId).maybeSingle();
+  if (!latest) {
+    return;
+  }
+  const b = latest as BookingRecord;
+  const { data: car } =
+    b.car_id != null
+      ? await admin.from("cars").select("name").eq("id", b.car_id).maybeSingle()
+      : { data: null };
+  const carName = formatBookingVehicleName({ ...b, car: car as { name: string } | null });
+  await notifyAdminsSecurityBookingReport(b, carName);
+}
+
+export async function reportBookingNotRecognizedFromEmailToken(token: string): Promise<
+  | { ok: true; message: string }
+  | { ok: false; message: string }
+> {
+  const verified = verifyBookingEmailActionToken(token);
+  if (!verified.ok) {
+    return { ok: false, message: verified.reason };
+  }
+
+  const admin = createAdminClient();
+  const { data: row, error } = await admin.from("bookings").select("*").eq("id", verified.bookingId).maybeSingle();
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+  if (!row) {
+    return { ok: false, message: "Booking not found." };
+  }
+
+  const booking = row as BookingRecord;
+  if (booking.dispute_reported_at) {
+    return { ok: true, message: "We already received a report for this booking. Our team will follow up if needed." };
+  }
+
+  const now = new Date().toISOString();
+
+  if (booking.status === "canceled") {
+    await admin.from("bookings").update({ dispute_reported_at: now }).eq("id", booking.id);
+    await notifySecurityAdminsForBooking(booking.id);
+    return { ok: true, message: "This booking is already canceled. We’ve logged your report." };
+  }
+
+  if (booking.status === "pending" && booking.payment_status === "unpaid") {
+    const { error: upErr } = await admin
+      .from("bookings")
+      .update({
+        status: "canceled",
+        canceled_at: now,
+        dispute_reported_at: now,
+        refund_status: "not_applicable",
+      })
+      .eq("id", booking.id)
+      .eq("status", "pending");
+    if (upErr) {
+      return { ok: false, message: upErr.message };
+    }
+    await notifySecurityAdminsForBooking(booking.id);
+    return {
+      ok: true,
+      message: "We’ve canceled this unpaid hold and flagged it for review. If anything still looks wrong, contact us from our website.",
+    };
+  }
+
+  if (booking.payment_status === "paid" && (booking.status === "upcoming" || booking.status === "active")) {
+    const { error: upErr } = await admin
+      .from("bookings")
+      .update({
+        status: "cancel_requested",
+        cancellation_reason: DISPUTE_REASON,
+        dispute_reported_at: now,
+      })
+      .eq("id", booking.id)
+      .in("status", ["upcoming", "active"]);
+    if (upErr) {
+      return { ok: false, message: upErr.message };
+    }
+    await notifySecurityAdminsForBooking(booking.id);
+    return {
+      ok: true,
+      message:
+        "Thanks — we’ve placed a cancellation request on this reservation and notified our team. You’ll get updates by SMS or email once it’s processed.",
+    };
+  }
+
+  if (booking.status === "cancel_requested") {
+    await admin
+      .from("bookings")
+      .update({ dispute_reported_at: now, cancellation_reason: booking.cancellation_reason ?? DISPUTE_REASON })
+      .eq("id", booking.id);
+    await notifySecurityAdminsForBooking(booking.id);
+    return { ok: true, message: "We’ve added your report to this cancellation request." };
+  }
+
+  await admin.from("bookings").update({ dispute_reported_at: now }).eq("id", booking.id);
+  await notifySecurityAdminsForBooking(booking.id);
+  return { ok: true, message: "We’ve logged your report and our team will review it." };
+}
+
 export async function listBookingsForAdmin() {
+  await syncStaleDerivedStatusesForAllBookings();
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("bookings")
@@ -208,6 +421,7 @@ export async function listBookingsForAdmin() {
 }
 
 export async function listBookingsForUser(userId: string) {
+  await syncStaleDerivedStatusesForUserBookings(userId);
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("bookings")

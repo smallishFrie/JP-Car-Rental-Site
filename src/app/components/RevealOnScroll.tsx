@@ -1,62 +1,51 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { useMemo } from "react";
+import { revealParentVariants, type RevealVariantName } from "@/lib/motion";
 
-export type RevealVariant = "fadeUp" | "slideLeft" | "scaleFade";
+export type RevealVariant = RevealVariantName;
 
 type RevealOnScrollProps = {
   children: React.ReactNode;
   className?: string;
-  /** Default `fadeUp` matches legacy `.reveal-on-scroll` motion. */
+  /** Default matches legacy fade-up reveal. */
   variant?: RevealVariant;
+  /** Delay before reveal (seconds). */
+  delay?: number;
+  once?: boolean;
+  /** Intersection ratio or preset for `viewport.amount`. */
+  amount?: number | "some" | "all";
+  /** `viewport.margin` (Framer Motion). */
+  margin?: string;
 };
 
-const variantClass: Record<Exclude<RevealVariant, "fadeUp">, string> = {
-  slideLeft: "reveal-on-scroll--slide-left",
-  scaleFade: "reveal-on-scroll--scale-fade",
-};
+export default function RevealOnScroll({
+  children,
+  className,
+  variant = "fadeUp",
+  delay = 0,
+  once = true,
+  amount = 0.12,
+  margin = "0px 0px -5% 0px",
+}: RevealOnScrollProps) {
+  const reduceMotion = useReducedMotion();
+  const variants = useMemo(() => revealParentVariants(variant, reduceMotion, delay), [variant, reduceMotion, delay]);
 
-export default function RevealOnScroll({ children, className, variant = "fadeUp" }: RevealOnScrollProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [revealed, setRevealed] = useState(false);
+  const viewport = useMemo(() => ({ once, amount, margin }), [once, amount, margin]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return;
-    }
-
-    const el = ref.current;
-    if (!el) {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setRevealed(true);
-            observer.disconnect();
-            break;
-          }
-        }
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -5% 0px" },
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  const modifier = variant !== "fadeUp" ? variantClass[variant] : "";
-  const classes = ["reveal-on-scroll", modifier, revealed ? "is-revealed" : "", className].filter(Boolean).join(" ");
+  const perspectiveStyle = variant === "flipUp3d" ? ({ perspective: 1200 } as const) : undefined;
 
   return (
-    <div ref={ref} className={classes}>
+    <motion.div
+      className={className}
+      style={perspectiveStyle}
+      variants={variants}
+      initial={reduceMotion ? false : "hidden"}
+      whileInView="visible"
+      viewport={viewport}
+    >
       {children}
-    </div>
+    </motion.div>
   );
 }

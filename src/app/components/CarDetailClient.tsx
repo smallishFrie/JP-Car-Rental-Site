@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { enUS } from "date-fns/locale";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { DayPicker, type DateRange } from "react-day-picker";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Car } from "@/lib/cars";
@@ -10,7 +11,9 @@ import { categoryTokensWithoutTransmission, parseCategoryTokens } from "@/lib/ca
 import CarSpecsRow from "@/app/components/CarSpecsRow";
 import { beginCheckoutAction } from "@/app/cars/[id]/actions";
 import CustomSelect from "@/app/components/CustomSelect";
+import { MotionPressableButton } from "@/app/components/MotionPressable";
 import RevealOnScroll from "@/app/components/RevealOnScroll";
+import { motionSprings } from "@/lib/motion";
 import "react-day-picker/style.css";
 
 type CarDetailClientProps = {
@@ -70,6 +73,7 @@ function sameMonth(a: Date, b: Date) {
 }
 
 export default function CarDetailClient({ car }: CarDetailClientProps) {
+  const reduceMotion = useReducedMotion();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [autoplayTick, setAutoplayTick] = useState(0);
   const [isZooming, setIsZooming] = useState(false);
@@ -516,7 +520,7 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
               className="booking-date-trigger"
               aria-expanded={calendarOpen}
               aria-haspopup="dialog"
-              aria-controls="booking-date-dialog"
+              aria-controls={calendarOpen ? "booking-date-dialog" : undefined}
               aria-labelledby="booking-date-label"
               onClick={() => setCalendarOpen((open) => !open)}
             >
@@ -525,52 +529,61 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
                 ▾
               </span>
             </button>
-            <div
-              className={`booking-calendar-dropdown${calendarOpen ? " booking-calendar-dropdown--open" : ""}`}
-              id="booking-date-dialog"
-              role="dialog"
-              aria-label="Rental calendar"
-              aria-hidden={!calendarOpen}
-              inert={!calendarOpen ? true : undefined}
-              onMouseLeave={() => setHoverDay(undefined)}
-            >
-              <DayPicker
-                mode="single"
-                locale={enUS}
-                className="booking-daypicker-root"
-                selected={selectedStartDay}
-                defaultMonth={selectedStartDay ?? todayDate}
-                onSelect={(day) => {
-                  setFeedback("");
-                  if (!day) {
-                    setStartDate("");
-                    return;
-                  }
-                  if (isDayDisabled(day)) {
-                    setFeedback("That date is unavailable.");
-                    return;
-                  }
-                  for (let offset = 0; offset < rentalDays; offset += 1) {
-                    const candidate = addDaysLocal(startOfLocalDay(day), offset);
-                    if (isDayDisabled(candidate)) {
-                      setFeedback("That range includes unavailable dates. Please choose another start date.");
-                      return;
-                    }
-                  }
-                  setStartDate(formatLocalIsoDate(day));
-                  setCalendarOpen(false);
-                }}
-                disabled={disabledMatchers}
-                onDayMouseEnter={(d) => setHoverDay(d)}
-                modifiers={bookingCalendarModifiers}
-                modifiersClassNames={{
-                  preview: "booking-day-preview",
-                  selectedrange: "booking-day-selectedrange",
-                  stripjoindown: "booking-day-strip-join-down",
-                  stripjoinup: "booking-day-strip-join-up",
-                }}
-              />
-            </div>
+            <AnimatePresence>
+              {calendarOpen ? (
+                <motion.div
+                  layout
+                  key="booking-calendar-panel"
+                  className="booking-calendar-dropdown popover-motion-layer"
+                  id="booking-date-dialog"
+                  role="dialog"
+                  aria-label="Rental calendar"
+                  aria-hidden={false}
+                  initial={{ opacity: 0, y: -8, scale: 0.98, visibility: "hidden" }}
+                  animate={{ opacity: 1, y: 0, scale: 1, visibility: "visible" }}
+                  exit={{ opacity: 0, y: -6, scale: 0.98, visibility: "hidden" }}
+                  transition={reduceMotion ? { duration: 0 } : motionSprings.snappy}
+                  onMouseLeave={() => setHoverDay(undefined)}
+                >
+                  <DayPicker
+                    mode="single"
+                    locale={enUS}
+                    className="booking-daypicker-root"
+                    selected={selectedStartDay}
+                    defaultMonth={selectedStartDay ?? todayDate}
+                    onSelect={(day) => {
+                      setFeedback("");
+                      if (!day) {
+                        setStartDate("");
+                        return;
+                      }
+                      if (isDayDisabled(day)) {
+                        setFeedback("That date is unavailable.");
+                        return;
+                      }
+                      for (let offset = 0; offset < rentalDays; offset += 1) {
+                        const candidate = addDaysLocal(startOfLocalDay(day), offset);
+                        if (isDayDisabled(candidate)) {
+                          setFeedback("That range includes unavailable dates. Please choose another start date.");
+                          return;
+                        }
+                      }
+                      setStartDate(formatLocalIsoDate(day));
+                      setCalendarOpen(false);
+                    }}
+                    disabled={disabledMatchers}
+                    onDayMouseEnter={(d) => setHoverDay(d)}
+                    modifiers={bookingCalendarModifiers}
+                    modifiersClassNames={{
+                      preview: "booking-day-preview",
+                      selectedrange: "booking-day-selectedrange",
+                      stripjoindown: "booking-day-strip-join-down",
+                      stripjoinup: "booking-day-strip-join-up",
+                    }}
+                  />
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
 
           <div className="booking-inline-fields">
@@ -609,9 +622,9 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
             {formattedDayRate} per day x {rentalDays} days = <strong>{formattedTotalPrice}</strong>
           </p>
 
-          <button type="submit" className="booking-submit" disabled={isSubmitting}>
+          <MotionPressableButton type="submit" className="booking-submit" disabled={isSubmitting}>
             {isSubmitting ? "Preparing checkout..." : "Proceed to checkout"}
-          </button>
+          </MotionPressableButton>
         </form>
 
         {feedback ? (

@@ -43,7 +43,7 @@ export async function initCheckoutComponentsSessionAction(input: {
     }
 
     if (String((booking as any).payment_status) === "paid") {
-      return { ok: true, nextUrl: "/account/bookings" };
+      return { ok: true, nextUrl: `/checkout/${bookingId}/result?outcome=success` };
     }
 
     const totalPrice = Number((booking as any).total_price);

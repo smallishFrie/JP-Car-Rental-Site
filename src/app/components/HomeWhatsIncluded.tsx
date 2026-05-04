@@ -1,5 +1,13 @@
+"use client";
+
 import type { ReactNode } from "react";
-import RevealOnScroll from "./RevealOnScroll";
+import { motion, useReducedMotion } from "framer-motion";
+import {
+  revealListContainerVariants,
+  revealListItemVariants,
+  revealReducedItem,
+  revealReducedStaggerContainer,
+} from "@/lib/motion";
 
 const INCLUDED: { title: string; text: string; icon: ReactNode }[] = [
   {
@@ -45,25 +53,40 @@ const INCLUDED: { title: string; text: string; icon: ReactNode }[] = [
 ];
 
 export default function HomeWhatsIncluded() {
+  const reduce = useReducedMotion();
+  const item = reduce ? revealReducedItem : revealListItemVariants;
+  const gridStagger = reduce ? revealReducedStaggerContainer : revealListContainerVariants;
+
   return (
     <section className="home-bottom-section home-included" aria-labelledby="home-included-heading">
-      <RevealOnScroll variant="scaleFade">
-        <h2 className="home-section-heading" id="home-included-heading">
+      <motion.div
+        className="home-included-reveal"
+        initial={reduce ? false : "hidden"}
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.1, margin: "0px 0px -5% 0px" }}
+        variants={{
+          hidden: {},
+          visible: { transition: { staggerChildren: 0.08, delayChildren: 0.04 } },
+        }}
+      >
+        <motion.h2 className="home-section-heading" id="home-included-heading" variants={item}>
           What&apos;s included in the rate
-        </h2>
-        <p className="home-included-subline">Four things you get on every quote—then the fine print lives where you book.</p>
+        </motion.h2>
+        <motion.p className="home-included-subline" variants={item}>
+          Four things you get on every quote—then the fine print lives where you book.
+        </motion.p>
 
-        <div className="home-included-grid">
-          {INCLUDED.map((item) => (
-            <article key={item.title} className="home-included-card">
-              <div className="home-included-icon">{item.icon}</div>
-              <h3 className="home-included-card-title">{item.title}</h3>
-              <p className="home-included-card-text">{item.text}</p>
-            </article>
+        <motion.div className="home-included-grid" variants={gridStagger}>
+          {INCLUDED.map((itemData) => (
+            <motion.article key={itemData.title} className="home-included-card" variants={item}>
+              <div className="home-included-icon">{itemData.icon}</div>
+              <h3 className="home-included-card-title">{itemData.title}</h3>
+              <p className="home-included-card-text">{itemData.text}</p>
+            </motion.article>
           ))}
-        </div>
+        </motion.div>
 
-        <aside className="home-included-callout" aria-label="Additional charges">
+        <motion.aside className="home-included-callout" aria-label="Additional charges" variants={item}>
           <div className="home-included-callout-icon" aria-hidden>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
@@ -74,8 +97,8 @@ export default function HomeWhatsIncluded() {
             <strong>Mileage, fuel, tolls, and add-ons</strong> are itemized on each car page and again at checkout—nothing
             hidden for pickup day.
           </p>
-        </aside>
-      </RevealOnScroll>
+        </motion.aside>
+      </motion.div>
     </section>
   );
 }

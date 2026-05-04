@@ -1,5 +1,6 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
 import { useId, useState } from "react";
 import RevealOnScroll from "./RevealOnScroll";
 
@@ -39,6 +40,7 @@ const FAQ_ITEMS: { question: string; answer: string }[] = [
 export default function HomeFaq() {
   const baseId = useId();
   const [openRows, setOpenRows] = useState<ReadonlySet<number>>(() => new Set());
+  const reduce = useReducedMotion();
 
   function toggleRow(index: number) {
     setOpenRows((prev) => {
@@ -78,17 +80,31 @@ export default function HomeFaq() {
                 >
                   <span className="home-faq-trigger-label">{item.question}</span>
                 </button>
-                <div
+                <motion.div
                   id={panelId}
                   role="region"
                   aria-labelledby={triggerId}
-                  className="home-faq-panel"
                   aria-hidden={!isOpen}
+                  className="home-faq-panel"
+                  initial={false}
+                  animate={{
+                    height: isOpen ? "auto" : 0,
+                    opacity: isOpen ? 1 : 0,
+                  }}
+                  transition={
+                    reduce
+                      ? { duration: 0 }
+                      : {
+                          height: { type: "tween", duration: 0.38, ease: [0.22, 1, 0.36, 1] },
+                          opacity: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
+                        }
+                  }
+                  style={{ overflow: "hidden" }}
                 >
                   <div className="home-faq-panel-inner">
                     <p className="home-faq-answer">{item.answer}</p>
                   </div>
-                </div>
+                </motion.div>
               </div>
             );
           })}

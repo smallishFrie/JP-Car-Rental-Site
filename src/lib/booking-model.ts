@@ -40,6 +40,7 @@ export type BookingRecord = {
   paid_at: string | null;
   created_at: string;
   updated_at: string;
+  dispute_reported_at?: string | null;
 };
 
 export function formatBookingVehicleName(

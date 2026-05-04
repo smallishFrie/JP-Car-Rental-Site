@@ -22,6 +22,8 @@ export type CarRecord = {
   card_image_url: string;
   gallery_image_urls: string[];
   is_active: boolean;
+  /** When true, vehicle is hidden from the public fleet until an admin confirms turnover. */
+  pending_turnover?: boolean;
   passenger_capacity?: number | null;
   /** Admin only: bookings whose status still requires the car row (not completed/canceled). */
   booking_count?: number;
@@ -92,6 +94,7 @@ export async function listCars(): Promise<Car[]> {
     .from("cars")
     .select("*")
     .eq("is_active", true)
+    .eq("pending_turnover", false)
     .order("created_at", { ascending: true });
 
   if (error || !data?.length) {
@@ -112,6 +115,7 @@ export async function getCarById(id: string): Promise<Car | null> {
     .select("*")
     .eq("id", id)
     .eq("is_active", true)
+    .eq("pending_turnover", false)
     .maybeSingle();
 
   if (error || !data) {
@@ -170,6 +174,7 @@ export async function upsertCar(input: {
   cardImageUrl: string;
   galleryImageUrls: string[];
   isActive?: boolean;
+  pendingTurnover?: boolean;
   passengerCapacity: number | null;
 }): Promise<string> {
   const supabase = await createClient();
@@ -185,6 +190,7 @@ export async function upsertCar(input: {
     card_image_url: input.cardImageUrl,
     gallery_image_urls: input.galleryImageUrls,
     is_active: input.isActive ?? true,
+    pending_turnover: input.pendingTurnover ?? false,
     passenger_capacity: input.passengerCapacity,
   };
 

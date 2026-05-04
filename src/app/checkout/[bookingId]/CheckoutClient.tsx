@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { MotionPressableButton } from "@/app/components/MotionPressable";
 import RevealOnScroll from "@/app/components/RevealOnScroll";
 import { initCheckoutComponentsSessionAction } from "@/app/checkout/[bookingId]/actions";
 import { XenditComponents } from "xendit-components-web";
@@ -88,7 +89,8 @@ export default function CheckoutClient(props: {
             typeof fromDetail === "string" && fromDetail.trim()
               ? fromDetail
               : "A payment error occurred. Please try again.";
-          if (mounted) setMessage(msg);
+          const q = encodeURIComponent(msg.slice(0, 400));
+          window.location.href = `/checkout/${props.bookingId}/result?outcome=failed&reason=${q}`;
         });
 
         components.addEventListener("init", () => {
@@ -109,10 +111,10 @@ export default function CheckoutClient(props: {
           if (mounted) setIsReadyToSubmit(false);
         });
         components.addEventListener("session-complete", () => {
-          window.location.href = "/account/bookings";
+          window.location.href = `/checkout/${props.bookingId}/result?outcome=success`;
         });
         components.addEventListener("session-expired-or-canceled", () => {
-          if (mounted) setMessage("Payment session expired or was canceled. Please try again.");
+          window.location.href = `/checkout/${props.bookingId}/result?outcome=canceled`;
         });
       } catch (error) {
         setMessage(error instanceof Error ? error.message : "Failed to initialize payment.");
@@ -168,7 +170,7 @@ export default function CheckoutClient(props: {
 
         {componentsSdkKey ? <div id="xendit-components-container" /> : null}
 
-        <button
+        <MotionPressableButton
           type="button"
           className="auth-primary"
           disabled={
@@ -184,7 +186,7 @@ export default function CheckoutClient(props: {
           }}
         >
           {payButtonLabel}
-        </button>
+        </MotionPressableButton>
 
         {message ? <p className="auth-message">{message}</p> : null}
         <p className="admin-empty">

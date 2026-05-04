@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import CheckoutClient from "@/app/checkout/[bookingId]/CheckoutClient";
-import SiteHeader from "@/app/components/SiteHeader";
 import { getCarById } from "@/lib/cars";
 import type { BookingRecord } from "@/lib/booking-model";
 import { createClient } from "@/lib/supabase/server";
@@ -35,9 +34,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
   const carName = car?.name ?? row.car_display_name?.trim() ?? "Vehicle";
 
   return (
-    <>
-      <SiteHeader />
-    <main className="auth-main">
+    <main className="auth-main auth-main--no-site-header">
       <CheckoutClient
         bookingId={id}
         carName={carName}
@@ -48,7 +45,6 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
         customerEmail={String(row.customer_email ?? "") || null}
       />
     </main>
-    </>
   );
 }
 

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signInWithEmail } from "@/app/auth/actions";
-import RevealOnScroll from "@/app/components/RevealOnScroll";
+import AuthShellMotion from "@/app/components/AuthShellMotion";
+import { MotionPressableButton } from "@/app/components/MotionPressable";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -30,9 +31,9 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   return (
     <main className="auth-main auth-main--no-site-header">
       <section className="auth-shell">
-        <RevealOnScroll className="auth-shell-reveal">
+        <AuthShellMotion>
           <header className="auth-header">
-            <h1 className="page-intro-fade">Welcome back</h1>
+            <h1>Welcome back</h1>
             <p>Sign in to manage your bookings.</p>
           </header>
 
@@ -50,9 +51,9 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
               Password
               <input type="password" name="password" required minLength={6} />
             </label>
-            <button type="submit" className="auth-primary">
+            <MotionPressableButton type="submit" className="auth-primary">
               Sign in
-            </button>
+            </MotionPressableButton>
           </form>
 
           <p className="auth-back-link">
@@ -62,7 +63,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             New here?{" "}
             <Link href={`/auth/create-account?returnTo=${encodeURIComponent(safeReturnTo)}`}>→ Create an account</Link>
           </p>
-        </RevealOnScroll>
+        </AuthShellMotion>
       </section>
     </main>
   );

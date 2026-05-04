@@ -1,8 +1,10 @@
 "use client";
 
+import { MotionPressableButton } from "@/app/components/MotionPressable";
+import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import type { CarRecord } from "@/lib/cars";
-import { deleteCarAction, saveCarAction } from "@/app/admin/actions";
+import { confirmCarTurnoverAction, deleteCarAction, saveCarAction } from "@/app/admin/actions";
 
 type AdminCarManagerProps = {
   initialCars: CarRecord[];
@@ -50,6 +52,7 @@ function mapCarToForm(car: CarRecord): FormState {
 }
 
 export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
+  const router = useRouter();
   const [cars, setCars] = useState<CarRecord[]>(initialCars);
   const [selectedCarId, setSelectedCarId] = useState<string>("");
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -120,6 +123,31 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
     });
   }
 
+  async function handleConfirmTurnover() {
+    const id = selectedCar?.id?.trim();
+    if (!id) {
+      setMessage("Select a car first.");
+      return;
+    }
+
+    const fd = new FormData();
+    fd.set("carId", id);
+
+    startTransition(async () => {
+      try {
+        await confirmCarTurnoverAction(fd);
+        setCars((currentCars) =>
+          currentCars.map((car) => (car.id === id ? { ...car, pending_turnover: false } : car)),
+        );
+        setMessage("Turnover confirmed — this car is available on the site again.");
+        router.refresh();
+      } catch (error) {
+        const errMessage = error instanceof Error ? error.message : "Something went wrong.";
+        setMessage(errMessage);
+      }
+    });
+  }
+
   async function handleDelete() {
     const id = form.id.trim();
     if (!id) {
@@ -170,6 +198,7 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
                 <span>
                   {car.category} - {car.tagline}
                   {!car.is_active ? " (Unavailable)" : ""}
+                  {car.pending_turnover ? " · Needs turnover" : ""}
                 </span>
               </button>
             </li>
@@ -179,6 +208,17 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
 
       <article className="admin-card">
         <h2>{isEditMode ? "Edit car" : "Create car"}</h2>
+        {selectedCar?.pending_turnover ? (
+          <div className="admin-turnover-banner" role="region" aria-label="Turnover confirmation">
+            <p>
+              <strong>Turnover required.</strong> This vehicle finished an on-rent period. Confirm turnover before it can
+              appear in the public fleet again.
+            </p>
+            <MotionPressableButton type="button" className="auth-primary" disabled={isPending} onClick={handleConfirmTurnover}>
+              {isPending ? "Working…" : "Confirm turnover & return to listing"}
+            </MotionPressableButton>
+          </div>
+        ) : null}
         <form className="admin-form" action={handleSubmit}>
           <input type="hidden" name="id" value={form.id} />
           <input type="hidden" name="existingCardImage" value={form.existingCardImage} />
@@ -299,9 +339,9 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
             </div>
           ) : null}
 
-          <button type="submit" className="auth-primary" disabled={isPending}>
+          <MotionPressableButton type="submit" className="auth-primary" disabled={isPending}>
             {isPending ? "Saving..." : isEditMode ? "Save changes" : "Create car"}
-          </button>
+          </MotionPressableButton>
           {isEditMode ? (
             !canHardDelete ? (
               <div className="admin-delete-blocked" role="note">

@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCarById } from "@/lib/cars";
 import { checkCarAvailability, createPendingBooking } from "@/lib/bookings";
+import { notifyAdminsPendingBookingCreated } from "@/lib/notifications/booking-admin-events";
 import { rateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
@@ -116,6 +117,7 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
       driverLicenseNumber,
       driverNotes,
     });
+    void notifyAdminsPendingBookingCreated(booking, car.name).catch(() => undefined);
     return { ok: true, redirectTo: `/checkout/${booking.id}` };
   } catch (error) {
     return {

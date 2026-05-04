@@ -19,7 +19,7 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
     <main className="car-page-main car-page-main--no-site-header">
       <section className="car-page-shell">
         <p className="car-page-back">
-          <Link href="/">← Back to cars</Link>
+          <Link href="/#cars">← Back to cars</Link>
         </p>
         <CarDetailClient car={car} />
       </section>

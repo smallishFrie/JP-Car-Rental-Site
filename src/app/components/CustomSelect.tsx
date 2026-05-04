@@ -1,6 +1,8 @@
 "use client";
 
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { motionSprings } from "@/lib/motion";
 
 export type CustomSelectOption = { value: string; label: string };
 
@@ -32,6 +34,7 @@ export default function CustomSelect({
   const uid = useId();
   const listId = `${uid}-list`;
   const triggerId = id ?? `${uid}-trigger`;
+  const reduce = useReducedMotion();
 
   const selectedLabel = useMemo(() => {
     const match = options.find((o) => o.value === value);
@@ -77,6 +80,8 @@ export default function CustomSelect({
     });
   }, [open]);
 
+  const panelTransition = reduce ? { duration: 0 } : motionSprings.snappy;
+
   return (
     <div className={`custom-select-field${className ? ` ${className}` : ""}`} ref={containerRef}>
       <button
@@ -86,7 +91,7 @@ export default function CustomSelect({
         className="booking-date-trigger"
         aria-expanded={open}
         aria-haspopup="listbox"
-        aria-controls={listId}
+        aria-controls={open ? listId : undefined}
         onClick={() => setOpen((o) => !o)}
       >
         <span>{selectedLabel}</span>
@@ -97,31 +102,40 @@ export default function CustomSelect({
           ▾
         </span>
       </button>
-      <div
-        className={`custom-select-dropdown${open ? " custom-select-dropdown--open" : ""}`}
-        id={listId}
-        role="listbox"
-        aria-label={optionsAriaLabel}
-        aria-hidden={!open}
-        inert={!open ? true : undefined}
-      >
-        {options.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            role="option"
-            aria-selected={option.value === value}
-            className={`custom-select-option${option.value === value ? " custom-select-option-selected" : ""}`}
-            onClick={() => {
-              onChange(option.value);
-              setOpen(false);
-              triggerRef.current?.focus();
-            }}
+      <AnimatePresence>
+        {open ? (
+          <motion.div
+            layout
+            key="custom-select-panel"
+            className="custom-select-dropdown popover-motion-layer"
+            id={listId}
+            role="listbox"
+            aria-label={optionsAriaLabel}
+            aria-hidden={false}
+            initial={{ opacity: 0, y: -8, scale: 0.98, visibility: "hidden" }}
+            animate={{ opacity: 1, y: 0, scale: 1, visibility: "visible" }}
+            exit={{ opacity: 0, y: -6, scale: 0.98, visibility: "hidden" }}
+            transition={panelTransition}
           >
-            {option.label}
-          </button>
-        ))}
-      </div>
+            {options.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                role="option"
+                aria-selected={option.value === value}
+                className={`custom-select-option${option.value === value ? " custom-select-option-selected" : ""}`}
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                  triggerRef.current?.focus();
+                }}
+              >
+                {option.label}
+              </button>
+            ))}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

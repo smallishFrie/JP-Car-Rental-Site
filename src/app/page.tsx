@@ -1,5 +1,7 @@
 import HeroCopy from "./components/HeroCopy";
+import HeroParallaxBg from "./components/HeroParallaxBg";
 import HomeContactStrip from "./components/HomeContactStrip";
+import HomeCredibilityStrip from "./components/HomeCredibilityStrip";
 import HomeFaq from "./components/HomeFaq";
 import HomeHowItWorks from "./components/HomeHowItWorks";
 import HomeTrustStrip from "./components/HomeTrustStrip";
@@ -19,29 +21,40 @@ export default async function Home() {
         <SiteHeader />
 
         <section className="hero-image-section">
-          <div aria-hidden="true" />
+          <HeroParallaxBg />
+          <div className="hero-image-section-overlay" aria-hidden="true" />
           <HeroCopy />
         </section>
 
         <main className="site-content">
           <section className="content-canvas" id="cars" aria-label="Available rental cars">
-            <div className="home-prelude">
-              <HomeTrustStrip />
-              <HomeHowItWorks />
+            <HomeCredibilityStrip />
+
+            <div className="home-section home-section--prelude">
+              <div className="home-prelude">
+                <HomeTrustStrip />
+                <HomeHowItWorks />
+              </div>
             </div>
-            <div className="home-cars-faq-split" aria-hidden="true">
+
+            <div className="home-cars-faq-split" aria-hidden="true" id="available-cars-scroll-mark">
               <span className="home-cars-faq-split-line" />
             </div>
-            <CarsBrowser cars={cars} />
+
+            <div className="home-section home-section--fleet">
+              <CarsBrowser cars={cars} />
+            </div>
 
             <div className="home-cars-faq-split" aria-hidden="true">
               <span className="home-cars-faq-split-line" />
             </div>
 
-            <div className="home-bottom-stack">
-              <HomeFaq />
-              <HomeContactStrip />
-              <HomeWhatsIncluded />
+            <div className="home-section home-section--bottom">
+              <div className="home-bottom-stack">
+                <HomeFaq />
+                <HomeContactStrip />
+                <HomeWhatsIncluded />
+              </div>
             </div>
           </section>
         </main>

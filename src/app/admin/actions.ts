@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
 import { deleteCarById, requireAdmin, uploadCarImage, upsertCar } from "@/lib/cars";
 import {
   cleanupExpiredPendingBookings,
@@ -60,6 +61,13 @@ export async function saveCarAction(formData: FormData) {
   const cardImageFile = asFile(formData.get("cardImage"));
   const galleryFiles = formData.getAll("galleryImages").filter((item): item is File => item instanceof File && item.size > 0);
 
+  let pendingTurnover = false;
+  if (id) {
+    const supabase = await createClient();
+    const { data: existingCar } = await supabase.from("cars").select("pending_turnover").eq("id", id).maybeSingle();
+    pendingTurnover = Boolean((existingCar as { pending_turnover?: boolean } | null)?.pending_turnover);
+  }
+
   const cardImageUrl = cardImageFile
     ? await uploadCarImage(cardImageFile, "cards")
     : existingCardImage;
@@ -85,6 +93,7 @@ export async function saveCarAction(formData: FormData) {
     cardImageUrl,
     galleryImageUrls,
     isActive,
+    pendingTurnover: id ? pendingTurnover : false,
     passengerCapacity,
   });
 
@@ -138,4 +147,22 @@ export async function confirmCancellationAction(formData: FormData) {
     rawAmount === null || String(rawAmount).trim() === "" ? 0 : parseNumber(rawAmount, "Refund amount");
   await confirmCancellationForAdmin(id, refundAmountPhp);
   revalidatePath("/admin");
+}
+
+export async function confirmCarTurnoverAction(formData: FormData) {
+  await requireAdmin();
+  const carId = String(formData.get("carId") ?? "").trim();
+  if (!carId) {
+    throw new Error("Car id is required.");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("cars").update({ pending_turnover: false }).eq("id", carId);
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath(`/cars/${carId}`);
 }
