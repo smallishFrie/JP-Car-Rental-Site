@@ -22,8 +22,8 @@
   --radius-md: 14px;
   --radius-lg: 20px;
   --radius-pill: 980px;
-  /* Bottom scroll pad: clears fixed footer on wide viewports (taller than 15rem); phones override with in-flow footer */
-  --site-content-scroll-pad: clamp(15rem, 30vh, 26rem);
+  /* Bottom scroll pad: must clear fixed desktop footer even when footer stacks taller on medium screens. */
+  --site-content-scroll-pad: clamp(19rem, 35vh, 29rem);
   --background: var(--bg-page);
   --foreground: var(--text);
   /* Homepage section rhythm: alternate surfaces without new “card walls” */
