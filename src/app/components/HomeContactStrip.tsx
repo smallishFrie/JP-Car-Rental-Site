@@ -1,7 +1,17 @@
 import Link from "next/link";
 import RevealOnScroll from "./RevealOnScroll";
+import { hasSupabaseEnv } from "@/lib/supabase/env";
+import { createClient } from "@/lib/supabase/server";
 
-export default function HomeContactStrip() {
+export default async function HomeContactStrip() {
+  let isSignedIn = false;
+
+  if (hasSupabaseEnv()) {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    isSignedIn = Boolean(data.user);
+  }
+
   return (
     <section className="home-bottom-section home-contact-strip" aria-labelledby="home-contact-heading">
       <RevealOnScroll variant="slideLeft">
@@ -26,9 +36,11 @@ export default function HomeContactStrip() {
             <p className="home-contact-body">
               Signed-in customers can review trips and messages in one place.
             </p>
-            <Link href="/auth/sign-in" className="home-contact-link">
-              Sign in
-            </Link>
+            {!isSignedIn ? (
+              <Link href="/auth/sign-in" className="home-contact-link">
+                Sign in
+              </Link>
+            ) : null}
           </div>
         </div>
       </RevealOnScroll>

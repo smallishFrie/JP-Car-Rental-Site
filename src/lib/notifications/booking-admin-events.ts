@@ -9,60 +9,70 @@ function moneyPhp(n: number) {
 
 export async function notifyAdminsPendingBookingCreated(booking: BookingRecord, carName: string) {
   const total = moneyPhp(Number(booking.total_price));
-  const html = adminEventEmailHtml("New booking (pending payment)", [
+  const driverNotes = booking.driver_notes?.trim() || "";
+  const lines = [
     { label: "Booking ID", value: booking.id },
     { label: "Customer", value: booking.customer_name },
     { label: "Vehicle", value: carName },
     { label: "Dates", value: `${booking.start_date} → ${booking.end_date}` },
     { label: "Total", value: total },
-  ]);
+    ...(driverNotes ? [{ label: "Driver notes", value: driverNotes }] : []),
+  ];
+
+  const html = adminEventEmailHtml("New booking (pending payment)", lines);
   await notifyAdmins({
     subject: `JP Car Rental — new checkout ${booking.id.slice(0, 8)}…`,
-    text: `A customer started checkout (pending payment).\nID: ${booking.id}\nCustomer: ${booking.customer_name}\nCar: ${carName}\nDates: ${booking.start_date} to ${booking.end_date}\nTotal: ${total}`,
+    text: `A customer started checkout (pending payment).\nID: ${booking.id}\nCustomer: ${booking.customer_name}\nCar: ${carName}\nDates: ${booking.start_date} to ${booking.end_date}\nTotal: ${total}${driverNotes ? `\nDriver notes: ${driverNotes}` : ""}`,
     html,
   });
 }
 
 export async function notifyAdminsPendingBookingCanceled(booking: BookingRecord, carName: string) {
+  const driverNotes = booking.driver_notes?.trim() || "";
   const html = adminEventEmailHtml("Booking canceled (unpaid)", [
     { label: "Booking ID", value: booking.id },
     { label: "Customer", value: booking.customer_name },
     { label: "Vehicle", value: carName },
     { label: "Dates", value: `${booking.start_date} → ${booking.end_date}` },
+    ...(driverNotes ? [{ label: "Driver notes", value: driverNotes }] : []),
   ]);
   await notifyAdmins({
     subject: `JP Car Rental — unpaid booking canceled ${booking.id.slice(0, 8)}…`,
-    text: `Customer canceled an unpaid pending booking.\nID: ${booking.id}\nCustomer: ${booking.customer_name}\nCar: ${carName}`,
+    text: `Customer canceled an unpaid pending booking.\nID: ${booking.id}\nCustomer: ${booking.customer_name}\nCar: ${carName}${driverNotes ? `\nDriver notes: ${driverNotes}` : ""}`,
     html,
   });
 }
 
 export async function notifyAdminsCancellationRequested(booking: BookingRecord, carName: string) {
+  const driverNotes = booking.driver_notes?.trim() || "";
   const html = adminEventEmailHtml("Cancellation requested", [
     { label: "Booking ID", value: booking.id },
     { label: "Customer", value: booking.customer_name },
     { label: "Vehicle", value: carName },
     { label: "Dates", value: `${booking.start_date} → ${booking.end_date}` },
     { label: "Customer note", value: booking.cancellation_reason?.trim() || "—" },
+    ...(driverNotes ? [{ label: "Driver notes", value: driverNotes }] : []),
   ]);
   await notifyAdmins({
     subject: `JP Car Rental — cancel request ${booking.id.slice(0, 8)}…`,
-    text: `Customer requested cancellation.\nID: ${booking.id}\nCustomer: ${booking.customer_name}\nCar: ${carName}\nNote: ${booking.cancellation_reason ?? "—"}`,
+    text: `Customer requested cancellation.\nID: ${booking.id}\nCustomer: ${booking.customer_name}\nCar: ${carName}\nNote: ${booking.cancellation_reason ?? "—"}${driverNotes ? `\nDriver notes: ${driverNotes}` : ""}`,
     html,
   });
 }
 
 export async function notifyAdminsSecurityBookingReport(booking: BookingRecord, carName: string) {
+  const driverNotes = booking.driver_notes?.trim() || "";
   const html = adminEventEmailHtml("Security: “This wasn’t me” report", [
     { label: "Booking ID", value: booking.id },
     { label: "Customer", value: booking.customer_name },
     { label: "Vehicle", value: carName },
     { label: "Status", value: booking.status },
     { label: "Payment", value: booking.payment_status },
+    ...(driverNotes ? [{ label: "Driver notes", value: driverNotes }] : []),
   ]);
   await notifyAdmins({
     subject: `JP Car Rental — SECURITY report ${booking.id.slice(0, 8)}…`,
-    text: `Customer used the email security link.\nID: ${booking.id}\nStatus: ${booking.status}\nPayment: ${booking.payment_status}\nCar: ${carName}`,
+    text: `Customer used the email security link.\nID: ${booking.id}\nStatus: ${booking.status}\nPayment: ${booking.payment_status}\nCar: ${carName}${driverNotes ? `\nDriver notes: ${driverNotes}` : ""}`,
     html,
   });
 }

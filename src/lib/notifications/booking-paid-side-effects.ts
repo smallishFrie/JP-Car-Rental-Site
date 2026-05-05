@@ -48,12 +48,14 @@ export async function notifyAfterBookingPaid(booking: BookingRecord) {
 
   const smsMessage = `JP Car Rental: Booking confirmed for ${booking.customer_name} from ${booking.start_date} to ${booking.end_date}.`;
 
+  const driverNotes = booking.driver_notes?.trim() || "";
   const adminHtml = adminEventEmailHtml("Paid booking confirmed", [
     { label: "Booking ID", value: booking.id },
     { label: "Customer", value: booking.customer_name },
     { label: "Vehicle", value: carName },
     { label: "Dates", value: `${booking.start_date} → ${booking.end_date}` },
     { label: "Total", value: formattedTotal },
+    ...(driverNotes ? [{ label: "Driver notes", value: driverNotes }] : []),
   ]);
 
   await Promise.allSettled([
@@ -68,7 +70,7 @@ export async function notifyAfterBookingPaid(booking: BookingRecord) {
       : Promise.resolve(),
     notifyAdmins({
       subject: `JP Car Rental — paid booking ${booking.id.slice(0, 8)}…`,
-      text: `Paid booking confirmed.\nID: ${booking.id}\nCustomer: ${booking.customer_name}\nCar: ${carName}\nDates: ${booking.start_date} to ${booking.end_date}\nTotal: ${formattedTotal}`,
+      text: `Paid booking confirmed.\nID: ${booking.id}\nCustomer: ${booking.customer_name}\nCar: ${carName}\nDates: ${booking.start_date} to ${booking.end_date}\nTotal: ${formattedTotal}${driverNotes ? `\nDriver notes: ${driverNotes}` : ""}`,
       html: adminHtml,
     }),
   ]);

@@ -1,7 +1,16 @@
 import Link from "next/link";
+import { hasSupabaseEnv } from "@/lib/supabase/env";
+import { createClient } from "@/lib/supabase/server";
 
-export default function SiteFooter() {
+export default async function SiteFooter() {
   const year = new Date().getFullYear();
+  let isSignedIn = false;
+
+  if (hasSupabaseEnv()) {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    isSignedIn = Boolean(data.user);
+  }
 
   return (
     <footer className="site-footer" aria-label="Site footer">
@@ -18,11 +27,19 @@ export default function SiteFooter() {
               <li>
                 <Link href="/#cars">Browse vehicles</Link>
               </li>
-              <li>
-                <Link href="/auth/sign-in">Sign in</Link>
-              </li>
+              {!isSignedIn ? (
+                <li>
+                  <Link href="/auth/sign-in">Sign in</Link>
+                </li>
+              ) : null}
               <li>
                 <Link href="/auth/create-account">Create account</Link>
+              </li>
+              <li>
+                <Link href="/privacy-policy">Privacy policy</Link>
+              </li>
+              <li>
+                <Link href="/terms-of-service">Terms of service</Link>
               </li>
             </ul>
           </div>

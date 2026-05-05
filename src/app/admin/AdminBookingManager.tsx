@@ -290,6 +290,11 @@ export default function AdminBookingManager({ initialBookings }: { initialBookin
                   <p>
                     <strong>Payment:</strong> {booking.payment_status} ({booking.payment_reference || "No ref yet"})
                   </p>
+                  {booking.driver_notes?.trim() ? (
+                    <p>
+                      <strong>Driver notes:</strong> {booking.driver_notes.trim()}
+                    </p>
+                  ) : null}
                   {(selectedStatus === "cancel_requested" || selectedStatus === "canceled") && (
                     <p>
                       <strong>Refund status:</strong> {refundStatusLabel(rs)}

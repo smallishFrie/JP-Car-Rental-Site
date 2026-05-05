@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signInWithEmail } from "@/app/auth/actions";
 import AuthShellMotion from "@/app/components/AuthShellMotion";
+import PasswordInput from "@/app/components/PasswordInput";
 import { MotionPressableButton } from "@/app/components/MotionPressable";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
@@ -47,10 +48,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
               Email
               <input type="email" name="email" required />
             </label>
-            <label>
-              Password
-              <input type="password" name="password" required minLength={6} />
-            </label>
+            <PasswordInput label="Password" name="password" required minLength={6} autoComplete="current-password" />
             <MotionPressableButton type="submit" className="auth-primary">
               Sign in
             </MotionPressableButton>

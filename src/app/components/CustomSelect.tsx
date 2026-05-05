@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { motionSprings } from "@/lib/motion";
 
-export type CustomSelectOption = { value: string; label: string };
+export type CustomSelectOption = { value: string; label: React.ReactNode };
 
 type CustomSelectProps = {
   options: CustomSelectOption[];

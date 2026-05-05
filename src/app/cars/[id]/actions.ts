@@ -82,7 +82,7 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
       rentalDays: formData.get("rentalDays"),
       customerName: formData.get("customerName"),
       customerPhone: formData.get("customerPhone"),
-      customerEmail: formData.get("customerEmail"),
+      customerEmail: user.email ?? formData.get("customerEmail"),
       pickupLocation: formData.get("pickupLocation"),
       driverLicenseNumber: formData.get("driverLicenseNumber"),
       driverNotes: formData.get("driverNotes"),

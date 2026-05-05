@@ -6,6 +6,8 @@ import { enUS } from "date-fns/locale";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { DayPicker, type DateRange } from "react-day-picker";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getCountries, getCountryCallingCode, type CountryCode } from "libphonenumber-js";
+import * as FlagIcons from "country-flag-icons/react/3x2";
 import type { Car } from "@/lib/cars";
 import { categoryTokensWithoutTransmission, parseCategoryTokens } from "@/lib/carDisplay";
 import CarSpecsRow from "@/app/components/CarSpecsRow";
@@ -81,8 +83,8 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
   const [rentalDays, setRentalDays] = useState(2);
   const [location, setLocation] = useState(car.locations[0]?.value ?? "");
   const [fullName, setFullName] = useState("");
+  const [phoneCountryIso, setPhoneCountryIso] = useState<CountryCode>("PH");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const [email, setEmail] = useState("");
   const [driverLicenseNumber, setDriverLicenseNumber] = useState("");
   const [driverNotes, setDriverNotes] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -108,6 +110,44 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
     () => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(totalPrice),
     [totalPrice],
   );
+
+  const phoneCountries = useMemo(() => getCountries(), []);
+
+  const phoneCountryOptions = useMemo(() => {
+    const options = phoneCountries.map((iso) => {
+      const dialCode = `+${getCountryCallingCode(iso)}`;
+      const Flag = (FlagIcons as Record<string, React.ComponentType<{ title?: string; className?: string }>>)[iso];
+      return {
+        value: iso,
+        label: (
+          <span className="phone-country-option">
+            {Flag ? <Flag title={iso} className="phone-country-flag" /> : null}
+            <span className="phone-country-dial">{dialCode}</span>
+          </span>
+        ),
+        sortKey: dialCode,
+      };
+    });
+
+    options.sort((a, b) => a.sortKey.localeCompare(b.sortKey, "en", { sensitivity: "base" }));
+
+    // Pin PH to the top since it's the primary market.
+    const phIndex = options.findIndex((o) => o.value === "PH");
+    if (phIndex > 0) {
+      const [ph] = options.splice(phIndex, 1);
+      options.unshift(ph);
+    }
+
+    return options.map(({ sortKey: _sortKey, ...rest }) => rest);
+  }, [phoneCountries]);
+
+  const phoneDialCode = useMemo(() => {
+    try {
+      return `+${getCountryCallingCode(phoneCountryIso)}`;
+    } catch {
+      return "+";
+    }
+  }, [phoneCountryIso]);
   const endDate = useMemo(() => {
     if (!startDate) {
       return "";
@@ -345,8 +385,7 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
       formData.set("pickupLocation", location);
       formData.set("startDate", startDate);
       formData.set("customerName", fullName);
-      formData.set("customerPhone", phoneNumber);
-      formData.set("customerEmail", email);
+      formData.set("customerPhone", `${phoneDialCode} ${phoneNumber}`.trim());
       formData.set("driverLicenseNumber", driverLicenseNumber);
       formData.set("driverNotes", driverNotes);
 
@@ -587,21 +626,29 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
           </div>
 
           <div className="booking-inline-fields">
-            <label>
+            <label className="booking-full-name-field">
               Full name
               <input type="text" value={fullName} onChange={(event) => setFullName(event.target.value)} required />
-            </label>
-
-            <label>
-              Phone number
-              <input type="tel" value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} required />
             </label>
           </div>
 
           <div className="booking-inline-fields">
             <label>
-              Email (for receipt)
-              <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+              Phone number
+              <div className="booking-phone-input-row">
+                <CustomSelect
+                  options={phoneCountryOptions}
+                  value={phoneCountryIso}
+                  onChange={(value) => {
+                    if ((phoneCountries as readonly string[]).includes(value)) {
+                      setPhoneCountryIso(value as CountryCode);
+                    }
+                  }}
+                  optionsAriaLabel="Phone country code"
+                  className="custom-select--phone-country"
+                />
+                <input type="tel" value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} required />
+              </div>
             </label>
             <label>
               Driver license number

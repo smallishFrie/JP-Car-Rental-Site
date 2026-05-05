@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { signUpWithEmail } from "@/app/auth/actions";
 import AuthShellMotion from "@/app/components/AuthShellMotion";
+import PasswordInput from "@/app/components/PasswordInput";
 import { MotionPressableButton } from "@/app/components/MotionPressable";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
@@ -48,10 +49,14 @@ export default async function CreateAccountPage({
               Email
               <input type="email" name="email" required />
             </label>
-            <label>
-              Password
-              <input type="password" name="password" required minLength={6} />
-            </label>
+            <PasswordInput label="Password" name="password" required minLength={6} autoComplete="new-password" />
+            <PasswordInput
+              label="Confirm password"
+              name="confirmPassword"
+              required
+              minLength={6}
+              autoComplete="new-password"
+            />
             <MotionPressableButton type="submit" className="auth-primary">
               Create account
             </MotionPressableButton>

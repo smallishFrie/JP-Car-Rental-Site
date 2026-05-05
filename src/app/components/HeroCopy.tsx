@@ -1,10 +1,14 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import { motionSprings } from "@/lib/motion";
 import { useHeroMotion } from "./hero-motion-context";
 import { MotionPressableLink } from "./MotionPressable";
 import { scrollToAvailableCarsHeader } from "@/lib/scrollToAvailableCars";
+import { hasSupabaseEnv } from "@/lib/supabase/env";
+import { createClient } from "@/lib/supabase/client";
 
 function scrollToCars(event: React.MouseEvent<HTMLAnchorElement>) {
   event.preventDefault();
@@ -73,6 +77,24 @@ export default function HeroCopy() {
   const reduce = useReducedMotion();
   const heroMotion = useHeroMotion();
   const lv = lineItem(reduce);
+  const [user, setUser] = useState<User | null | undefined>(() => (hasSupabaseEnv() ? undefined : null));
+
+  useEffect(() => {
+    if (!hasSupabaseEnv()) return;
+
+    const supabase = createClient();
+    void supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const showSignInCta = !hasSupabaseEnv() || user === null;
 
   return (
     <motion.div className="hero-copy" style={heroMotion ? { y: heroMotion.textY } : undefined}>
@@ -114,9 +136,11 @@ export default function HeroCopy() {
           <MotionPressableLink href="#cars" className="learn-more-box" onClick={scrollToCars}>
             Book now
           </MotionPressableLink>
-          <MotionPressableLink href="/auth/sign-in" className="hero-cta-secondary">
-            Sign in
-          </MotionPressableLink>
+          {showSignInCta ? (
+            <MotionPressableLink href="/auth/sign-in" className="hero-cta-secondary">
+              Sign in
+            </MotionPressableLink>
+          ) : null}
         </motion.div>
       </motion.div>
     </motion.div>

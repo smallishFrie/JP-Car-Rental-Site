@@ -47,6 +47,15 @@ export async function signUpWithEmail(formData: FormData) {
 
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  if (!password || password.length < 6) {
+    redirect(`${returnPath}?message=${encodeURIComponent("Password must be at least 6 characters.")}`);
+  }
+
+  if (password !== confirmPassword) {
+    redirect(`${returnPath}?message=${encodeURIComponent("Passwords do not match.")}`);
+  }
 
   const supabase = await createClient();
   const origin = await getOrigin();
