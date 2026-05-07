@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCarById } from "@/lib/cars";
 import { checkCarAvailability, createPendingBooking } from "@/lib/bookings";
+import { getDropoffLocationByName } from "@/lib/dropoff-locations";
 import { notifyAdminsPendingBookingCreated } from "@/lib/notifications/booking-admin-events";
 import { rateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
@@ -65,6 +66,7 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
         .transform((value) => (value ? value : undefined))
         .refine((value) => !value || z.string().email().safeParse(value).success, "Customer email must be valid."),
       pickupLocation: z.string().trim().min(1, "Pickup location is required."),
+      dropoffLocation: z.string().trim().min(1, "Drop-off location is required."),
       driverLicenseNumber: z
         .string()
         .trim()
@@ -84,6 +86,7 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
       customerPhone: formData.get("customerPhone"),
       customerEmail: user.email ?? formData.get("customerEmail"),
       pickupLocation: formData.get("pickupLocation"),
+      dropoffLocation: formData.get("dropoffLocation"),
       driverLicenseNumber: formData.get("driverLicenseNumber"),
       driverNotes: formData.get("driverNotes"),
     });
@@ -92,11 +95,26 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
       return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid checkout details." };
     }
 
-    const { startDate, rentalDays, customerName, customerPhone, customerEmail, pickupLocation, driverLicenseNumber, driverNotes } =
-      parsed.data;
+    const {
+      startDate,
+      rentalDays,
+      customerName,
+      customerPhone,
+      customerEmail,
+      pickupLocation,
+      dropoffLocation,
+      driverLicenseNumber,
+      driverNotes,
+    } = parsed.data;
 
     const endDate = addDaysToIsoDate(startDate, Math.max(0, rentalDays - 1));
-    const totalPrice = Number((rentalDays * car.dayRate).toFixed(2));
+    const dropoff = await getDropoffLocationByName(dropoffLocation);
+    if (!dropoff) {
+      return { ok: false, message: "Selected drop-off location is not available." };
+    }
+    const basePrice = Number((rentalDays * car.dayRate).toFixed(2));
+    const dropoffFee = Number(dropoff.extraFee.toFixed(2));
+    const totalPrice = Number((basePrice + dropoffFee).toFixed(2));
 
     const isAvailable = await checkCarAvailability(carId, startDate, endDate);
     if (!isAvailable) {
@@ -110,10 +128,13 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
       startDate,
       endDate,
       totalPrice,
+      basePrice,
+      dropoffFee,
       customerName,
       customerPhone,
       customerEmail,
       pickupLocation,
+      dropoffLocation: dropoff.name,
       driverLicenseNumber,
       driverNotes,
     });

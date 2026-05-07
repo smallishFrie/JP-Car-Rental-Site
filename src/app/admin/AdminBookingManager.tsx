@@ -42,6 +42,10 @@ function toDate(value: string) {
   return new Date(value).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
 }
 
+function toPhp(value: number) {
+  return new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value);
+}
+
 const pipelineStatusLabels: Record<string, string> = {
   pending: "Pending",
   upcoming: "Upcoming",
@@ -286,6 +290,21 @@ export default function AdminBookingManager({ initialBookings }: { initialBookin
                   </p>
                   <p>
                     <strong>Schedule:</strong> {toDate(booking.start_date)} - {toDate(booking.end_date)}
+                  </p>
+                  <p>
+                    <strong>Pickup:</strong> {booking.pickup_location}
+                  </p>
+                  <p>
+                    <strong>Drop-off:</strong> {booking.dropoff_location}
+                  </p>
+                  <p>
+                    <strong>Base rental:</strong> {toPhp(Number(booking.base_price ?? booking.total_price))}
+                  </p>
+                  <p>
+                    <strong>Drop-off fee:</strong> {toPhp(Number(booking.dropoff_fee ?? 0))}
+                  </p>
+                  <p>
+                    <strong>Total:</strong> {toPhp(Number(booking.total_price))}
                   </p>
                   <p>
                     <strong>Payment:</strong> {booking.payment_status} ({booking.payment_reference || "No ref yet"})

@@ -62,6 +62,10 @@ export default async function CheckoutResultPage({ params, searchParams }: PageP
         startDate={String(row.start_date)}
         endDate={String(row.end_date)}
         totalPrice={Number(row.total_price)}
+        basePrice={Number(row.base_price ?? row.total_price)}
+        dropoffFee={Number(row.dropoff_fee ?? 0)}
+        pickupLocation={String(row.pickup_location)}
+        dropoffLocation={String(row.dropoff_location ?? "")}
         reason={reason}
       />
     </main>

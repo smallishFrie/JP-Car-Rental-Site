@@ -16,7 +16,9 @@ export default async function SiteFooter() {
     <footer className="site-footer" aria-label="Site footer">
       <div className="site-footer-inner">
         <div className="site-footer-brand">
-          <p className="site-footer-title">JP Car Rental</p>
+          <p className="site-footer-title notranslate" translate="no">
+            JP Car Rental
+          </p>
           <p className="site-footer-tagline">Fast booking. Clean vehicles. Easy travel.</p>
         </div>
 
@@ -61,7 +63,9 @@ export default async function SiteFooter() {
           </div>
         </div>
 
-        <p className="site-footer-copy">&copy; {year} JP Car Rental. All rights reserved.</p>
+        <p className="site-footer-copy notranslate" translate="no">
+          &copy; {year} JP Car Rental. All rights reserved.
+        </p>
       </div>
     </footer>
   );

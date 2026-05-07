@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { deleteCarById, requireAdmin, uploadCarImage, upsertCar } from "@/lib/cars";
+import { deleteDropoffLocation, saveDropoffLocation } from "@/lib/dropoff-locations";
 import {
   cleanupExpiredPendingBookings,
   confirmCancellationForAdmin,
@@ -16,6 +17,14 @@ function parseNumber(value: FormDataEntryValue | null, fieldName: string) {
   }
 
   return parsed;
+}
+
+function parseCurrency(value: FormDataEntryValue | null, fieldName: string) {
+  const parsed = Number(String(value ?? "").trim());
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`${fieldName} must be a valid non-negative amount.`);
+  }
+  return Number(parsed.toFixed(2));
 }
 
 function parseOptionalPassengerCapacity(value: FormDataEntryValue | null, fieldName: string) {
@@ -165,4 +174,28 @@ export async function confirmCarTurnoverAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/admin");
   revalidatePath(`/cars/${carId}`);
+}
+
+export async function saveDropoffLocationAction(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim();
+  const extraFee = parseCurrency(formData.get("extraFee"), "Extra fee");
+
+  const saved = await saveDropoffLocation({ id: id || undefined, name, extraFee });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  return saved;
+}
+
+export async function deleteDropoffLocationAction(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) {
+    throw new Error("Location id is required.");
+  }
+  await deleteDropoffLocation(id);
+  revalidatePath("/admin");
+  revalidatePath("/");
 }

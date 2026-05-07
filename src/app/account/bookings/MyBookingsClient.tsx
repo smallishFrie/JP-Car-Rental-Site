@@ -12,6 +12,10 @@ function toDate(value: string) {
   return new Date(value).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
 }
 
+function toPhp(value: number) {
+  return new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value);
+}
+
 function getActionKind(booking: BookingWithCar) {
   if (booking.status === "pending" && booking.payment_status === "unpaid") {
     return "cancel";
@@ -92,6 +96,11 @@ export default function MyBookingsClient({ initialBookings }: { initialBookings:
               <span>
                 Status: {booking.status} | Payment: {booking.payment_status}
               </span>
+              <span>Pickup: {booking.pickup_location}</span>
+              <span>Drop-off: {booking.dropoff_location}</span>
+              <span>Base rental: {toPhp(Number(booking.base_price ?? booking.total_price))}</span>
+              <span>Drop-off fee: {toPhp(Number(booking.dropoff_fee ?? 0))}</span>
+              <span>Total: {toPhp(Number(booking.total_price))}</span>
               {actionKind === "cancel" ? (
                 <button type="button" className="admin-danger-button" disabled={isPending} onClick={() => cancelPendingBooking(booking.id)}>
                   Cancel Booking

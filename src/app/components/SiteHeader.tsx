@@ -3,6 +3,7 @@ import type { User } from "@supabase/supabase-js";
 import { signOut } from "@/app/auth/actions";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
+import HeaderPreferences from "@/app/components/HeaderPreferences";
 
 export default async function SiteHeader() {
   let user: User | null = null;
@@ -20,7 +21,9 @@ export default async function SiteHeader() {
     <header className="site-header">
       <div className="site-header-inner">
         <Link href="/" className="site-header-brand">
-          <h1 className="site-header-title">JP Car Rental</h1>
+          <h1 className="site-header-title notranslate" translate="no">
+            JP Car Rental
+          </h1>
         </Link>
 
         <nav aria-label="User navigation" className="header-auth-nav">
@@ -39,6 +42,7 @@ export default async function SiteHeader() {
                   Sign out
                 </button>
               </form>
+              <HeaderPreferences />
             </>
           ) : (
             <>
@@ -48,6 +52,7 @@ export default async function SiteHeader() {
               <Link href="/auth/create-account" className="header-auth-button header-auth-cta">
                 Create account
               </Link>
+              <HeaderPreferences />
             </>
           )}
         </nav>

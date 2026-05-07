@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createXenditRefund } from "@/lib/xendit";
 import { verifyBookingEmailActionToken } from "@/lib/booking-email-token";
 import { notifyAdminsSecurityBookingReport } from "@/lib/notifications/booking-admin-events";
-import type { BookingRecord, BookingStatus, RefundStatus } from "./booking-model";
+import type { BookingRecord, BookingStatus } from "./booking-model";
 import { computeDerivedStatus, formatBookingVehicleName } from "./booking-model";
 
 export type { BookingRecord, BookingStatus, RefundStatus } from "./booking-model";
@@ -73,10 +73,13 @@ export async function createPendingBooking(input: {
   startDate: string;
   endDate: string;
   totalPrice: number;
+  basePrice: number;
+  dropoffFee: number;
   customerName: string;
   customerPhone: string;
   customerEmail?: string;
   pickupLocation: string;
+  dropoffLocation: string;
   driverLicenseNumber?: string;
   driverNotes?: string;
 }): Promise<BookingRecord> {
@@ -88,11 +91,14 @@ export async function createPendingBooking(input: {
     start_date: toDateOnly(input.startDate),
     end_date: toDateOnly(input.endDate),
     total_price: input.totalPrice,
+    base_price: input.basePrice,
+    dropoff_fee: input.dropoffFee,
     status: "pending" as BookingStatus,
     customer_name: input.customerName.trim(),
     customer_phone: input.customerPhone.trim(),
     customer_email: input.customerEmail?.trim() || null,
     pickup_location: input.pickupLocation.trim(),
+    dropoff_location: input.dropoffLocation.trim(),
     driver_license_number: input.driverLicenseNumber?.trim() || null,
     driver_notes: input.driverNotes?.trim() || null,
     payment_provider: "xendit",

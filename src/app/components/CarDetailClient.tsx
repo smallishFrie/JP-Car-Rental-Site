@@ -20,6 +20,7 @@ import "react-day-picker/style.css";
 
 type CarDetailClientProps = {
   car: Car;
+  dropoffLocations: Array<{ id: string; name: string; extraFee: number }>;
 };
 
 const AUTOPLAY_MS = 4200;
@@ -74,7 +75,7 @@ function sameMonth(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
 }
 
-export default function CarDetailClient({ car }: CarDetailClientProps) {
+export default function CarDetailClient({ car, dropoffLocations }: CarDetailClientProps) {
   const reduceMotion = useReducedMotion();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [autoplayTick, setAutoplayTick] = useState(0);
@@ -82,6 +83,7 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
   const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
   const [rentalDays, setRentalDays] = useState(2);
   const [location, setLocation] = useState(car.locations[0]?.value ?? "");
+  const [dropoffLocation, setDropoffLocation] = useState(dropoffLocations[0]?.name ?? "");
   const [fullName, setFullName] = useState("");
   const [phoneCountryIso, setPhoneCountryIso] = useState<CountryCode>("PH");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -101,7 +103,13 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
     [activeImageIndex, totalImages],
   );
   const todayDate = useMemo(() => localTodayStart(), []);
-  const totalPrice = useMemo(() => rentalDays * car.dayRate, [rentalDays, car.dayRate]);
+  const basePrice = useMemo(() => rentalDays * car.dayRate, [rentalDays, car.dayRate]);
+  const selectedDropoff = useMemo(
+    () => dropoffLocations.find((option) => option.name === dropoffLocation) ?? null,
+    [dropoffLocations, dropoffLocation],
+  );
+  const dropoffFee = useMemo(() => selectedDropoff?.extraFee ?? 0, [selectedDropoff]);
+  const totalPrice = useMemo(() => basePrice + dropoffFee, [basePrice, dropoffFee]);
   const formattedDayRate = useMemo(
     () => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(car.dayRate),
     [car.dayRate],
@@ -109,6 +117,27 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
   const formattedTotalPrice = useMemo(
     () => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(totalPrice),
     [totalPrice],
+  );
+  const formattedBasePrice = useMemo(
+    () => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(basePrice),
+    [basePrice],
+  );
+  const formattedDropoffFee = useMemo(
+    () => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(dropoffFee),
+    [dropoffFee],
+  );
+  const formatPhp = useCallback(
+    (amount: number) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(amount),
+    [],
+  );
+  const renderLocationOption = useCallback(
+    (name: string, fee: number) => (
+      <span className="location-option-row">
+        <span className="location-option-name">{name}</span>
+        {fee > 0 ? <span className="location-option-fee">{formatPhp(fee)}</span> : null}
+      </span>
+    ),
+    [formatPhp],
   );
 
   const phoneCountries = useMemo(() => getCountries(), []);
@@ -138,7 +167,7 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
       options.unshift(ph);
     }
 
-    return options.map(({ sortKey: _sortKey, ...rest }) => rest);
+    return options.map((option) => ({ value: option.value, label: option.label }));
   }, [phoneCountries]);
 
   const phoneDialCode = useMemo(() => {
@@ -383,6 +412,7 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
       formData.set("carId", car.id);
       formData.set("rentalDays", String(rentalDays));
       formData.set("pickupLocation", location);
+      formData.set("dropoffLocation", dropoffLocation);
       formData.set("startDate", startDate);
       formData.set("customerName", fullName);
       formData.set("customerPhone", `${phoneDialCode} ${phoneNumber}`.trim());
@@ -543,10 +573,29 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
           <label>
             Pickup location
             <CustomSelect
-              options={car.locations.map((option) => ({ value: option.value, label: option.label }))}
+              options={car.locations.map((option) => {
+                const fee = dropoffLocations.find((locationOption) => locationOption.name === option.label)?.extraFee ?? 0;
+                return {
+                  value: option.value,
+                  label: renderLocationOption(option.label, fee),
+                };
+              })}
               value={location}
               onChange={setLocation}
               optionsAriaLabel="Pickup locations"
+            />
+          </label>
+
+          <label>
+            Drop-off location
+            <CustomSelect
+              options={dropoffLocations.map((option) => ({
+                value: option.name,
+                label: renderLocationOption(option.name, option.extraFee),
+              }))}
+              value={dropoffLocation}
+              onChange={setDropoffLocation}
+              optionsAriaLabel="Drop-off locations"
             />
           </label>
 
@@ -665,9 +714,20 @@ export default function CarDetailClient({ car }: CarDetailClientProps) {
             <input type="text" value={driverNotes} onChange={(event) => setDriverNotes(event.target.value)} />
           </label>
 
-          <p className="booking-total">
-            {formattedDayRate} per day x {rentalDays} days = <strong>{formattedTotalPrice}</strong>
-          </p>
+          <div className="booking-total booking-total-breakdown">
+            <p className="booking-total-line">
+              <span>{formattedDayRate} per day x {rentalDays} days</span>
+              <strong>{formattedBasePrice}</strong>
+            </p>
+            <p className="booking-total-line">
+              <span>Drop-off extra fee</span>
+              <strong>{formattedDropoffFee}</strong>
+            </p>
+            <p className="booking-total-line booking-total-grand">
+              <span>Total</span>
+              <strong>{formattedTotalPrice}</strong>
+            </p>
+          </div>
 
           <MotionPressableButton type="submit" className="booking-submit" disabled={isSubmitting}>
             {isSubmitting ? "Preparing checkout..." : "Proceed to checkout"}

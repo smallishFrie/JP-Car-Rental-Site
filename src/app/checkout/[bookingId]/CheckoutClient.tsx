@@ -12,6 +12,10 @@ export default function CheckoutClient(props: {
   startDate: string;
   endDate: string;
   totalPrice: number;
+  basePrice: number;
+  dropoffFee: number;
+  pickupLocation: string;
+  dropoffLocation: string;
   customerName: string;
   customerEmail?: string | null;
 }) {
@@ -24,6 +28,8 @@ export default function CheckoutClient(props: {
   const [isHttps, setIsHttps] = useState<boolean | null>(null);
 
   const formattedTotal = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(props.totalPrice);
+  const formattedBase = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(props.basePrice);
+  const formattedDropoffFee = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(props.dropoffFee);
 
   const payButtonLabel = useMemo(() => {
     if (!componentsSdkKey) return message ? "Payment unavailable" : "Loading…";
@@ -125,7 +131,7 @@ export default function CheckoutClient(props: {
     return () => {
       mounted = false;
     };
-  }, [componentsSdkKey]);
+  }, [componentsSdkKey, props.bookingId]);
 
   return (
     <section className="auth-shell">
@@ -141,6 +147,18 @@ export default function CheckoutClient(props: {
           </p>
           <p>
             <strong>Rental dates:</strong> {props.startDate} → {props.endDate}
+          </p>
+          <p>
+            <strong>Pickup location:</strong> {props.pickupLocation}
+          </p>
+          <p>
+            <strong>Drop-off location:</strong> {props.dropoffLocation}
+          </p>
+          <p>
+            <strong>Base rental:</strong> {formattedBase}
+          </p>
+          <p>
+            <strong>Drop-off extra fee:</strong> {formattedDropoffFee}
           </p>
           <p>
             <strong>Total:</strong> {formattedTotal}

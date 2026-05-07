@@ -104,7 +104,8 @@ export default function HeroCopy() {
         </motion.span>
 
         <motion.h2
-          className="hero-title"
+          className="hero-title notranslate"
+          translate="no"
           variants={{
             hidden: {},
             visible: { transition: { staggerChildren: 0.07, delayChildren: 0.06 } },

@@ -15,12 +15,18 @@ export default function CheckoutResultClient(props: {
   startDate: string;
   endDate: string;
   totalPrice: number;
+  basePrice: number;
+  dropoffFee: number;
+  pickupLocation: string;
+  dropoffLocation: string;
   reason?: string | null;
 }) {
   const router = useRouter();
   const [seconds, setSeconds] = useState(6);
 
   const formattedTotal = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(props.totalPrice);
+  const formattedBase = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(props.basePrice);
+  const formattedDropoffFee = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(props.dropoffFee);
 
   useEffect(() => {
     if (seconds <= 0) {
@@ -65,6 +71,18 @@ export default function CheckoutResultClient(props: {
           </p>
           <p>
             <strong>Rental dates:</strong> {props.startDate} → {props.endDate}
+          </p>
+          <p>
+            <strong>Pickup location:</strong> {props.pickupLocation}
+          </p>
+          <p>
+            <strong>Drop-off location:</strong> {props.dropoffLocation}
+          </p>
+          <p>
+            <strong>Base rental:</strong> {formattedBase}
+          </p>
+          <p>
+            <strong>Drop-off extra fee:</strong> {formattedDropoffFee}
           </p>
           <p>
             <strong>Total:</strong> {formattedTotal}

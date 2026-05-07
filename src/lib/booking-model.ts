@@ -22,11 +22,14 @@ export type BookingRecord = {
   start_date: string;
   end_date: string;
   total_price: number;
+  base_price: number;
+  dropoff_fee: number;
   status: BookingStatus;
   customer_name: string;
   customer_phone: string;
   customer_email: string | null;
   pickup_location: string;
+  dropoff_location: string;
   driver_license_number: string | null;
   driver_notes: string | null;
   payment_provider: string;

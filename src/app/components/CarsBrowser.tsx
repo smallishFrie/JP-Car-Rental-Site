@@ -3,11 +3,10 @@
 import { motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Car } from "@/lib/cars";
 import { categoryTokensWithoutTransmission, parseCategoryTokens } from "@/lib/carDisplay";
 import CarSpecsRow from "@/app/components/CarSpecsRow";
-import CustomSelect from "@/app/components/CustomSelect";
 import RevealOnScroll from "@/app/components/RevealOnScroll";
 import TiltSurface from "@/app/components/TiltSurface";
 import { motionSprings } from "@/lib/motion";
@@ -50,20 +49,35 @@ function formatDayRate(amount: number) {
 export default function CarsBrowser({ cars }: CarsBrowserProps) {
   const reduceMotion = useReducedMotion();
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
   const categories = useMemo(() => {
     return Array.from(new Set(cars.flatMap((car) => parseCategoryTokens(car.category)))).sort((a, b) =>
       a.localeCompare(b),
     );
   }, [cars]);
+  const selectedCategorySummary = useMemo(() => {
+    if (selectedCategories.length === 0) {
+      return "All categories";
+    }
+    if (selectedCategories.length === 1) {
+      return selectedCategories[0];
+    }
+    if (selectedCategories.length <= 3) {
+      return selectedCategories.join(", ");
+    }
+    return `${selectedCategories.length} categories selected`;
+  }, [selectedCategories]);
 
   const filteredCars = useMemo(() => {
     const query = search.trim().toLowerCase();
     return cars
       .filter((car) => {
         const carCategories = parseCategoryTokens(car.category);
-        const categoryMatch = selectedCategory === "all" || carCategories.includes(selectedCategory);
+        const categoryMatch =
+          selectedCategories.length === 0 || selectedCategories.some((selectedCategory) => carCategories.includes(selectedCategory));
         if (!categoryMatch) {
           return false;
         }
@@ -85,7 +99,39 @@ export default function CarsBrowser({ cars }: CarsBrowserProps) {
         }
         return a.name.localeCompare(b.name);
       });
-  }, [cars, search, selectedCategory]);
+  }, [cars, search, selectedCategories]);
+
+  function toggleCategory(category: string) {
+    setSelectedCategories((current) =>
+      current.includes(category) ? current.filter((item) => item !== category) : [...current, category],
+    );
+  }
+
+  useEffect(() => {
+    if (!categoryDropdownOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const field = categoryDropdownRef.current;
+      if (field && !field.contains(event.target as Node)) {
+        setCategoryDropdownOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setCategoryDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [categoryDropdownOpen]);
 
   return (
     <div className="cars-grid-shell">
@@ -108,15 +154,58 @@ export default function CarsBrowser({ cars }: CarsBrowserProps) {
           </label>
           <label>
             Filter by category
-            <CustomSelect
-              options={[
-                { value: "all", label: "All categories" },
-                ...categories.map((category) => ({ value: category, label: category })),
-              ]}
-              value={selectedCategory}
-              onChange={setSelectedCategory}
-              optionsAriaLabel="Car categories"
-            />
+            <div className="custom-select-field" ref={categoryDropdownRef}>
+              <button
+                type="button"
+                className="booking-date-trigger"
+                aria-expanded={categoryDropdownOpen}
+                aria-haspopup="listbox"
+                aria-controls={categoryDropdownOpen ? "cars-category-listbox" : undefined}
+                onClick={() => setCategoryDropdownOpen((open) => !open)}
+              >
+                <span>{selectedCategorySummary}</span>
+                <span
+                  className={`booking-date-trigger-chevron${categoryDropdownOpen ? " booking-date-trigger-chevron-open" : ""}`}
+                  aria-hidden
+                >
+                  ▾
+                </span>
+              </button>
+              <div
+                id="cars-category-listbox"
+                role="listbox"
+                aria-label="Car categories"
+                aria-multiselectable="true"
+                className={`custom-select-dropdown${categoryDropdownOpen ? " custom-select-dropdown--open" : ""}`}
+              >
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={selectedCategories.length === 0}
+                  className={`custom-select-option${selectedCategories.length === 0 ? " custom-select-option-selected" : ""}`}
+                  onClick={() => setSelectedCategories([])}
+                >
+                  {selectedCategories.length === 0 ? "✓ " : ""}
+                  All categories
+                </button>
+                {categories.map((category) => {
+                  const selected = selectedCategories.includes(category);
+                  return (
+                    <button
+                      key={category}
+                      type="button"
+                      role="option"
+                      aria-selected={selected}
+                      className={`custom-select-option${selected ? " custom-select-option-selected" : ""}`}
+                      onClick={() => toggleCategory(category)}
+                    >
+                      {selected ? "✓ " : ""}
+                      {category}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </label>
         </div>
       </RevealOnScroll>
