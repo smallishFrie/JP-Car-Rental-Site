@@ -3,8 +3,14 @@
 import { MotionPressableButton } from "@/app/components/MotionPressable";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
+import CustomSelect from "@/app/components/CustomSelect";
 import type { CarRecord } from "@/lib/cars";
 import { confirmCarTurnoverAction, deleteCarAction, saveCarAction } from "@/app/admin/actions";
+import {
+  categoryTokensWithoutTransmission,
+  parseCategoryTokens,
+  transmissionFromCategoryTokens,
+} from "@/lib/carDisplay";
 
 type AdminCarManagerProps = {
   initialCars: CarRecord[];
@@ -13,7 +19,9 @@ type AdminCarManagerProps = {
 type FormState = {
   id: string;
   name: string;
-  category: string;
+  categoryOption: string;
+  customCategory: string;
+  transmission: "Automatic" | "Manual";
   tagline: string;
   description: string;
   dayRate: string;
@@ -23,10 +31,52 @@ type FormState = {
   existingGalleryImages: string[];
 };
 
+const CATEGORY_OPTIONS = [
+  "Sedan",
+  "SUV",
+  "Hatchback",
+  "Crossover",
+  "Coupe",
+  "Convertable",
+  "Station Wagon",
+  "MPV",
+  "Pickup Trick",
+] as const;
+
+const CUSTOM_CATEGORY_VALUE = "__custom__";
+const TRANSMISSION_OPTIONS = ["Automatic", "Manual"] as const;
+
+function parseFormCategory(categoryText: string): Pick<FormState, "categoryOption" | "customCategory" | "transmission"> {
+  const tokens = parseCategoryTokens(categoryText);
+  const categoryToken = categoryTokensWithoutTransmission(tokens)[0]?.trim() ?? "";
+  const detectedTransmission = transmissionFromCategoryTokens(tokens);
+  const transmission = detectedTransmission === "manual" ? "Manual" : "Automatic";
+  if (categoryToken && CATEGORY_OPTIONS.includes(categoryToken as (typeof CATEGORY_OPTIONS)[number])) {
+    return {
+      categoryOption: categoryToken,
+      customCategory: "",
+      transmission,
+    };
+  }
+  return {
+    categoryOption: CUSTOM_CATEGORY_VALUE,
+    customCategory: categoryToken,
+    transmission,
+  };
+}
+
+function composeCategoryValue(form: FormState): string {
+  const category =
+    form.categoryOption === CUSTOM_CATEGORY_VALUE ? form.customCategory.trim() : form.categoryOption.trim();
+  return [category, form.transmission].filter(Boolean).join(", ");
+}
+
 const emptyForm: FormState = {
   id: "",
   name: "",
-  category: "",
+  categoryOption: CATEGORY_OPTIONS[0],
+  customCategory: "",
+  transmission: "Automatic",
   tagline: "",
   description: "",
   dayRate: "",
@@ -37,10 +87,13 @@ const emptyForm: FormState = {
 };
 
 function mapCarToForm(car: CarRecord): FormState {
+  const categoryState = parseFormCategory(car.category);
   return {
     id: car.id,
     name: car.name,
-    category: car.category,
+    categoryOption: categoryState.categoryOption,
+    customCategory: categoryState.customCategory,
+    transmission: categoryState.transmission,
     tagline: car.tagline,
     description: car.description,
     dayRate: String(car.day_rate),
@@ -88,6 +141,8 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
 
   async function handleSubmit(formData: FormData) {
     const formSnapshot = { ...form };
+    const categoryValue = composeCategoryValue(formSnapshot);
+    formData.set("category", categoryValue);
     startTransition(async () => {
       try {
         const savedId = await saveCarAction(formData);
@@ -102,7 +157,7 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
               ? {
                   ...car,
                   name: formSnapshot.name.trim(),
-                  category: formSnapshot.category.trim(),
+                  category: categoryValue,
                   tagline: formSnapshot.tagline.trim(),
                   description: formSnapshot.description.trim(),
                   day_rate: Number(formSnapshot.dayRate),
@@ -238,11 +293,46 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
 
           <label>
             Category
-            <input
-              name="category"
-              value={form.category}
-              onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
-              required
+            <input type="hidden" name="category" value={composeCategoryValue(form)} />
+            <CustomSelect
+              options={[
+                ...CATEGORY_OPTIONS.map((option) => ({ value: option, label: option })),
+                { value: CUSTOM_CATEGORY_VALUE, label: "Custom" },
+              ]}
+              value={form.categoryOption}
+              onChange={(value) =>
+                setForm((current) => ({
+                  ...current,
+                  categoryOption: value,
+                }))
+              }
+              optionsAriaLabel="Car categories"
+            />
+          </label>
+          {form.categoryOption === CUSTOM_CATEGORY_VALUE ? (
+            <label>
+              Custom category
+              <input
+                value={form.customCategory}
+                onChange={(event) => setForm((current) => ({ ...current, customCategory: event.target.value }))}
+                placeholder="Enter a custom category"
+                required
+              />
+            </label>
+          ) : null}
+
+          <label>
+            Transmission
+            <CustomSelect
+              options={TRANSMISSION_OPTIONS.map((option) => ({ value: option, label: option }))}
+              value={form.transmission}
+              onChange={(value) =>
+                setForm((current) => ({
+                  ...current,
+                  transmission: value === "Manual" ? "Manual" : "Automatic",
+                }))
+              }
+              optionsAriaLabel="Transmission type"
             />
           </label>
 

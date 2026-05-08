@@ -3408,6 +3408,52 @@ a.car-card:focus-visible {
   background: color-mix(in srgb, var(--accent) 10%, var(--bg-elevated));
 }
 
+.cars-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.cars-category-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.75rem;
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.35;
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+
+.cars-category-checkbox:hover,
+.cars-category-checkbox:focus-within {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.cars-category-checkbox input {
+  width: 0.95rem;
+  height: 0.95rem;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.cars-category-checkbox span {
+  min-width: 0;
+}
+
+.cars-category-checkbox-selected {
+  font-weight: 600;
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-elevated));
+}
+
+.cars-category-checkbox-all {
+  margin-bottom: 0.2rem;
+}
+
 .location-option-row {
   display: flex;
   align-items: center;

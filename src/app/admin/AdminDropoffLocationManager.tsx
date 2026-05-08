@@ -47,12 +47,12 @@ export default function AdminDropoffLocationManager({ initialLocations }: { init
             a.name.localeCompare(b.name, "en", { sensitivity: "base" }),
           );
         });
-        setMessage(selectedId ? "Drop-off location updated." : "Drop-off location added.");
+        setMessage(selectedId ? "Location updated." : "Location added.");
         if (!selectedId) {
           resetForm();
         }
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : "Failed to save drop-off location.");
+        setMessage(error instanceof Error ? error.message : "Failed to save location.");
       }
     });
   }
@@ -68,10 +68,10 @@ export default function AdminDropoffLocationManager({ initialLocations }: { init
       try {
         await deleteDropoffLocationAction(fd);
         setLocations((current) => current.filter((item) => item.id !== selectedLocation.id));
-        setMessage("Drop-off location deleted.");
+        setMessage("Location deleted.");
         resetForm();
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : "Failed to delete drop-off location.");
+        setMessage(error instanceof Error ? error.message : "Failed to delete location.");
       }
     });
   }
@@ -79,8 +79,8 @@ export default function AdminDropoffLocationManager({ initialLocations }: { init
   return (
     <section className="admin-manager">
       <aside className="admin-card">
-        <h2>Drop-off locations</h2>
-        <p className="admin-empty">Add and manage drop-off points with extra fees.</p>
+        <h2>Locations</h2>
+        <p className="admin-empty">Add and manage locations with extra fees.</p>
         {selectedId ? (
           <div className="admin-actions">
             <button type="button" className="admin-secondary-button" onClick={resetForm}>
@@ -106,7 +106,7 @@ export default function AdminDropoffLocationManager({ initialLocations }: { init
       </aside>
 
       <article className="admin-card">
-        <h2>{selectedId ? "Edit drop-off location" : "Create drop-off location"}</h2>
+        <h2>{selectedId ? "Edit location" : "Create location"}</h2>
         <form className="admin-form" action={handleSubmit}>
           <input type="hidden" name="id" value={selectedId} />
           <label>

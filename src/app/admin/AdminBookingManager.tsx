@@ -46,6 +46,10 @@ function toPhp(value: number) {
   return new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value);
 }
 
+function hasText(value: string | null | undefined): value is string {
+  return Boolean(value?.trim());
+}
+
 const pipelineStatusLabels: Record<string, string> = {
   pending: "Pending",
   upcoming: "Upcoming",
@@ -271,6 +275,9 @@ export default function AdminBookingManager({ initialBookings }: { initialBookin
           <div className="booking-detail-grid">
             {filteredBookings.map((booking) => {
               const rs = effectiveRefundStatus(booking);
+              const showRefundStatus =
+                (selectedStatus === "cancel_requested" || selectedStatus === "canceled") && rs !== "none";
+              const paymentReference = hasText(booking.payment_reference) ? booking.payment_reference.trim() : "";
               return (
                 <article key={booking.id} className="booking-admin-item">
                   <p>
@@ -282,9 +289,11 @@ export default function AdminBookingManager({ initialBookings }: { initialBookin
                   <p>
                     <strong>Phone:</strong> {booking.customer_phone}
                   </p>
-                  <p>
-                    <strong>Email:</strong> {booking.customer_email || "N/A"}
-                  </p>
+                  {hasText(booking.customer_email) ? (
+                    <p>
+                      <strong>Email:</strong> {booking.customer_email.trim()}
+                    </p>
+                  ) : null}
                   <p>
                     <strong>Car:</strong> {formatBookingVehicleName(booking)}
                   </p>
@@ -307,14 +316,15 @@ export default function AdminBookingManager({ initialBookings }: { initialBookin
                     <strong>Total:</strong> {toPhp(Number(booking.total_price))}
                   </p>
                   <p>
-                    <strong>Payment:</strong> {booking.payment_status} ({booking.payment_reference || "No ref yet"})
+                    <strong>Payment:</strong> {booking.payment_status}
+                    {paymentReference ? <span> ({paymentReference})</span> : null}
                   </p>
                   {booking.driver_notes?.trim() ? (
                     <p>
                       <strong>Driver notes:</strong> {booking.driver_notes.trim()}
                     </p>
                   ) : null}
-                  {(selectedStatus === "cancel_requested" || selectedStatus === "canceled") && (
+                  {showRefundStatus ? (
                     <p>
                       <strong>Refund status:</strong> {refundStatusLabel(rs)}
                       {booking.refund_amount_php != null && booking.refund_amount_php > 0 ? (
@@ -324,7 +334,7 @@ export default function AdminBookingManager({ initialBookings }: { initialBookin
                         </span>
                       ) : null}
                     </p>
-                  )}
+                  ) : null}
                   {selectedStatus === "cancel_requested" ? (
                     <CancellationConfirmPanel booking={booking} disabled={isPending} onConfirm={confirmCancellation} />
                   ) : null}

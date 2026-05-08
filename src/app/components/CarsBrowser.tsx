@@ -173,37 +173,36 @@ export default function CarsBrowser({ cars }: CarsBrowserProps) {
               </button>
               <div
                 id="cars-category-listbox"
-                role="listbox"
+                role="group"
                 aria-label="Car categories"
-                aria-multiselectable="true"
                 className={`custom-select-dropdown${categoryDropdownOpen ? " custom-select-dropdown--open" : ""}`}
               >
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={selectedCategories.length === 0}
-                  className={`custom-select-option${selectedCategories.length === 0 ? " custom-select-option-selected" : ""}`}
-                  onClick={() => setSelectedCategories([])}
+                <label
+                  className={`cars-category-checkbox cars-category-checkbox-all${
+                    selectedCategories.length === 0 ? " cars-category-checkbox-selected" : ""
+                  }`}
                 >
-                  {selectedCategories.length === 0 ? "✓ " : ""}
-                  All categories
-                </button>
-                {categories.map((category) => {
-                  const selected = selectedCategories.includes(category);
-                  return (
-                    <button
-                      key={category}
-                      type="button"
-                      role="option"
-                      aria-selected={selected}
-                      className={`custom-select-option${selected ? " custom-select-option-selected" : ""}`}
-                      onClick={() => toggleCategory(category)}
-                    >
-                      {selected ? "✓ " : ""}
-                      {category}
-                    </button>
-                  );
-                })}
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.length === 0}
+                    onChange={() => setSelectedCategories([])}
+                  />
+                  <span>All categories</span>
+                </label>
+                <div className="cars-category-grid">
+                  {categories.map((category) => {
+                    const selected = selectedCategories.includes(category);
+                    return (
+                      <label
+                        key={category}
+                        className={`cars-category-checkbox${selected ? " cars-category-checkbox-selected" : ""}`}
+                      >
+                        <input type="checkbox" checked={selected} onChange={() => toggleCategory(category)} />
+                        <span>{category}</span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </label>

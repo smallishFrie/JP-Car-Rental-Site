@@ -84,7 +84,7 @@ export default function CarDetailClient({ car, dropoffLocations, reviews }: CarD
   const [isZooming, setIsZooming] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
   const [rentalDays, setRentalDays] = useState(2);
-  const [location, setLocation] = useState(car.locations[0]?.value ?? "");
+  const [location, setLocation] = useState(dropoffLocations[0]?.name ?? "");
   const [dropoffLocation, setDropoffLocation] = useState(dropoffLocations[0]?.name ?? "");
   const [fullName, setFullName] = useState("");
   const [phoneCountryIso, setPhoneCountryIso] = useState<CountryCode>("PH");
@@ -790,13 +790,10 @@ export default function CarDetailClient({ car, dropoffLocations, reviews }: CarD
             <label>
               Pickup location
               <CustomSelect
-                options={car.locations.map((option) => {
-                  const fee = dropoffLocations.find((locationOption) => locationOption.name === option.label)?.extraFee ?? 0;
-                  return {
-                    value: option.value,
-                    label: renderLocationOption(option.label, fee),
-                  };
-                })}
+                options={dropoffLocations.map((option) => ({
+                  value: option.name,
+                  label: renderLocationOption(option.name, option.extraFee),
+                }))}
                 value={location}
                 onChange={setLocation}
                 optionsAriaLabel="Pickup locations"
