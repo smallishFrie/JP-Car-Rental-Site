@@ -552,126 +552,130 @@ export default function CarDetailClient({ car, dropoffLocations }: CarDetailClie
           <Link href="/terms-of-service#cancellation">Terms of Service</Link>.
         </p>
         <form className="booking-form" onSubmit={handleSubmit}>
-          <label>
-            Rental days
-            <input
-              type="number"
-              min={2}
-              value={rentalDays}
-              onChange={(event) => {
-                const parsedDays = Number(event.target.value);
-                if (Number.isNaN(parsedDays)) {
-                  setRentalDays(2);
-                  return;
-                }
-                setRentalDays(Math.max(2, parsedDays));
-              }}
-              required
-            />
-          </label>
+          <div className="booking-inline-fields">
+            <label>
+              Rental days
+              <input
+                type="number"
+                min={2}
+                value={rentalDays}
+                onChange={(event) => {
+                  const parsedDays = Number(event.target.value);
+                  if (Number.isNaN(parsedDays)) {
+                    setRentalDays(2);
+                    return;
+                  }
+                  setRentalDays(Math.max(2, parsedDays));
+                }}
+                required
+              />
+            </label>
 
-          <label>
-            Pickup location
-            <CustomSelect
-              options={car.locations.map((option) => {
-                const fee = dropoffLocations.find((locationOption) => locationOption.name === option.label)?.extraFee ?? 0;
-                return {
-                  value: option.value,
-                  label: renderLocationOption(option.label, fee),
-                };
-              })}
-              value={location}
-              onChange={setLocation}
-              optionsAriaLabel="Pickup locations"
-            />
-          </label>
-
-          <label>
-            Drop-off location
-            <CustomSelect
-              options={dropoffLocations.map((option) => ({
-                value: option.name,
-                label: renderLocationOption(option.name, option.extraFee),
-              }))}
-              value={dropoffLocation}
-              onChange={setDropoffLocation}
-              optionsAriaLabel="Drop-off locations"
-            />
-          </label>
-
-          <div className="booking-date-field" ref={bookingDateFieldRef}>
-            <p className="booking-calendar-label" id="booking-date-label">
-              Pickup dates
-            </p>
-            <button
-              type="button"
-              className="booking-date-trigger"
-              aria-expanded={calendarOpen}
-              aria-haspopup="dialog"
-              aria-controls={calendarOpen ? "booking-date-dialog" : undefined}
-              aria-labelledby="booking-date-label"
-              onClick={() => setCalendarOpen((open) => !open)}
-            >
-              <span>{startDate ? `${startDate} → ${endDate}` : "Select start date & range"}</span>
-              <span className={`booking-date-trigger-chevron${calendarOpen ? " booking-date-trigger-chevron-open" : ""}`} aria-hidden>
-                ▾
-              </span>
-            </button>
-            <AnimatePresence>
-              {calendarOpen ? (
-                <motion.div
-                  layout
-                  key="booking-calendar-panel"
-                  className="booking-calendar-dropdown popover-motion-layer"
-                  id="booking-date-dialog"
-                  role="dialog"
-                  aria-label="Rental calendar"
-                  aria-hidden={false}
-                  initial={{ opacity: 0, y: -8, scale: 0.98, visibility: "hidden" }}
-                  animate={{ opacity: 1, y: 0, scale: 1, visibility: "visible" }}
-                  exit={{ opacity: 0, y: -6, scale: 0.98, visibility: "hidden" }}
-                  transition={reduceMotion ? { duration: 0 } : motionSprings.snappy}
-                  onMouseLeave={() => setHoverDay(undefined)}
-                >
-                  <DayPicker
-                    mode="single"
-                    locale={enUS}
-                    className="booking-daypicker-root"
-                    selected={selectedStartDay}
-                    defaultMonth={selectedStartDay ?? todayDate}
-                    onSelect={(day) => {
-                      setFeedback("");
-                      if (!day) {
-                        setStartDate("");
-                        return;
-                      }
-                      if (isDayDisabled(day)) {
-                        setFeedback("That date is unavailable.");
-                        return;
-                      }
-                      for (let offset = 0; offset < rentalDays; offset += 1) {
-                        const candidate = addDaysLocal(startOfLocalDay(day), offset);
-                        if (isDayDisabled(candidate)) {
-                          setFeedback("That range includes unavailable dates. Please choose another start date.");
+            <div className="booking-date-field" ref={bookingDateFieldRef}>
+              <p className="booking-calendar-label" id="booking-date-label">
+                Pickup dates
+              </p>
+              <button
+                type="button"
+                className="booking-date-trigger"
+                aria-expanded={calendarOpen}
+                aria-haspopup="dialog"
+                aria-controls={calendarOpen ? "booking-date-dialog" : undefined}
+                aria-labelledby="booking-date-label"
+                onClick={() => setCalendarOpen((open) => !open)}
+              >
+                <span>{startDate ? `${startDate} → ${endDate}` : "Select start date & range"}</span>
+                <span className={`booking-date-trigger-chevron${calendarOpen ? " booking-date-trigger-chevron-open" : ""}`} aria-hidden>
+                  ▾
+                </span>
+              </button>
+              <AnimatePresence>
+                {calendarOpen ? (
+                  <motion.div
+                    layout
+                    key="booking-calendar-panel"
+                    className="booking-calendar-dropdown popover-motion-layer"
+                    id="booking-date-dialog"
+                    role="dialog"
+                    aria-label="Rental calendar"
+                    aria-hidden={false}
+                    initial={{ opacity: 0, y: -8, scale: 0.98, visibility: "hidden" }}
+                    animate={{ opacity: 1, y: 0, scale: 1, visibility: "visible" }}
+                    exit={{ opacity: 0, y: -6, scale: 0.98, visibility: "hidden" }}
+                    transition={reduceMotion ? { duration: 0 } : motionSprings.snappy}
+                    onMouseLeave={() => setHoverDay(undefined)}
+                  >
+                    <DayPicker
+                      mode="single"
+                      locale={enUS}
+                      className="booking-daypicker-root"
+                      selected={selectedStartDay}
+                      defaultMonth={selectedStartDay ?? todayDate}
+                      onSelect={(day) => {
+                        setFeedback("");
+                        if (!day) {
+                          setStartDate("");
                           return;
                         }
-                      }
-                      setStartDate(formatLocalIsoDate(day));
-                      setCalendarOpen(false);
-                    }}
-                    disabled={disabledMatchers}
-                    onDayMouseEnter={(d) => setHoverDay(d)}
-                    modifiers={bookingCalendarModifiers}
-                    modifiersClassNames={{
-                      preview: "booking-day-preview",
-                      selectedrange: "booking-day-selectedrange",
-                      stripjoindown: "booking-day-strip-join-down",
-                      stripjoinup: "booking-day-strip-join-up",
-                    }}
-                  />
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
+                        if (isDayDisabled(day)) {
+                          setFeedback("That date is unavailable.");
+                          return;
+                        }
+                        for (let offset = 0; offset < rentalDays; offset += 1) {
+                          const candidate = addDaysLocal(startOfLocalDay(day), offset);
+                          if (isDayDisabled(candidate)) {
+                            setFeedback("That range includes unavailable dates. Please choose another start date.");
+                            return;
+                          }
+                        }
+                        setStartDate(formatLocalIsoDate(day));
+                        setCalendarOpen(false);
+                      }}
+                      disabled={disabledMatchers}
+                      onDayMouseEnter={(d) => setHoverDay(d)}
+                      modifiers={bookingCalendarModifiers}
+                      modifiersClassNames={{
+                        preview: "booking-day-preview",
+                        selectedrange: "booking-day-selectedrange",
+                        stripjoindown: "booking-day-strip-join-down",
+                        stripjoinup: "booking-day-strip-join-up",
+                      }}
+                    />
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          <div className="booking-inline-fields">
+            <label>
+              Pickup location
+              <CustomSelect
+                options={car.locations.map((option) => {
+                  const fee = dropoffLocations.find((locationOption) => locationOption.name === option.label)?.extraFee ?? 0;
+                  return {
+                    value: option.value,
+                    label: renderLocationOption(option.label, fee),
+                  };
+                })}
+                value={location}
+                onChange={setLocation}
+                optionsAriaLabel="Pickup locations"
+              />
+            </label>
+
+            <label>
+              Drop-off location
+              <CustomSelect
+                options={dropoffLocations.map((option) => ({
+                  value: option.name,
+                  label: renderLocationOption(option.name, option.extraFee),
+                }))}
+                value={dropoffLocation}
+                onChange={setDropoffLocation}
+                optionsAriaLabel="Drop-off locations"
+              />
+            </label>
           </div>
 
           <div className="booking-inline-fields">
