@@ -1,6 +1,7 @@
 import "server-only";
 
 import { readServerEnv } from "@/lib/env";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 type XenditInvoiceResponse = {
   id?: string;
@@ -31,6 +32,25 @@ type XenditPaymentSessionResponse = {
 
 function xenditAuthHeader(secretKey: string) {
   return `Basic ${Buffer.from(`${secretKey}:`).toString("base64")}`;
+}
+
+function normalizeXenditMobileNumber(rawPhone?: string) {
+  const candidate = String(rawPhone ?? "").trim();
+  if (!candidate) return undefined;
+
+  const parsedPh = parsePhoneNumberFromString(candidate, "PH");
+  if (parsedPh?.isValid()) {
+    return parsedPh.number;
+  }
+
+  const parsedGeneric = parsePhoneNumberFromString(candidate);
+  if (parsedGeneric?.isValid()) {
+    return parsedGeneric.number;
+  }
+
+  // Fallback: keep only + and digits so obvious separators do not break validation.
+  const compact = candidate.replace(/[^\d+]/g, "");
+  return compact.startsWith("+") ? compact : undefined;
 }
 
 export async function createXenditInvoice(input: {
@@ -87,6 +107,25 @@ export async function createXenditPaymentRequest(input: {
   failureUrl: string;
 }) {
   const secretKey = readServerEnv("XENDIT_SECRET_KEY");
+  const normalizedMobile = normalizeXenditMobileNumber(input.customerPhone);
+  // #region agent log
+  fetch("http://127.0.0.1:7918/ingest/032d1357-fea6-4540-a457-bae66492ee09", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "46aa6d" },
+    body: JSON.stringify({
+      sessionId: "46aa6d",
+      runId: "run1",
+      hypothesisId: "H6",
+      location: "src/lib/xendit.ts:117",
+      message: "createXenditPaymentRequest phone normalization",
+      data: {
+        hadInputPhone: Boolean(input.customerPhone),
+        hadNormalizedPhone: Boolean(normalizedMobile),
+      },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
   const response = await fetch("https://api.xendit.co/v3/payment_requests", {
     method: "POST",
     headers: {
@@ -113,7 +152,7 @@ export async function createXenditPaymentRequest(input: {
           given_names: input.customerName,
         },
         email: input.customerEmail || undefined,
-        mobile_number: input.customerPhone || undefined,
+        mobile_number: normalizedMobile,
       },
       description: `JP Car Rental booking ${input.bookingId}`,
       metadata: {
@@ -191,6 +230,25 @@ export async function createXenditComponentsPaymentSession(input: {
 }) {
   const secretKey = readServerEnv("XENDIT_SECRET_KEY");
   const uniqueCustomerReferenceId = `cust-${crypto.randomUUID()}`;
+  const normalizedMobile = normalizeXenditMobileNumber(input.customerPhone);
+  // #region agent log
+  fetch("http://127.0.0.1:7918/ingest/032d1357-fea6-4540-a457-bae66492ee09", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "46aa6d" },
+    body: JSON.stringify({
+      sessionId: "46aa6d",
+      runId: "run1",
+      hypothesisId: "H6",
+      location: "src/lib/xendit.ts:237",
+      message: "createXenditComponentsPaymentSession phone normalization",
+      data: {
+        hadInputPhone: Boolean(input.customerPhone),
+        hadNormalizedPhone: Boolean(normalizedMobile),
+      },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
   const response = await fetch("https://api.xendit.co/sessions", {
     method: "POST",
     headers: {
@@ -208,7 +266,7 @@ export async function createXenditComponentsPaymentSession(input: {
         reference_id: uniqueCustomerReferenceId,
         type: "INDIVIDUAL",
         email: input.customerEmail || undefined,
-        mobile_number: input.customerPhone || undefined,
+        mobile_number: normalizedMobile,
         individual_detail: {
           given_names: input.customerName,
         },
@@ -220,6 +278,27 @@ export async function createXenditComponentsPaymentSession(input: {
   });
 
   const payload = (await response.json()) as XenditPaymentSessionResponse;
+  // #region agent log
+  fetch("http://127.0.0.1:7918/ingest/032d1357-fea6-4540-a457-bae66492ee09", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "46aa6d" },
+    body: JSON.stringify({
+      sessionId: "46aa6d",
+      runId: "run1",
+      hypothesisId: "H6",
+      location: "src/lib/xendit.ts:272",
+      message: "createXenditComponentsPaymentSession response",
+      data: {
+        ok: response.ok,
+        status: response.status,
+        hasPaymentSessionId: Boolean(payload.payment_session_id),
+        hasComponentsSdkKey: Boolean(payload.components_sdk_key),
+        message: payload.message ?? null,
+      },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
   if (!response.ok || !payload.payment_session_id || !payload.components_sdk_key) {
     throw new Error(payload.message || "Failed to create payment session.");
   }

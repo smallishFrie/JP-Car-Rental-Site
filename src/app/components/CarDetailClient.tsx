@@ -138,6 +138,8 @@ export default function CarDetailClient({ car, dropoffLocations, reviews }: CarD
         month: "short",
         day: "numeric",
         year: "numeric",
+        // Keep server/client render deterministic across timezones.
+        timeZone: "UTC",
       }),
     [],
   );
@@ -146,6 +148,8 @@ export default function CarDetailClient({ car, dropoffLocations, reviews }: CarD
       new Intl.DateTimeFormat("en-US", {
         month: "short",
         year: "numeric",
+        // Keep server/client render deterministic across timezones.
+        timeZone: "UTC",
       }),
     [],
   );
