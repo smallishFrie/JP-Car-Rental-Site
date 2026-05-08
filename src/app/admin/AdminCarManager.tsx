@@ -315,7 +315,6 @@ export default function AdminCarManager({ initialCars }: AdminCarManagerProps) {
               <input
                 value={form.customCategory}
                 onChange={(event) => setForm((current) => ({ ...current, customCategory: event.target.value }))}
-                placeholder="Enter a custom category"
                 required
               />
             </label>
