@@ -115,7 +115,6 @@ export default function AdminDropoffLocationManager({ initialLocations }: { init
               name="name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="e.g. Airport Terminal"
               required
             />
           </label>
