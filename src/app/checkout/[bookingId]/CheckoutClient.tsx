@@ -39,6 +39,21 @@ export default function CheckoutClient(props: {
 
   useEffect(() => {
     const https = window.location.protocol === "https:";
+    // #region agent log
+    fetch("http://127.0.0.1:7918/ingest/032d1357-fea6-4540-a457-bae66492ee09", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "46aa6d" },
+      body: JSON.stringify({
+        sessionId: "46aa6d",
+        runId: "run1",
+        hypothesisId: "H2",
+        location: "src/app/checkout/[bookingId]/CheckoutClient.tsx:43",
+        message: "CheckoutClient mount protocol check",
+        data: { bookingId: props.bookingId, protocol: window.location.protocol, isHttps: https },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     queueMicrotask(() => {
       setIsHttps(https);
     });
@@ -54,6 +69,27 @@ export default function CheckoutClient(props: {
           bookingId: props.bookingId,
           origin: window.location.origin,
         });
+        // #region agent log
+        fetch("http://127.0.0.1:7918/ingest/032d1357-fea6-4540-a457-bae66492ee09", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "46aa6d" },
+          body: JSON.stringify({
+            sessionId: "46aa6d",
+            runId: "run1",
+            hypothesisId: "H2",
+            location: "src/app/checkout/[bookingId]/CheckoutClient.tsx:59",
+            message: "CheckoutClient received init session result",
+            data: {
+              ok: result.ok,
+              hasComponentsSdkKey: Boolean(result.ok && result.componentsSdkKey),
+              hasNextUrl: Boolean(result.ok && result.nextUrl),
+              redirectTo: result.ok ? null : (result.redirectTo ?? null),
+              errorMessage: result.ok ? null : result.message,
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
         if (cancelled) return;
         if (!result.ok) {
           setMessage(result.message);
@@ -123,6 +159,23 @@ export default function CheckoutClient(props: {
           window.location.href = `/checkout/${props.bookingId}/result?outcome=canceled`;
         });
       } catch (error) {
+        // #region agent log
+        fetch("http://127.0.0.1:7918/ingest/032d1357-fea6-4540-a457-bae66492ee09", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "46aa6d" },
+          body: JSON.stringify({
+            sessionId: "46aa6d",
+            runId: "run1",
+            hypothesisId: "H3",
+            location: "src/app/checkout/[bookingId]/CheckoutClient.tsx:137",
+            message: "CheckoutClient xendit component init failed",
+            data: {
+              errorMessage: error instanceof Error ? error.message : "unknown",
+            },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
         setMessage(error instanceof Error ? error.message : "Failed to initialize payment.");
       }
     };

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { deleteCarById, requireAdmin, uploadCarImage, upsertCar } from "@/lib/cars";
 import { deleteDropoffLocation, saveDropoffLocation } from "@/lib/dropoff-locations";
+import { createReview, deleteReview } from "@/lib/reviews";
 import {
   cleanupExpiredPendingBookings,
   confirmCancellationForAdmin,
@@ -43,6 +44,14 @@ function parseOptionalPassengerCapacity(value: FormDataEntryValue | null, fieldN
 
 function asFile(value: FormDataEntryValue | null) {
   return value instanceof File && value.size > 0 ? value : null;
+}
+
+function parseRequiredText(value: FormDataEntryValue | null, fieldName: string) {
+  const parsed = String(value ?? "").trim();
+  if (!parsed) {
+    throw new Error(`${fieldName} is required.`);
+  }
+  return parsed;
 }
 
 export async function saveCarAction(formData: FormData) {
@@ -198,4 +207,34 @@ export async function deleteDropoffLocationAction(formData: FormData) {
   await deleteDropoffLocation(id);
   revalidatePath("/admin");
   revalidatePath("/");
+}
+
+export async function saveReviewAction(formData: FormData) {
+  await requireAdmin();
+  const carId = parseRequiredText(formData.get("carId"), "Car");
+  const reviewerName = parseRequiredText(formData.get("reviewerName"), "Name");
+  const countryOfOrigin = parseRequiredText(formData.get("countryOfOrigin"), "Country of origin");
+  const reviewText = parseRequiredText(formData.get("reviewText"), "Review");
+
+  const savedId = await createReview({
+    carId,
+    reviewerName,
+    countryOfOrigin,
+    reviewText,
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  revalidatePath(`/cars/${carId}`);
+  return savedId;
+}
+
+export async function deleteReviewAction(formData: FormData) {
+  await requireAdmin();
+  const id = parseRequiredText(formData.get("id"), "Review id");
+  const carId = parseRequiredText(formData.get("carId"), "Car");
+  await deleteReview(id);
+  revalidatePath("/admin");
+  revalidatePath("/");
+  revalidatePath(`/cars/${carId}`);
 }

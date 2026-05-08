@@ -24,6 +24,27 @@ function addDaysToIsoDate(dateIso: string, days: number) {
 export async function beginCheckoutAction(formData: FormData): Promise<CheckoutResult> {
   try {
     const carId = String(formData.get("carId") ?? "").trim();
+    // #region agent log
+    fetch("http://127.0.0.1:7918/ingest/032d1357-fea6-4540-a457-bae66492ee09", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "46aa6d" },
+      body: JSON.stringify({
+        sessionId: "46aa6d",
+        runId: "run1",
+        hypothesisId: "H1",
+        location: "src/app/cars/[id]/actions.ts:27",
+        message: "beginCheckoutAction called",
+        data: {
+          carId,
+          startDate: String(formData.get("startDate") ?? ""),
+          rentalDays: String(formData.get("rentalDays") ?? ""),
+          pickupLocation: String(formData.get("pickupLocation") ?? ""),
+          dropoffLocation: String(formData.get("dropoffLocation") ?? ""),
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     if (!carId) {
       throw new Error("Car id is required.");
     }
@@ -92,6 +113,24 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
     });
 
     if (!parsed.success) {
+      // #region agent log
+      fetch("http://127.0.0.1:7918/ingest/032d1357-fea6-4540-a457-bae66492ee09", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "46aa6d" },
+        body: JSON.stringify({
+          sessionId: "46aa6d",
+          runId: "run1",
+          hypothesisId: "H1",
+          location: "src/app/cars/[id]/actions.ts:109",
+          message: "beginCheckoutAction zod parse failed",
+          data: {
+            issue: parsed.error.issues[0]?.message ?? "unknown",
+            issuePath: parsed.error.issues[0]?.path ?? [],
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
       return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid checkout details." };
     }
 
@@ -138,9 +177,46 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
       driverLicenseNumber,
       driverNotes,
     });
+    // #region agent log
+    fetch("http://127.0.0.1:7918/ingest/032d1357-fea6-4540-a457-bae66492ee09", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "46aa6d" },
+      body: JSON.stringify({
+        sessionId: "46aa6d",
+        runId: "run1",
+        hypothesisId: "H1",
+        location: "src/app/cars/[id]/actions.ts:171",
+        message: "beginCheckoutAction booking created",
+        data: {
+          bookingId: booking.id,
+          totalPrice,
+          basePrice,
+          dropoffFee,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     void notifyAdminsPendingBookingCreated(booking, car.name).catch(() => undefined);
     return { ok: true, redirectTo: `/checkout/${booking.id}` };
   } catch (error) {
+    // #region agent log
+    fetch("http://127.0.0.1:7918/ingest/032d1357-fea6-4540-a457-bae66492ee09", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "46aa6d" },
+      body: JSON.stringify({
+        sessionId: "46aa6d",
+        runId: "run1",
+        hypothesisId: "H1",
+        location: "src/app/cars/[id]/actions.ts:184",
+        message: "beginCheckoutAction threw",
+        data: {
+          errorMessage: error instanceof Error ? error.message : "unknown",
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     return {
       ok: false,
       message: error instanceof Error ? error.message : "Unable to proceed to checkout.",

@@ -7,15 +7,18 @@ import HomeHowItWorks from "./components/HomeHowItWorks";
 import HomeTrustStrip from "./components/HomeTrustStrip";
 import HomeWhatsIncluded from "./components/HomeWhatsIncluded";
 import HomeScrollHeader from "./components/HomeScrollHeader";
+import HomeReviewsWheel from "./components/HomeReviewsWheel";
 import ScrollHero from "./components/ScrollHero";
 import SiteFooter from "./components/SiteFooter";
 import SiteHeader from "./components/SiteHeader";
 import CarsBrowser from "./components/CarsBrowser";
 import HomeAvailableCarsHashScroll from "./components/HomeAvailableCarsHashScroll";
 import { listCars } from "@/lib/cars";
+import { listRecentReviews } from "@/lib/reviews";
 
 export default async function Home() {
   const cars = await listCars();
+  const reviews = await listRecentReviews(12);
 
   return (
     <ScrollHero>
@@ -39,6 +42,7 @@ export default async function Home() {
               <div className="home-prelude">
                 <HomeTrustStrip />
                 <HomeHowItWorks />
+                <HomeReviewsWheel reviews={reviews} cars={cars} />
               </div>
             </div>
 

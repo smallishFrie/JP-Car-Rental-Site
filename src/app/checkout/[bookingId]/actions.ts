@@ -16,6 +16,21 @@ export async function initCheckoutComponentsSessionAction(input: {
   try {
     const bookingId = String(input.bookingId ?? "").trim();
     const origin = String(input.origin ?? "").trim();
+    // #region agent log
+    fetch("http://127.0.0.1:7918/ingest/032d1357-fea6-4540-a457-bae66492ee09", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "46aa6d" },
+      body: JSON.stringify({
+        sessionId: "46aa6d",
+        runId: "run1",
+        hypothesisId: "H2",
+        location: "src/app/checkout/[bookingId]/actions.ts:20",
+        message: "initCheckoutComponentsSessionAction called",
+        data: { bookingId, origin },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     if (!bookingId) {
       throw new Error("Booking id is required.");
     }
@@ -38,6 +53,25 @@ export async function initCheckoutComponentsSessionAction(input: {
       .eq("id", bookingId)
       .eq("user_id", user.id)
       .single();
+    // #region agent log
+    fetch("http://127.0.0.1:7918/ingest/032d1357-fea6-4540-a457-bae66492ee09", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "46aa6d" },
+      body: JSON.stringify({
+        sessionId: "46aa6d",
+        runId: "run1",
+        hypothesisId: "H2",
+        location: "src/app/checkout/[bookingId]/actions.ts:54",
+        message: "initCheckoutComponentsSessionAction booking lookup finished",
+        data: {
+          hasBooking: Boolean(booking),
+          errorMessage: error?.message ?? null,
+          errorCode: error?.code ?? null,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     if (error || !booking) {
       throw new Error(error?.message ?? "Booking not found.");
     }
@@ -70,6 +104,25 @@ export async function initCheckoutComponentsSessionAction(input: {
       customerPhone: String((booking as any).customer_phone ?? "") || undefined,
       origins,
     });
+    // #region agent log
+    fetch("http://127.0.0.1:7918/ingest/032d1357-fea6-4540-a457-bae66492ee09", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "46aa6d" },
+      body: JSON.stringify({
+        sessionId: "46aa6d",
+        runId: "run1",
+        hypothesisId: "H3",
+        location: "src/app/checkout/[bookingId]/actions.ts:100",
+        message: "xendit components session created",
+        data: {
+          paymentSessionId: session.paymentSessionId,
+          hasComponentsSdkKey: Boolean(session.componentsSdkKey),
+          origin: normalizedOrigin,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
 
     await attachPaymentReference(bookingId, session.paymentSessionId);
     await supabase
@@ -86,6 +139,23 @@ export async function initCheckoutComponentsSessionAction(input: {
     revalidatePath(`/checkout/${bookingId}`);
     return { ok: true, componentsSdkKey: session.componentsSdkKey };
   } catch (error) {
+    // #region agent log
+    fetch("http://127.0.0.1:7918/ingest/032d1357-fea6-4540-a457-bae66492ee09", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "46aa6d" },
+      body: JSON.stringify({
+        sessionId: "46aa6d",
+        runId: "run1",
+        hypothesisId: "H2",
+        location: "src/app/checkout/[bookingId]/actions.ts:123",
+        message: "initCheckoutComponentsSessionAction threw",
+        data: {
+          errorMessage: error instanceof Error ? error.message : "unknown",
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
     return { ok: false, message: error instanceof Error ? error.message : "Failed to start payment." };
   }
 }

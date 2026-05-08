@@ -3,10 +3,12 @@ import { redirect } from "next/navigation";
 import AdminCarManager from "@/app/admin/AdminCarManager";
 import AdminBookingManager from "@/app/admin/AdminBookingManager";
 import AdminDropoffLocationManager from "@/app/admin/AdminDropoffLocationManager";
+import AdminReviewManager from "@/app/admin/AdminReviewManager";
 import { bookingStatusBlocksCarDelete } from "@/lib/booking-model";
 import { listBookingsForAdmin } from "@/lib/bookings";
 import { listCarsForAdmin, requireAdmin } from "@/lib/cars";
 import { listDropoffLocations } from "@/lib/dropoff-locations";
+import { listReviewsForAdmin } from "@/lib/reviews";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 
 export default async function AdminPage() {
@@ -27,10 +29,12 @@ export default async function AdminPage() {
   let cars: Awaited<ReturnType<typeof listCarsForAdmin>> = [];
   let bookings: Awaited<ReturnType<typeof listBookingsForAdmin>> = [];
   let dropoffLocations: Awaited<ReturnType<typeof listDropoffLocations>> = [];
+  let reviews: Awaited<ReturnType<typeof listReviewsForAdmin>> = [];
   try {
     cars = await listCarsForAdmin();
     bookings = await listBookingsForAdmin();
     dropoffLocations = await listDropoffLocations();
+    reviews = await listReviewsForAdmin();
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load cars.";
     if (message.includes("Could not find the table") || message.includes("relation") && message.includes("cars")) {
@@ -58,6 +62,7 @@ export default async function AdminPage() {
       <section className="auth-shell">
         <h1 className="admin-page-heading">Admin panel</h1>
         <AdminCarManager initialCars={carsWithBookingCounts} />
+        <AdminReviewManager initialReviews={reviews} initialCars={cars} />
         <AdminDropoffLocationManager initialLocations={dropoffLocations} />
         <AdminBookingManager initialBookings={bookings} />
         <p className="auth-back-link">
