@@ -61,7 +61,7 @@ export const testCars: Car[] = [
   {
     id: "vios-prime",
     name: "Vios Prime",
-    category: "Sedan, CVT",
+    category: "Sedan, Automatic",
     passengerCapacity: 5,
     tagline: "Compact and easy to drive in busy streets.",
     description:
