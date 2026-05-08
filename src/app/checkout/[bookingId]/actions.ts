@@ -91,10 +91,10 @@ export async function initCheckoutComponentsSessionAction(input: {
     if (!normalizedOrigin.toLowerCase().startsWith("https://")) {
       return {
         ok: false,
-        message:
-          "Embedded checkout requires HTTPS. Please run the site on an HTTPS domain (e.g. deploy preview or use an HTTPS tunnel) and try again.",
+        message: "Embedded checkout requires HTTPS. Please run on an HTTPS domain or tunnel.",
       };
     }
+
     const origins = [normalizedOrigin];
     const session = await createXenditComponentsPaymentSession({
       bookingId,

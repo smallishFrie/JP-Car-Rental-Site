@@ -57,9 +57,6 @@ export default function CheckoutClient(props: {
     queueMicrotask(() => {
       setIsHttps(https);
     });
-    if (!https) {
-      return;
-    }
 
     let cancelled = false;
     startTransition(() => {
@@ -227,9 +224,9 @@ export default function CheckoutClient(props: {
         <div className="auth-form">
         <h2>Payment</h2>
 
-        {isHttps === false ? (
+        {isHttps === false && !message ? (
           <p className="admin-empty">
-            Embedded checkout requires HTTPS. You’re currently on <strong>HTTP</strong> (localhost). Use an HTTPS domain or tunnel to pay.
+            Local HTTP detected. Redirecting you to a secure hosted checkout page...
           </p>
         ) : null}
 
