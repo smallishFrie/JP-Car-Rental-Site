@@ -13,6 +13,10 @@ export type CarReviewRecord = {
   cars?: { name: string } | null;
 };
 
+type CarReviewAdminRow = Omit<CarReviewRecord, "cars"> & {
+  cars?: { name: string } | { name: string }[] | null;
+};
+
 export type CarReview = {
   id: string;
   carId: string;
@@ -92,7 +96,11 @@ export async function listReviewsForAdmin(): Promise<CarReviewRecord[]> {
     throw new Error(error.message);
   }
 
-  return (data as CarReviewRecord[]) ?? [];
+  const rows = ((data as CarReviewAdminRow[] | null) ?? []);
+  return rows.map((row) => ({
+    ...row,
+    cars: Array.isArray(row.cars) ? row.cars[0] ?? null : (row.cars ?? null),
+  }));
 }
 
 export async function createReview(input: {
