@@ -3,7 +3,8 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { MotionPressableButton } from "@/app/components/MotionPressable";
-import { deleteReviewAction, saveReviewAction } from "@/app/admin/actions";
+import CustomSelect from "@/app/components/CustomSelect";
+import { deleteReviewAction, saveReviewAction, updateReviewAction } from "@/app/admin/actions";
 import type { CarRecord } from "@/lib/cars";
 import type { CarReviewRecord } from "@/lib/reviews";
 
@@ -13,58 +14,100 @@ type AdminReviewManagerProps = {
 };
 
 type ReviewFormState = {
+  id: string;
   carId: string;
   reviewerName: string;
   countryOfOrigin: string;
   reviewText: string;
 };
 
+const buildEmptyForm = (cars: CarRecord[]): ReviewFormState => ({
+  id: "",
+  carId: cars[0]?.id ?? "",
+  reviewerName: "",
+  countryOfOrigin: "",
+  reviewText: "",
+});
+
+function mapReviewToForm(review: CarReviewRecord): ReviewFormState {
+  return {
+    id: review.id,
+    carId: review.car_id,
+    reviewerName: review.reviewer_name,
+    countryOfOrigin: review.country_of_origin,
+    reviewText: review.review_text,
+  };
+}
+
 export default function AdminReviewManager({ initialReviews, initialCars }: AdminReviewManagerProps) {
   const router = useRouter();
   const [reviews, setReviews] = useState(initialReviews);
   const [selectedReviewId, setSelectedReviewId] = useState("");
   const [message, setMessage] = useState("");
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [form, setForm] = useState<ReviewFormState>({
-    carId: initialCars[0]?.id ?? "",
-    reviewerName: "",
-    countryOfOrigin: "",
-    reviewText: "",
-  });
+  const [form, setForm] = useState<ReviewFormState>(buildEmptyForm(initialCars));
 
   const selectedReview = useMemo(
     () => reviews.find((review) => review.id === selectedReviewId) ?? null,
     [reviews, selectedReviewId],
   );
+  const isEditMode = Boolean(form.id);
 
-  function getCarName(carId: string) {
-    return initialCars.find((car) => car.id === carId)?.name ?? carId;
+  function selectReview(reviewId: string) {
+    setSelectedReviewId(reviewId);
+    const review = reviews.find((item) => item.id === reviewId);
+    setForm(review ? mapReviewToForm(review) : buildEmptyForm(initialCars));
+    setMessage("");
+    setIsConfirmingDelete(false);
   }
 
-  async function handleSave(formData: FormData) {
+  async function handleSubmit(formData: FormData) {
     const snapshot = { ...form };
+    const action = snapshot.id ? updateReviewAction : saveReviewAction;
     startTransition(async () => {
       try {
-        const savedId = await saveReviewAction(formData);
-        setReviews((current) => [
-          {
+        if (snapshot.id) {
+          await action(formData);
+          setReviews((current) =>
+            current.map((review) =>
+              review.id === snapshot.id
+                ? {
+                    ...review,
+                    car_id: snapshot.carId,
+                    reviewer_name: snapshot.reviewerName.trim(),
+                    country_of_origin: snapshot.countryOfOrigin.trim(),
+                    review_text: snapshot.reviewText.trim(),
+                  }
+                : review,
+            ),
+          );
+          setMessage("Review updated.");
+        } else {
+          const savedId = await action(formData);
+          const selectedCar = initialCars.find((car) => car.id === snapshot.carId) ?? null;
+          setReviews((current) => [
+            {
+              id: savedId,
+              car_id: snapshot.carId,
+              reviewer_name: snapshot.reviewerName.trim(),
+              country_of_origin: snapshot.countryOfOrigin.trim(),
+              review_text: snapshot.reviewText.trim(),
+              created_at: new Date().toISOString(),
+              cars: selectedCar ? { name: selectedCar.name } : null,
+            },
+            ...current,
+          ]);
+          setSelectedReviewId(savedId);
+          setForm({
             id: savedId,
-            car_id: snapshot.carId,
-            reviewer_name: snapshot.reviewerName.trim(),
-            country_of_origin: snapshot.countryOfOrigin.trim(),
-            review_text: snapshot.reviewText.trim(),
-            created_at: new Date().toISOString(),
-            cars: { name: getCarName(snapshot.carId) },
-          },
-          ...current,
-        ]);
-        setForm((current) => ({
-          ...current,
-          reviewerName: "",
-          countryOfOrigin: "",
-          reviewText: "",
-        }));
-        setMessage("Review saved and published.");
+            carId: snapshot.carId,
+            reviewerName: snapshot.reviewerName.trim(),
+            countryOfOrigin: snapshot.countryOfOrigin.trim(),
+            reviewText: snapshot.reviewText.trim(),
+          });
+          setMessage("Review saved successfully.");
+        }
         router.refresh();
       } catch (error) {
         const errMessage = error instanceof Error ? error.message : "Something went wrong.";
@@ -74,21 +117,24 @@ export default function AdminReviewManager({ initialReviews, initialCars }: Admi
   }
 
   function handleDelete() {
-    if (!selectedReview) {
+    const id = form.id.trim();
+    if (!id) {
       setMessage("Select a review to delete.");
       return;
     }
 
     const formData = new FormData();
-    formData.set("id", selectedReview.id);
-    formData.set("carId", selectedReview.car_id);
+    formData.set("id", id);
+    formData.set("carId", form.carId.trim());
 
     startTransition(async () => {
       try {
         await deleteReviewAction(formData);
-        setReviews((current) => current.filter((review) => review.id !== selectedReview.id));
+        setReviews((current) => current.filter((review) => review.id !== id));
         setSelectedReviewId("");
-        setMessage("Review deleted.");
+        setForm(buildEmptyForm(initialCars));
+        setIsConfirmingDelete(false);
+        setMessage("Review deleted successfully.");
         router.refresh();
       } catch (error) {
         const errMessage = error instanceof Error ? error.message : "Something went wrong.";
@@ -101,19 +147,25 @@ export default function AdminReviewManager({ initialReviews, initialCars }: Admi
     <section className="admin-manager">
       <aside className="admin-card">
         <h2>Reviews</h2>
-        <p className="admin-empty">Select a review to remove it.</p>
+        <p className="admin-empty">Select a review to edit or create a new one.</p>
+        {isEditMode ? (
+          <div className="admin-actions">
+            <button type="button" className="admin-secondary-button" onClick={() => selectReview("")}>
+              + Add new review
+            </button>
+          </div>
+        ) : null}
         <ul className="admin-list admin-review-list">
           {reviews.map((review) => (
             <li key={review.id}>
               <button
                 type="button"
                 className="admin-select-button"
-                onClick={() => setSelectedReviewId(review.id)}
+                onClick={() => selectReview(review.id)}
                 aria-current={selectedReview?.id === review.id}
               >
                 <strong>{review.reviewer_name}</strong>
                 <span>{review.country_of_origin}</span>
-                <span className="admin-review-list-meta">{review.cars?.name ?? getCarName(review.car_id)}</span>
               </button>
             </li>
           ))}
@@ -121,22 +173,19 @@ export default function AdminReviewManager({ initialReviews, initialCars }: Admi
       </aside>
 
       <article className="admin-card">
-        <h2>Add review</h2>
-        <form className="admin-form" action={handleSave}>
+        <h2>{isEditMode ? "Edit review" : "Create review"}</h2>
+        {initialCars.length ? <form className="admin-form" action={handleSubmit}>
+          <input type="hidden" name="id" value={form.id} />
+          <input type="hidden" name="carId" value={form.carId} />
+
           <label>
             Car
-            <select
-              name="carId"
+            <CustomSelect
+              options={initialCars.map((car) => ({ value: car.id, label: car.name }))}
               value={form.carId}
-              onChange={(event) => setForm((current) => ({ ...current, carId: event.target.value }))}
-              required
-            >
-              {initialCars.map((car) => (
-                <option key={car.id} value={car.id}>
-                  {car.name}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => setForm((current) => ({ ...current, carId: value }))}
+              optionsAriaLabel="Cars"
+            />
           </label>
 
           <label>
@@ -171,21 +220,39 @@ export default function AdminReviewManager({ initialReviews, initialCars }: Admi
           </label>
 
           <MotionPressableButton type="submit" className="auth-primary" disabled={isPending}>
-            {isPending ? "Saving..." : "Save review"}
+            {isPending ? "Saving..." : isEditMode ? "Save changes" : "Create review"}
           </MotionPressableButton>
-        </form>
-
-        {selectedReview ? (
-          <div className="admin-review-selected">
-            <p className="admin-review-selected-text">
-              Selected review by <strong>{selectedReview.reviewer_name}</strong> for{" "}
-              <strong>{selectedReview.cars?.name ?? getCarName(selectedReview.car_id)}</strong>.
-            </p>
-            <button type="button" className="admin-danger-button" onClick={handleDelete} disabled={isPending}>
-              {isPending ? "Working..." : "Delete selected review"}
-            </button>
-          </div>
-        ) : null}
+          {isEditMode ? (
+            isConfirmingDelete ? (
+              <div className="admin-delete-confirm">
+                <p>Delete this review permanently?</p>
+                <p className="admin-delete-confirm-detail">This cannot be undone.</p>
+                <div>
+                  <button type="button" className="admin-danger-button" onClick={handleDelete} disabled={isPending}>
+                    {isPending ? "Working..." : "Confirm delete"}
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-cancel-button"
+                    onClick={() => setIsConfirmingDelete(false)}
+                    disabled={isPending}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="admin-danger-button"
+                onClick={() => setIsConfirmingDelete(true)}
+                disabled={isPending}
+              >
+                Delete review
+              </button>
+            )
+          ) : null}
+        </form> : <p className="admin-empty">No cars available to attach new reviews.</p>}
 
         {message ? (
           <p className="booking-feedback" role="status">

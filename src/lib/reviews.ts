@@ -139,3 +139,28 @@ export async function deleteReview(id: string) {
     throw new Error(error.message);
   }
 }
+
+export async function updateReview(input: {
+  id: string;
+  reviewerName: string;
+  countryOfOrigin: string;
+  reviewText: string;
+}) {
+  await requireAdmin();
+  const id = input.id.trim();
+  if (!id) {
+    throw new Error("Review id is required.");
+  }
+
+  const supabase = await createClient();
+  const payload = {
+    reviewer_name: input.reviewerName.trim(),
+    country_of_origin: input.countryOfOrigin.trim(),
+    review_text: input.reviewText.trim(),
+  };
+
+  const { error } = await supabase.from("car_reviews").update(payload).eq("id", id);
+  if (error) {
+    throw new Error(error.message);
+  }
+}

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { deleteCarById, requireAdmin, uploadCarImage, upsertCar } from "@/lib/cars";
 import { deleteDropoffLocation, saveDropoffLocation } from "@/lib/dropoff-locations";
-import { createReview, deleteReview } from "@/lib/reviews";
+import { createReview, deleteReview, updateReview } from "@/lib/reviews";
 import {
   cleanupExpiredPendingBookings,
   confirmCancellationForAdmin,
@@ -234,6 +234,26 @@ export async function deleteReviewAction(formData: FormData) {
   const id = parseRequiredText(formData.get("id"), "Review id");
   const carId = parseRequiredText(formData.get("carId"), "Car");
   await deleteReview(id);
+  revalidatePath("/admin");
+  revalidatePath("/");
+  revalidatePath(`/cars/${carId}`);
+}
+
+export async function updateReviewAction(formData: FormData) {
+  await requireAdmin();
+  const id = parseRequiredText(formData.get("id"), "Review id");
+  const carId = parseRequiredText(formData.get("carId"), "Car");
+  const reviewerName = parseRequiredText(formData.get("reviewerName"), "Name");
+  const countryOfOrigin = parseRequiredText(formData.get("countryOfOrigin"), "Country of origin");
+  const reviewText = parseRequiredText(formData.get("reviewText"), "Review");
+
+  await updateReview({
+    id,
+    reviewerName,
+    countryOfOrigin,
+    reviewText,
+  });
+
   revalidatePath("/admin");
   revalidatePath("/");
   revalidatePath(`/cars/${carId}`);
