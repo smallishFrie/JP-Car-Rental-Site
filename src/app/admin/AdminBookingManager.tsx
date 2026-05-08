@@ -310,7 +310,7 @@ export default function AdminBookingManager({ initialBookings }: { initialBookin
                     <strong>Base rental:</strong> {toPhp(Number(booking.base_price ?? booking.total_price))}
                   </p>
                   <p>
-                    <strong>Drop-off fee:</strong> {toPhp(Number(booking.dropoff_fee ?? 0))}
+                    <strong>Location fees:</strong> {toPhp(Number(booking.dropoff_fee ?? 0))}
                   </p>
                   <p>
                     <strong>Total:</strong> {toPhp(Number(booking.total_price))}

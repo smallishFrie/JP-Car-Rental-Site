@@ -29,7 +29,7 @@ export default function CheckoutClient(props: {
 
   const formattedTotal = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(props.totalPrice);
   const formattedBase = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(props.basePrice);
-  const formattedDropoffFee = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(props.dropoffFee);
+  const formattedLocationFee = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(props.dropoffFee);
 
   const payButtonLabel = useMemo(() => {
     if (!componentsSdkKey) return message ? "Payment unavailable" : "Loading…";
@@ -231,7 +231,7 @@ export default function CheckoutClient(props: {
             <strong>Base rental:</strong> {formattedBase}
           </p>
           <p>
-            <strong>Drop-off extra fee:</strong> {formattedDropoffFee}
+            <strong>Location fees:</strong> {formattedLocationFee}
           </p>
           <p>
             <strong>Total:</strong> {formattedTotal}

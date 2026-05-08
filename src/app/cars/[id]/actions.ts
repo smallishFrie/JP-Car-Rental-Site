@@ -147,13 +147,17 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
     } = parsed.data;
 
     const endDate = addDaysToIsoDate(startDate, Math.max(0, rentalDays - 1));
+    const pickup = await getDropoffLocationByName(pickupLocation);
+    if (!pickup) {
+      return { ok: false, message: "Selected pickup location is not available." };
+    }
     const dropoff = await getDropoffLocationByName(dropoffLocation);
     if (!dropoff) {
       return { ok: false, message: "Selected drop-off location is not available." };
     }
     const basePrice = Number((rentalDays * car.dayRate).toFixed(2));
-    const dropoffFee = Number(dropoff.extraFee.toFixed(2));
-    const totalPrice = Number((basePrice + dropoffFee).toFixed(2));
+    const locationFee = Number((pickup.extraFee + dropoff.extraFee).toFixed(2));
+    const totalPrice = Number((basePrice + locationFee).toFixed(2));
 
     const isAvailable = await checkCarAvailability(carId, startDate, endDate);
     if (!isAvailable) {
@@ -168,7 +172,7 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
       endDate,
       totalPrice,
       basePrice,
-      dropoffFee,
+      dropoffFee: locationFee,
       customerName,
       customerPhone,
       customerEmail,
@@ -191,7 +195,9 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
           bookingId: booking.id,
           totalPrice,
           basePrice,
-          dropoffFee,
+          pickupFee: pickup.extraFee,
+          dropoffFee: dropoff.extraFee,
+          locationFee,
         },
         timestamp: Date.now(),
       }),

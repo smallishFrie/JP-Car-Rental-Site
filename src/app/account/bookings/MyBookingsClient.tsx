@@ -99,7 +99,7 @@ export default function MyBookingsClient({ initialBookings }: { initialBookings:
               <span>Pickup: {booking.pickup_location}</span>
               <span>Drop-off: {booking.dropoff_location}</span>
               <span>Base rental: {toPhp(Number(booking.base_price ?? booking.total_price))}</span>
-              <span>Drop-off fee: {toPhp(Number(booking.dropoff_fee ?? 0))}</span>
+              <span>Location fees: {toPhp(Number(booking.dropoff_fee ?? 0))}</span>
               <span>Total: {toPhp(Number(booking.total_price))}</span>
               {actionKind === "cancel" ? (
                 <button type="button" className="admin-danger-button" disabled={isPending} onClick={() => cancelPendingBooking(booking.id)}>

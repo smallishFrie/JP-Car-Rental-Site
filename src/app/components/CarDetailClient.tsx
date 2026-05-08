@@ -106,12 +106,19 @@ export default function CarDetailClient({ car, dropoffLocations, reviews }: CarD
   );
   const todayDate = useMemo(() => localTodayStart(), []);
   const basePrice = useMemo(() => rentalDays * car.dayRate, [rentalDays, car.dayRate]);
+  const selectedPickup = useMemo(
+    () => dropoffLocations.find((option) => option.name === location) ?? null,
+    [dropoffLocations, location],
+  );
   const selectedDropoff = useMemo(
     () => dropoffLocations.find((option) => option.name === dropoffLocation) ?? null,
     [dropoffLocations, dropoffLocation],
   );
-  const dropoffFee = useMemo(() => selectedDropoff?.extraFee ?? 0, [selectedDropoff]);
-  const totalPrice = useMemo(() => basePrice + dropoffFee, [basePrice, dropoffFee]);
+  const locationFee = useMemo(
+    () => (selectedPickup?.extraFee ?? 0) + (selectedDropoff?.extraFee ?? 0),
+    [selectedPickup, selectedDropoff],
+  );
+  const totalPrice = useMemo(() => basePrice + locationFee, [basePrice, locationFee]);
   const formattedDayRate = useMemo(
     () => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(car.dayRate),
     [car.dayRate],
@@ -124,9 +131,9 @@ export default function CarDetailClient({ car, dropoffLocations, reviews }: CarD
     () => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(basePrice),
     [basePrice],
   );
-  const formattedDropoffFee = useMemo(
-    () => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(dropoffFee),
-    [dropoffFee],
+  const formattedLocationFee = useMemo(
+    () => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(locationFee),
+    [locationFee],
   );
   const reviewCount = reviews.length;
   const countryCount = new Set(
@@ -860,8 +867,8 @@ export default function CarDetailClient({ car, dropoffLocations, reviews }: CarD
               <strong>{formattedBasePrice}</strong>
             </p>
             <p className="booking-total-line">
-              <span>Drop-off extra fee</span>
-              <strong>{formattedDropoffFee}</strong>
+              <span>Location fees</span>
+              <strong>{formattedLocationFee}</strong>
             </p>
             <p className="booking-total-line booking-total-grand">
               <span>Total</span>
