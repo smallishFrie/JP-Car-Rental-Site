@@ -64,11 +64,10 @@ export default function AdminReviewManager({ initialReviews, initialCars }: Admi
 
   async function handleSubmit(formData: FormData) {
     const snapshot = { ...form };
-    const action = snapshot.id ? updateReviewAction : saveReviewAction;
     startTransition(async () => {
       try {
         if (snapshot.id) {
-          await action(formData);
+          await updateReviewAction(formData);
           setReviews((current) =>
             current.map((review) =>
               review.id === snapshot.id
@@ -84,7 +83,7 @@ export default function AdminReviewManager({ initialReviews, initialCars }: Admi
           );
           setMessage("Review updated.");
         } else {
-          const savedId = await action(formData);
+          const savedId = await saveReviewAction(formData);
           const selectedCar = initialCars.find((car) => car.id === snapshot.carId) ?? null;
           setReviews((current) => [
             {

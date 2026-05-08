@@ -6,6 +6,7 @@ import { checkCarAvailability, createPendingBooking } from "@/lib/bookings";
 import { getDropoffLocationByName } from "@/lib/dropoff-locations";
 import { notifyAdminsPendingBookingCreated } from "@/lib/notifications/booking-admin-events";
 import { rateLimit } from "@/lib/rate-limit";
+import { logServerWarning } from "@/lib/server-error-logger";
 import { z } from "zod";
 
 type CheckoutResult =
@@ -43,7 +44,12 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
         },
         timestamp: Date.now(),
       }),
-    }).catch(() => {});
+    }).catch((error) => {
+      logServerWarning(error, {
+        source: "cars/[id]/beginCheckoutAction",
+        category: "debug_ingest_failed",
+      });
+    });
     // #endregion
     if (!carId) {
       throw new Error("Car id is required.");
@@ -129,7 +135,12 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
           },
           timestamp: Date.now(),
         }),
-      }).catch(() => {});
+      }).catch((error) => {
+        logServerWarning(error, {
+          source: "cars/[id]/beginCheckoutAction",
+          category: "debug_ingest_failed",
+        });
+      });
       // #endregion
       return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid checkout details." };
     }
@@ -201,9 +212,19 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
         },
         timestamp: Date.now(),
       }),
-    }).catch(() => {});
+    }).catch((error) => {
+      logServerWarning(error, {
+        source: "cars/[id]/beginCheckoutAction",
+        category: "debug_ingest_failed",
+      });
+    });
     // #endregion
-    void notifyAdminsPendingBookingCreated(booking, car.name).catch(() => undefined);
+    void notifyAdminsPendingBookingCreated(booking, car.name).catch((error) => {
+      logServerWarning(error, {
+        source: "cars/[id]/beginCheckoutAction",
+        category: "notify_admins_pending_booking_failed",
+      });
+    });
     return { ok: true, redirectTo: `/checkout/${booking.id}` };
   } catch (error) {
     // #region agent log
@@ -221,7 +242,12 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
         },
         timestamp: Date.now(),
       }),
-    }).catch(() => {});
+    }).catch((fetchError) => {
+      logServerWarning(fetchError, {
+        source: "cars/[id]/beginCheckoutAction",
+        category: "debug_ingest_failed",
+      });
+    });
     // #endregion
     return {
       ok: false,

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { readServerEnv } from "@/lib/env";
+import { logServerWarning } from "@/lib/server-error-logger";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 type XenditInvoiceResponse = {
@@ -124,7 +125,12 @@ export async function createXenditPaymentRequest(input: {
       },
       timestamp: Date.now(),
     }),
-  }).catch(() => {});
+  }).catch((error) => {
+    logServerWarning(error, {
+      source: "lib/xendit/createXenditPaymentRequest",
+      category: "debug_ingest_failed",
+    });
+  });
   // #endregion
   const response = await fetch("https://api.xendit.co/v3/payment_requests", {
     method: "POST",
@@ -247,7 +253,12 @@ export async function createXenditComponentsPaymentSession(input: {
       },
       timestamp: Date.now(),
     }),
-  }).catch(() => {});
+  }).catch((error) => {
+    logServerWarning(error, {
+      source: "lib/xendit/createXenditComponentsPaymentSession",
+      category: "debug_ingest_failed",
+    });
+  });
   // #endregion
   const response = await fetch("https://api.xendit.co/sessions", {
     method: "POST",
@@ -297,7 +308,12 @@ export async function createXenditComponentsPaymentSession(input: {
       },
       timestamp: Date.now(),
     }),
-  }).catch(() => {});
+  }).catch((error) => {
+    logServerWarning(error, {
+      source: "lib/xendit/createXenditComponentsPaymentSession",
+      category: "debug_ingest_failed",
+    });
+  });
   // #endregion
   if (!response.ok || !payload.payment_session_id || !payload.components_sdk_key) {
     throw new Error(payload.message || "Failed to create payment session.");

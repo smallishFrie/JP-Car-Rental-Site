@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { attachPaymentReference } from "@/lib/bookings";
+import { logServerWarning } from "@/lib/server-error-logger";
 import { createXenditComponentsPaymentSession } from "@/lib/xendit";
 
 type InitCheckoutComponentsResult =
@@ -29,7 +30,12 @@ export async function initCheckoutComponentsSessionAction(input: {
         data: { bookingId, origin },
         timestamp: Date.now(),
       }),
-    }).catch(() => {});
+    }).catch((error) => {
+      logServerWarning(error, {
+        source: "checkout/[bookingId]/initCheckoutComponentsSessionAction",
+        category: "debug_ingest_failed",
+      });
+    });
     // #endregion
     if (!bookingId) {
       throw new Error("Booking id is required.");
@@ -70,7 +76,12 @@ export async function initCheckoutComponentsSessionAction(input: {
         },
         timestamp: Date.now(),
       }),
-    }).catch(() => {});
+    }).catch((fetchError) => {
+      logServerWarning(fetchError, {
+        source: "checkout/[bookingId]/initCheckoutComponentsSessionAction",
+        category: "debug_ingest_failed",
+      });
+    });
     // #endregion
     if (error || !booking) {
       throw new Error(error?.message ?? "Booking not found.");
@@ -121,7 +132,12 @@ export async function initCheckoutComponentsSessionAction(input: {
         },
         timestamp: Date.now(),
       }),
-    }).catch(() => {});
+    }).catch((fetchError) => {
+      logServerWarning(fetchError, {
+        source: "checkout/[bookingId]/initCheckoutComponentsSessionAction",
+        category: "debug_ingest_failed",
+      });
+    });
     // #endregion
 
     await attachPaymentReference(bookingId, session.paymentSessionId);
@@ -154,7 +170,12 @@ export async function initCheckoutComponentsSessionAction(input: {
         },
         timestamp: Date.now(),
       }),
-    }).catch(() => {});
+    }).catch((fetchError) => {
+      logServerWarning(fetchError, {
+        source: "checkout/[bookingId]/initCheckoutComponentsSessionAction",
+        category: "debug_ingest_failed",
+      });
+    });
     // #endregion
     return { ok: false, message: error instanceof Error ? error.message : "Failed to start payment." };
   }
