@@ -2417,12 +2417,7 @@ a.car-card:focus-visible {
   display: grid;
   gap: 0.9rem;
   align-content: space-between;
-  background: linear-gradient(
-    150deg,
-    color-mix(in srgb, var(--accent) 7%, var(--bg-elevated)) 0%,
-    var(--bg-elevated) 52%,
-    color-mix(in srgb, var(--bg-muted) 45%, var(--bg-elevated)) 100%
-  );
+  background: var(--bg-elevated);
   box-shadow: var(--shadow-sm);
   transition:
     transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
@@ -3786,6 +3781,25 @@ a.car-card:focus-visible {
   padding: 1.5rem;
   display: grid;
   gap: 1rem;
+  /* Keep embedded Xendit controls aligned with the app theme. */
+  --xendit-font-family: var(--font-sans);
+  --xendit-color-primary: var(--accent);
+  --xendit-color-text: var(--text);
+  --xendit-color-text-secondary: var(--text-muted);
+  --xendit-color-text-placeholder: color-mix(in srgb, var(--text-muted) 78%, transparent);
+  --xendit-color-disabled: color-mix(in srgb, var(--bg-muted) 72%, var(--text-muted));
+  --xendit-color-danger: #ef4444;
+  --xendit-color-border: var(--border-strong);
+  --xendit-color-background: var(--bg-elevated);
+  --xendit-focus-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+  --xendit-radius-1: var(--radius-sm);
+}
+
+.auth-form #xendit-components-container {
+  border: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--bg-elevated) 88%, var(--bg-muted));
+  border-radius: var(--radius-md);
+  padding: 1rem;
 }
 
 .auth-form h2 {
