@@ -118,7 +118,30 @@ export default function CheckoutClient(props: {
     let mounted = true;
     const run = async () => {
       try {
-        const components = new XenditComponents({ componentsSdkKey });
+        const currentTheme = document.documentElement.getAttribute("data-theme");
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const isDarkTheme = currentTheme === "dark" || (currentTheme !== "light" && prefersDark);
+        const components = new XenditComponents({
+          componentsSdkKey,
+          iframeFieldAppearance: {
+            inputStyles: isDarkTheme
+              ? {
+                  color: "#f4f4f5",
+                  backgroundColor: "#16161a",
+                }
+              : {
+                  color: "#1d1d1f",
+                  backgroundColor: "#ffffff",
+                },
+            placeholderStyles: isDarkTheme
+              ? {
+                  color: "#9b9ba3",
+                }
+              : {
+                  color: "#6e6e73",
+                },
+          },
+        });
         componentsRef.current = components;
 
         components.addEventListener("fatal-error", (event: Event) => {
