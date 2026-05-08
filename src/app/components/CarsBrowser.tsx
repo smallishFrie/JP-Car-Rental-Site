@@ -54,9 +54,9 @@ export default function CarsBrowser({ cars }: CarsBrowserProps) {
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
   const categories = useMemo(() => {
-    return Array.from(new Set(cars.flatMap((car) => parseCategoryTokens(car.category)))).sort((a, b) =>
-      a.localeCompare(b),
-    );
+    return Array.from(
+      new Set(cars.flatMap((car) => categoryTokensWithoutTransmission(parseCategoryTokens(car.category)))),
+    ).sort((a, b) => a.localeCompare(b));
   }, [cars]);
   const selectedCategorySummary = useMemo(() => {
     if (selectedCategories.length === 0) {
@@ -75,7 +75,7 @@ export default function CarsBrowser({ cars }: CarsBrowserProps) {
     const query = search.trim().toLowerCase();
     return cars
       .filter((car) => {
-        const carCategories = parseCategoryTokens(car.category);
+        const carCategories = categoryTokensWithoutTransmission(parseCategoryTokens(car.category));
         const categoryMatch =
           selectedCategories.length === 0 || selectedCategories.some((selectedCategory) => carCategories.includes(selectedCategory));
         if (!categoryMatch) {
