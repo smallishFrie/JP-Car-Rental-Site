@@ -40,7 +40,7 @@ const CATEGORY_OPTIONS = [
   "Convertable",
   "Station Wagon",
   "MPV",
-  "Pickup Trick",
+  "Pickup Truck",
 ] as const;
 
 const CUSTOM_CATEGORY_VALUE = "__custom__";
