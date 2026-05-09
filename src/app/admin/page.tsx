@@ -3,11 +3,13 @@ import { redirect } from "next/navigation";
 import AdminCarManager from "@/app/admin/AdminCarManager";
 import AdminBookingManager from "@/app/admin/AdminBookingManager";
 import AdminDropoffLocationManager from "@/app/admin/AdminDropoffLocationManager";
+import AdminContactManager from "@/app/admin/AdminContactManager";
 import AdminReviewManager from "@/app/admin/AdminReviewManager";
 import { bookingStatusBlocksCarDelete } from "@/lib/booking-model";
 import { listBookingsForAdmin } from "@/lib/bookings";
 import { listCarsForAdmin, requireAdmin } from "@/lib/cars";
 import { listDropoffLocations } from "@/lib/dropoff-locations";
+import { listContactOptionsForAdmin } from "@/lib/contact-options";
 import { listReviewsForAdmin } from "@/lib/reviews";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 
@@ -30,13 +32,18 @@ export default async function AdminPage() {
   let bookings: Awaited<ReturnType<typeof listBookingsForAdmin>> = [];
   let dropoffLocations: Awaited<ReturnType<typeof listDropoffLocations>> = [];
   let reviews: Awaited<ReturnType<typeof listReviewsForAdmin>> = [];
+  let contactOptions: Awaited<ReturnType<typeof listContactOptionsForAdmin>> = [];
   try {
     cars = await listCarsForAdmin();
     bookings = await listBookingsForAdmin();
     dropoffLocations = await listDropoffLocations();
     reviews = await listReviewsForAdmin();
+    contactOptions = await listContactOptionsForAdmin();
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to load cars.";
+    if (message.includes("contact_options") || (message.includes("relation") && message.includes("contact_options"))) {
+      redirect("/?message=Please run supabase/contact_options_setup.sql first.");
+    }
     if (message.includes("Could not find the table") || message.includes("relation") && message.includes("cars")) {
       redirect("/?message=Please run supabase/admin_cars_setup.sql first.");
     }
@@ -64,6 +71,7 @@ export default async function AdminPage() {
         <AdminCarManager initialCars={carsWithBookingCounts} />
         <AdminReviewManager initialReviews={reviews} initialCars={cars} />
         <AdminDropoffLocationManager initialLocations={dropoffLocations} />
+        <AdminContactManager initialOptions={contactOptions} />
         <AdminBookingManager initialBookings={bookings} />
         <p className="auth-back-link">
           <Link href="/">← Back to home</Link>

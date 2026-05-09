@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { deleteCarById, requireAdmin, uploadCarImage, upsertCar } from "@/lib/cars";
+import { deleteContactOption, saveContactOption } from "@/lib/contact-options";
+import { CONTACT_TYPES, type ContactType } from "@/lib/contact-options-types";
 import { deleteDropoffLocation, saveDropoffLocation } from "@/lib/dropoff-locations";
 import { createReview, deleteReview, updateReview } from "@/lib/reviews";
 import {
@@ -205,6 +207,58 @@ export async function deleteDropoffLocationAction(formData: FormData) {
     throw new Error("Location id is required.");
   }
   await deleteDropoffLocation(id);
+  revalidatePath("/admin");
+  revalidatePath("/");
+}
+
+function parseContactType(value: FormDataEntryValue | null): ContactType {
+  const raw = String(value ?? "").trim();
+  if ((CONTACT_TYPES as readonly string[]).includes(raw)) {
+    return raw as ContactType;
+  }
+  throw new Error("Select a valid contact type.");
+}
+
+function parseSortOrder(value: FormDataEntryValue | null): number {
+  const parsed = Number(String(value ?? "").trim());
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+  return Math.trunc(parsed);
+}
+
+export async function saveContactOptionAction(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "").trim();
+  const contactType = parseContactType(formData.get("contactType"));
+  const labelRaw = String(formData.get("label") ?? "").trim();
+  const label = labelRaw === "" ? null : labelRaw;
+  const value = String(formData.get("value") ?? "").trim();
+  const sortOrder = parseSortOrder(formData.get("sortOrder"));
+  const isActiveValues = formData.getAll("isActive").map((item) => String(item).trim().toLowerCase());
+  const isActive = isActiveValues.includes("true") || isActiveValues.includes("on");
+
+  const saved = await saveContactOption({
+    id: id || undefined,
+    contactType,
+    label,
+    value,
+    sortOrder,
+    isActive,
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  return saved;
+}
+
+export async function deleteContactOptionAction(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) {
+    throw new Error("Contact option id is required.");
+  }
+  await deleteContactOption(id);
   revalidatePath("/admin");
   revalidatePath("/");
 }

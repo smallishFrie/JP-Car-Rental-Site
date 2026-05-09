@@ -1,10 +1,13 @@
 import Link from "next/link";
+import HomeContactChannels from "./HomeContactChannels";
 import RevealOnScroll from "./RevealOnScroll";
+import { listContactOptionsPublic } from "@/lib/contact-options";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function HomeContactStrip() {
   let isSignedIn = false;
+  const contactChannels = await listContactOptionsPublic();
 
   if (hasSupabaseEnv()) {
     const supabase = await createClient();
@@ -43,6 +46,7 @@ export default async function HomeContactStrip() {
             ) : null}
           </div>
         </div>
+        {contactChannels.length > 0 ? <HomeContactChannels channels={contactChannels} /> : null}
       </RevealOnScroll>
     </section>
   );

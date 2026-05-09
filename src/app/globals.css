@@ -728,7 +728,7 @@ a.header-auth-cta:focus-visible {
 
 .site-footer-columns {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: 1.25rem 1.5rem;
 }
 
@@ -1693,6 +1693,283 @@ html[data-theme="dark"] .home-cars-faq-split-line::before {
 .home-contact-link:focus-visible {
   color: var(--accent-hover);
   outline: none;
+}
+
+/* Admin-defined contact channels (home) */
+.home-contact-channels {
+  margin-top: 1.75rem;
+  padding-top: 1.35rem;
+  border-top: 1px solid var(--border-subtle);
+  display: grid;
+  gap: 1rem;
+}
+
+.home-contact-channels-eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--accent) 75%, var(--text-muted));
+}
+
+.home-contact-channels-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 1rem;
+}
+
+.home-contact-channel-item {
+  min-height: 100%;
+}
+
+/* Channel brand accents (tiles + icon rings). Falls back to site --accent. */
+.home-contact-channel-tile {
+  --contact-brand: var(--accent);
+
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.85rem 1rem;
+  padding: 1.1rem 1.15rem;
+  min-height: 100%;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: inherit;
+  background:
+    linear-gradient(var(--bg-elevated), var(--bg-elevated)) padding-box,
+    linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--contact-brand) 58%, transparent),
+        color-mix(in srgb, var(--contact-brand) 12%, transparent) 45%,
+        color-mix(in srgb, var(--contact-brand) 38%, transparent)
+      )
+      border-box;
+  border: 1px solid transparent;
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms ease,
+    filter 220ms ease;
+}
+
+.home-contact-channel-tile[data-contact-type="email"] {
+  --contact-brand: #3b82f6;
+}
+
+.home-contact-channel-tile[data-contact-type="phone"] {
+  --contact-brand: #0ea5e9;
+}
+
+.home-contact-channel-tile[data-contact-type="whatsapp"] {
+  --contact-brand: #25d366;
+}
+
+.home-contact-channel-tile[data-contact-type="sms"] {
+  --contact-brand: #2dd4bf;
+}
+
+.home-contact-channel-tile[data-contact-type="website"] {
+  --contact-brand: #8b5cf6;
+}
+
+.home-contact-channel-tile[data-contact-type="facebook"] {
+  --contact-brand: #1877f2;
+}
+
+.home-contact-channel-tile[data-contact-type="instagram"] {
+  --contact-brand: #e4405f;
+}
+
+.home-contact-channel-tile[data-contact-type="telegram"] {
+  --contact-brand: #26a5e4;
+}
+
+.home-contact-channel-tile[data-contact-type="other"] {
+  --contact-brand: #64748b;
+}
+
+.home-contact-channel-tile:hover,
+.home-contact-channel-tile:focus-visible {
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 36px color-mix(in srgb, var(--contact-brand) 22%, transparent),
+    var(--shadow-sm);
+  outline: none;
+}
+
+.home-contact-channel-tile--inert {
+  cursor: default;
+  opacity: 0.92;
+}
+
+.home-contact-channel-icon {
+  display: grid;
+  place-items: center;
+  width: 2.65rem;
+  height: 2.65rem;
+  border-radius: 999px;
+  color: var(--contact-brand);
+  background: color-mix(in srgb, var(--contact-brand) 16%, var(--bg-elevated));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--contact-brand) 32%, transparent);
+}
+
+.home-contact-channel-text {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.home-contact-channel-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--contact-brand) 82%, var(--text-muted));
+}
+
+.home-contact-channel-title {
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--foreground);
+}
+
+.home-contact-channel-detail {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-contact-channel-chev {
+  color: color-mix(in srgb, var(--contact-brand) 72%, var(--text-muted));
+  opacity: 0.9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-contact-channel-tile {
+    transition: none;
+  }
+
+  .home-contact-channel-tile:hover,
+  .home-contact-channel-tile:focus-visible {
+    transform: none;
+  }
+}
+
+.site-footer-contact-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.site-footer-contact-link,
+.site-footer-contact-static {
+  display: grid;
+  gap: 0.1rem;
+  text-decoration: none;
+}
+
+.site-footer-contact-link {
+  color: inherit;
+  width: fit-content;
+  border-bottom: 1px solid transparent;
+  transition:
+    color 200ms ease,
+    border-color 200ms ease;
+}
+
+.site-footer-contact-link:hover .site-footer-contact-value,
+.site-footer-contact-link:focus-visible .site-footer-contact-value {
+  color: #ffffff;
+}
+
+.site-footer-contact-link:hover,
+.site-footer-contact-link:focus-visible {
+  border-bottom-color: #71717a;
+  outline: none;
+}
+
+.site-footer-contact-link:hover .site-footer-contact-type,
+.site-footer-contact-link:focus-visible .site-footer-contact-type {
+  color: color-mix(in srgb, var(--footer-channel-type, #a1a1aa) 55%, #ffffff);
+}
+
+/* Match home tiles — type label uses brand color */
+.site-footer-contact-link,
+.site-footer-contact-static {
+  --footer-channel-type: #a1a1aa;
+}
+
+.site-footer-contact-link[data-contact-type="email"],
+.site-footer-contact-static[data-contact-type="email"] {
+  --footer-channel-type: #3b82f6;
+}
+
+.site-footer-contact-link[data-contact-type="phone"],
+.site-footer-contact-static[data-contact-type="phone"] {
+  --footer-channel-type: #0ea5e9;
+}
+
+.site-footer-contact-link[data-contact-type="whatsapp"],
+.site-footer-contact-static[data-contact-type="whatsapp"] {
+  --footer-channel-type: #25d366;
+}
+
+.site-footer-contact-link[data-contact-type="sms"],
+.site-footer-contact-static[data-contact-type="sms"] {
+  --footer-channel-type: #2dd4bf;
+}
+
+.site-footer-contact-link[data-contact-type="website"],
+.site-footer-contact-static[data-contact-type="website"] {
+  --footer-channel-type: #8b5cf6;
+}
+
+.site-footer-contact-link[data-contact-type="facebook"],
+.site-footer-contact-static[data-contact-type="facebook"] {
+  --footer-channel-type: #1877f2;
+}
+
+.site-footer-contact-link[data-contact-type="instagram"],
+.site-footer-contact-static[data-contact-type="instagram"] {
+  --footer-channel-type: #e4405f;
+}
+
+.site-footer-contact-link[data-contact-type="telegram"],
+.site-footer-contact-static[data-contact-type="telegram"] {
+  --footer-channel-type: #26a5e4;
+}
+
+.site-footer-contact-link[data-contact-type="other"],
+.site-footer-contact-static[data-contact-type="other"] {
+  --footer-channel-type: #94a3b8;
+}
+
+.site-footer-contact-type {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--footer-channel-type, #a1a1aa);
+}
+
+.site-footer-contact-value {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #e4e4e7;
+}
+
+.site-footer-contact-static .site-footer-contact-value {
+  color: #cbd5e1;
 }
 
 .home-included-subline {
