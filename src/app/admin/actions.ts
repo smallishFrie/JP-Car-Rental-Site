@@ -265,13 +265,11 @@ export async function deleteContactOptionAction(formData: FormData) {
 
 export async function saveReviewAction(formData: FormData) {
   await requireAdmin();
-  const carId = parseRequiredText(formData.get("carId"), "Car");
   const reviewerName = parseRequiredText(formData.get("reviewerName"), "Name");
   const countryOfOrigin = parseRequiredText(formData.get("countryOfOrigin"), "Country of origin");
   const reviewText = parseRequiredText(formData.get("reviewText"), "Review");
 
   const savedId = await createReview({
-    carId,
     reviewerName,
     countryOfOrigin,
     reviewText,
@@ -279,24 +277,20 @@ export async function saveReviewAction(formData: FormData) {
 
   revalidatePath("/admin");
   revalidatePath("/");
-  revalidatePath(`/cars/${carId}`);
   return savedId;
 }
 
 export async function deleteReviewAction(formData: FormData) {
   await requireAdmin();
   const id = parseRequiredText(formData.get("id"), "Review id");
-  const carId = parseRequiredText(formData.get("carId"), "Car");
   await deleteReview(id);
   revalidatePath("/admin");
   revalidatePath("/");
-  revalidatePath(`/cars/${carId}`);
 }
 
 export async function updateReviewAction(formData: FormData) {
   await requireAdmin();
   const id = parseRequiredText(formData.get("id"), "Review id");
-  const carId = parseRequiredText(formData.get("carId"), "Car");
   const reviewerName = parseRequiredText(formData.get("reviewerName"), "Name");
   const countryOfOrigin = parseRequiredText(formData.get("countryOfOrigin"), "Country of origin");
   const reviewText = parseRequiredText(formData.get("reviewText"), "Review");
@@ -310,5 +304,4 @@ export async function updateReviewAction(formData: FormData) {
 
   revalidatePath("/admin");
   revalidatePath("/");
-  revalidatePath(`/cars/${carId}`);
 }

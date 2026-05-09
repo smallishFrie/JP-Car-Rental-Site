@@ -1,12 +1,10 @@
-import type { Car } from "@/lib/cars";
 import type { CarReview } from "@/lib/reviews";
 
 type HomeReviewsWheelProps = {
   reviews: CarReview[];
-  cars: Car[];
 };
 
-export default function HomeReviewsWheel({ reviews, cars }: HomeReviewsWheelProps) {
+export default function HomeReviewsWheel({ reviews }: HomeReviewsWheelProps) {
   if (!reviews.length) {
     return null;
   }
@@ -18,7 +16,6 @@ export default function HomeReviewsWheel({ reviews, cars }: HomeReviewsWheelProp
     year: "numeric",
   });
   const cards = visibleReviews.map((review) => {
-    const carName = cars.find((car) => car.id === review.carId)?.name ?? "Selected car";
     const parsedDate = new Date(review.createdAt);
     const reviewDate = Number.isNaN(parsedDate.getTime()) ? "Recent trip" : dateFormatter.format(parsedDate);
     return {
@@ -26,7 +23,6 @@ export default function HomeReviewsWheel({ reviews, cars }: HomeReviewsWheelProp
       reviewText: review.reviewText,
       reviewerName: review.reviewerName,
       countryOfOrigin: review.countryOfOrigin,
-      carName,
       createdAt: review.createdAt,
       reviewDate,
     };
@@ -44,7 +40,6 @@ export default function HomeReviewsWheel({ reviews, cars }: HomeReviewsWheelProp
                 <span>{card.countryOfOrigin}</span>
               </p>
               <p className="home-review-chips">
-                <span className="home-review-chip">{card.carName}</span>
                 <time className="home-review-chip" dateTime={card.createdAt}>
                   {card.reviewDate}
                 </time>

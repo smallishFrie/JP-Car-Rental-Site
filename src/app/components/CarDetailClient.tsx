@@ -9,7 +9,6 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import { getCountries, getCountryCallingCode, type CountryCode } from "libphonenumber-js";
 import * as FlagIcons from "country-flag-icons/react/3x2";
 import type { Car } from "@/lib/cars";
-import type { CarReview } from "@/lib/reviews";
 import { categoryTokensWithoutTransmission, parseCategoryTokens } from "@/lib/carDisplay";
 import CarSpecsRow from "@/app/components/CarSpecsRow";
 import { beginCheckoutAction } from "@/app/cars/[id]/actions";
@@ -22,7 +21,6 @@ import "react-day-picker/style.css";
 type CarDetailClientProps = {
   car: Car;
   dropoffLocations: Array<{ id: string; name: string; extraFee: number }>;
-  reviews: CarReview[];
 };
 
 const AUTOPLAY_MS = 4200;
@@ -77,7 +75,7 @@ function sameMonth(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
 }
 
-export default function CarDetailClient({ car, dropoffLocations, reviews }: CarDetailClientProps) {
+export default function CarDetailClient({ car, dropoffLocations }: CarDetailClientProps) {
   const reduceMotion = useReducedMotion();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [autoplayTick, setAutoplayTick] = useState(0);
@@ -134,52 +132,6 @@ export default function CarDetailClient({ car, dropoffLocations, reviews }: CarD
   const formattedLocationFee = useMemo(
     () => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(locationFee),
     [locationFee],
-  );
-  const reviewCount = reviews.length;
-  const countryCount = new Set(
-    reviews.map((review) => review.countryOfOrigin.trim().toLowerCase()).filter(Boolean),
-  ).size;
-  const reviewDateFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        // Keep server/client render deterministic across timezones.
-        timeZone: "UTC",
-      }),
-    [],
-  );
-  const reviewMonthFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat("en-US", {
-        month: "short",
-        year: "numeric",
-        // Keep server/client render deterministic across timezones.
-        timeZone: "UTC",
-      }),
-    [],
-  );
-  const latestReviewLabel = useMemo(() => {
-    const latest = reviews[0]?.createdAt;
-    if (!latest) {
-      return "No recent entries";
-    }
-    const parsed = new Date(latest);
-    if (Number.isNaN(parsed.getTime())) {
-      return "Recently updated";
-    }
-    return reviewMonthFormatter.format(parsed);
-  }, [reviews, reviewMonthFormatter]);
-  const formatReviewDate = useCallback(
-    (value: string) => {
-      const parsed = new Date(value);
-      if (Number.isNaN(parsed.getTime())) {
-        return "Recent trip";
-      }
-      return reviewDateFormatter.format(parsed);
-    },
-    [reviewDateFormatter],
   );
   const formatPhp = useCallback(
     (amount: number) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(amount),
@@ -453,43 +405,12 @@ export default function CarDetailClient({ car, dropoffLocations, reviews }: CarD
         message: "Car detail client mounted with review render inputs",
         data: {
           carId: car.id,
-          reviewsLength: reviews.length,
-          firstReviewId: reviews[0]?.id ?? null,
-          firstReviewCreatedAt: reviews[0]?.createdAt ?? null,
         },
         timestamp: Date.now(),
       }),
     }).catch(() => {});
     // #endregion
-  }, [car.id, reviews]);
-
-  useEffect(() => {
-    if (!reviews.length) {
-      return;
-    }
-    const showcase = document.querySelector("section.car-reviews-showcase");
-    const hasShell = Boolean(showcase?.querySelector(":scope > .car-reviews-shell"));
-    const directHeader = Boolean(showcase?.querySelector(":scope > header.car-reviews-header"));
-    // #region agent log
-    fetch("http://127.0.0.1:7918/ingest/032d1357-fea6-4540-a457-bae66492ee09", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "46aa6d" },
-      body: JSON.stringify({
-        sessionId: "46aa6d",
-        runId: "run1",
-        hypothesisId: "H5",
-        location: "src/app/components/CarDetailClient.tsx:456",
-        message: "Car reviews DOM shape after hydrate",
-        data: {
-          hasShowcase: Boolean(showcase),
-          hasShell,
-          directHeader,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-  }, [reviews.length]);
+  }, [car.id]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -895,57 +816,6 @@ export default function CarDetailClient({ car, dropoffLocations, reviews }: CarD
           </p>
         ) : null}
       </section>
-      </RevealOnScroll>
-
-      <RevealOnScroll>
-      {reviews.length ? (
-      <section className="car-reviews-showcase" aria-label={`${car.name} customer reviews`}>
-        <div className="car-reviews-shell">
-          <header className="car-reviews-header">
-            <p className="car-reviews-eyebrow">Renter spotlight</p>
-            <h2 className="car-reviews-heading">Real trips. Real impressions. Trusted comfort.</h2>
-            <p className="car-reviews-lead">
-              Guests consistently praise the drive quality, cleanliness, and smooth pickup flow for this vehicle.
-            </p>
-          </header>
-
-          <ul className="car-reviews-highlights" aria-label="Review highlights">
-            <li className="car-reviews-highlight-card">
-              <strong>{reviewCount}</strong>
-              <span>{reviewCount === 1 ? "Guest story" : "Guest stories"}</span>
-            </li>
-            <li className="car-reviews-highlight-card">
-              <strong>{countryCount}</strong>
-              <span>{countryCount === 1 ? "Country represented" : "Countries represented"}</span>
-            </li>
-            <li className="car-reviews-highlight-card">
-              <strong>{latestReviewLabel}</strong>
-              <span>Most recent review</span>
-            </li>
-          </ul>
-
-          <ul className="car-reviews-grid">
-            {reviews.map((review) => (
-              <li key={review.id} className="car-review-card">
-                <p className="car-review-card-text">{review.reviewText}</p>
-                <div className="car-review-card-footer">
-                  <p className="car-review-card-attribution">
-                    <span className="car-review-card-reviewer">{review.reviewerName}</span>
-                    <span className="car-review-card-origin">{review.countryOfOrigin}</span>
-                  </p>
-                  <div className="car-review-card-meta">
-                    <span className="car-review-card-chip">Guest review</span>
-                    <time dateTime={review.createdAt} className="car-review-card-chip">
-                      {formatReviewDate(review.createdAt)}
-                    </time>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-      ) : null}
       </RevealOnScroll>
     </div>
   );

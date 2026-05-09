@@ -55,7 +55,7 @@ export default async function Home() {
 
             <div className="home-section home-section--reviews">
               <div className="home-reviews-stack">
-                <HomeReviewsWheel reviews={reviews} cars={cars} />
+                <HomeReviewsWheel reviews={reviews} />
               </div>
             </div>
 

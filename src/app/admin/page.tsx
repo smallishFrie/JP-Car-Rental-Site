@@ -87,7 +87,7 @@ export default async function AdminPage(props: Props) {
           <AdminAnalytics bookings={bookings} cars={carsWithBookingCounts} />
         )}
         {tab === "cars" && <AdminCarManager initialCars={carsWithBookingCounts} />}
-        {tab === "reviews" && <AdminReviewManager initialReviews={reviews} initialCars={cars} />}
+        {tab === "reviews" && <AdminReviewManager initialReviews={reviews} />}
         {tab === "locations" && <AdminDropoffLocationManager initialLocations={dropoffLocations} />}
         {tab === "contacts" && <AdminContactManager initialOptions={contactOptions} />}
         {tab === "bookings" && <AdminBookingManager initialBookings={bookings} />}

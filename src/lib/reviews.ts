@@ -5,21 +5,16 @@ import { requireAdmin } from "@/lib/cars";
 
 export type CarReviewRecord = {
   id: string;
-  car_id: string;
   reviewer_name: string;
   country_of_origin: string;
   review_text: string;
   created_at: string;
-  cars?: { name: string } | null;
 };
 
-type CarReviewAdminRow = Omit<CarReviewRecord, "cars"> & {
-  cars?: { name: string } | { name: string }[] | null;
-};
+type CarReviewAdminRow = CarReviewRecord;
 
 export type CarReview = {
   id: string;
-  carId: string;
   reviewerName: string;
   countryOfOrigin: string;
   reviewText: string;
@@ -29,7 +24,6 @@ export type CarReview = {
 function toAppReview(record: CarReviewRecord): CarReview {
   return {
     id: record.id,
-    carId: record.car_id,
     reviewerName: record.reviewer_name,
     countryOfOrigin: record.country_of_origin,
     reviewText: record.review_text,
@@ -56,31 +50,6 @@ export async function listRecentReviews(limit = 10): Promise<CarReview[]> {
   return (data as CarReviewRecord[]).map(toAppReview);
 }
 
-export async function listReviewsForCar(carId: string, limit = 6): Promise<CarReview[]> {
-  if (!hasSupabaseEnv()) {
-    return [];
-  }
-
-  const normalizedId = carId.trim();
-  if (!normalizedId) {
-    return [];
-  }
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("car_reviews")
-    .select("*")
-    .eq("car_id", normalizedId)
-    .order("created_at", { ascending: false })
-    .limit(Math.max(1, limit));
-
-  if (error || !data?.length) {
-    return [];
-  }
-
-  return (data as CarReviewRecord[]).map(toAppReview);
-}
-
 export async function listReviewsForAdmin(): Promise<CarReviewRecord[]> {
   if (!hasSupabaseEnv()) {
     return [];
@@ -89,7 +58,7 @@ export async function listReviewsForAdmin(): Promise<CarReviewRecord[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("car_reviews")
-    .select("id, car_id, reviewer_name, country_of_origin, review_text, created_at, cars(name)")
+    .select("id, reviewer_name, country_of_origin, review_text, created_at")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -97,14 +66,10 @@ export async function listReviewsForAdmin(): Promise<CarReviewRecord[]> {
   }
 
   const rows = ((data as CarReviewAdminRow[] | null) ?? []);
-  return rows.map((row) => ({
-    ...row,
-    cars: Array.isArray(row.cars) ? row.cars[0] ?? null : (row.cars ?? null),
-  }));
+  return rows;
 }
 
 export async function createReview(input: {
-  carId: string;
   reviewerName: string;
   countryOfOrigin: string;
   reviewText: string;
@@ -112,7 +77,6 @@ export async function createReview(input: {
   await requireAdmin();
   const supabase = await createClient();
   const payload = {
-    car_id: input.carId.trim(),
     reviewer_name: input.reviewerName.trim(),
     country_of_origin: input.countryOfOrigin.trim(),
     review_text: input.reviewText.trim(),

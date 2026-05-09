@@ -3,27 +3,22 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { MotionPressableButton } from "@/app/components/MotionPressable";
-import CustomSelect from "@/app/components/CustomSelect";
 import { deleteReviewAction, saveReviewAction, updateReviewAction } from "@/app/admin/actions";
-import type { CarRecord } from "@/lib/cars";
 import type { CarReviewRecord } from "@/lib/reviews";
 
 type AdminReviewManagerProps = {
   initialReviews: CarReviewRecord[];
-  initialCars: CarRecord[];
 };
 
 type ReviewFormState = {
   id: string;
-  carId: string;
   reviewerName: string;
   countryOfOrigin: string;
   reviewText: string;
 };
 
-const buildEmptyForm = (cars: CarRecord[]): ReviewFormState => ({
+const buildEmptyForm = (): ReviewFormState => ({
   id: "",
-  carId: cars[0]?.id ?? "",
   reviewerName: "",
   countryOfOrigin: "",
   reviewText: "",
@@ -32,21 +27,20 @@ const buildEmptyForm = (cars: CarRecord[]): ReviewFormState => ({
 function mapReviewToForm(review: CarReviewRecord): ReviewFormState {
   return {
     id: review.id,
-    carId: review.car_id,
     reviewerName: review.reviewer_name,
     countryOfOrigin: review.country_of_origin,
     reviewText: review.review_text,
   };
 }
 
-export default function AdminReviewManager({ initialReviews, initialCars }: AdminReviewManagerProps) {
+export default function AdminReviewManager({ initialReviews }: AdminReviewManagerProps) {
   const router = useRouter();
   const [reviews, setReviews] = useState(initialReviews);
   const [selectedReviewId, setSelectedReviewId] = useState("");
   const [message, setMessage] = useState("");
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [form, setForm] = useState<ReviewFormState>(buildEmptyForm(initialCars));
+  const [form, setForm] = useState<ReviewFormState>(buildEmptyForm());
 
   const selectedReview = useMemo(
     () => reviews.find((review) => review.id === selectedReviewId) ?? null,
@@ -57,7 +51,7 @@ export default function AdminReviewManager({ initialReviews, initialCars }: Admi
   function selectReview(reviewId: string) {
     setSelectedReviewId(reviewId);
     const review = reviews.find((item) => item.id === reviewId);
-    setForm(review ? mapReviewToForm(review) : buildEmptyForm(initialCars));
+    setForm(review ? mapReviewToForm(review) : buildEmptyForm());
     setMessage("");
     setIsConfirmingDelete(false);
   }
@@ -73,7 +67,6 @@ export default function AdminReviewManager({ initialReviews, initialCars }: Admi
               review.id === snapshot.id
                 ? {
                     ...review,
-                    car_id: snapshot.carId,
                     reviewer_name: snapshot.reviewerName.trim(),
                     country_of_origin: snapshot.countryOfOrigin.trim(),
                     review_text: snapshot.reviewText.trim(),
@@ -84,23 +77,19 @@ export default function AdminReviewManager({ initialReviews, initialCars }: Admi
           setMessage("Review updated.");
         } else {
           const savedId = await saveReviewAction(formData);
-          const selectedCar = initialCars.find((car) => car.id === snapshot.carId) ?? null;
           setReviews((current) => [
             {
               id: savedId,
-              car_id: snapshot.carId,
               reviewer_name: snapshot.reviewerName.trim(),
               country_of_origin: snapshot.countryOfOrigin.trim(),
               review_text: snapshot.reviewText.trim(),
               created_at: new Date().toISOString(),
-              cars: selectedCar ? { name: selectedCar.name } : null,
             },
             ...current,
           ]);
           setSelectedReviewId(savedId);
           setForm({
             id: savedId,
-            carId: snapshot.carId,
             reviewerName: snapshot.reviewerName.trim(),
             countryOfOrigin: snapshot.countryOfOrigin.trim(),
             reviewText: snapshot.reviewText.trim(),
@@ -124,14 +113,13 @@ export default function AdminReviewManager({ initialReviews, initialCars }: Admi
 
     const formData = new FormData();
     formData.set("id", id);
-    formData.set("carId", form.carId.trim());
 
     startTransition(async () => {
       try {
         await deleteReviewAction(formData);
         setReviews((current) => current.filter((review) => review.id !== id));
         setSelectedReviewId("");
-        setForm(buildEmptyForm(initialCars));
+        setForm(buildEmptyForm());
         setIsConfirmingDelete(false);
         setMessage("Review deleted successfully.");
         router.refresh();
@@ -173,19 +161,8 @@ export default function AdminReviewManager({ initialReviews, initialCars }: Admi
 
       <article className="admin-card">
         <h2>{isEditMode ? "Edit review" : "Create review"}</h2>
-        {initialCars.length ? <form className="admin-form" action={handleSubmit}>
+        <form className="admin-form" action={handleSubmit}>
           <input type="hidden" name="id" value={form.id} />
-          <input type="hidden" name="carId" value={form.carId} />
-
-          <label>
-            Car
-            <CustomSelect
-              options={initialCars.map((car) => ({ value: car.id, label: car.name }))}
-              value={form.carId}
-              onChange={(value) => setForm((current) => ({ ...current, carId: value }))}
-              optionsAriaLabel="Cars"
-            />
-          </label>
 
           <label>
             Name
@@ -251,7 +228,7 @@ export default function AdminReviewManager({ initialReviews, initialCars }: Admi
               </button>
             )
           ) : null}
-        </form> : <p className="admin-empty">No cars available to attach new reviews.</p>}
+        </form>
 
         {message ? (
           <p className="booking-feedback" role="status">
