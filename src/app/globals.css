@@ -2918,6 +2918,23 @@ a.car-card:focus-visible {
   text-decoration: underline;
 }
 
+.booking-policy-subtitle {
+  margin: 1rem 0 0.4rem;
+  color: var(--text-muted);
+}
+
+.booking-policy-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  list-style: disc;
+  list-style-position: outside;
+}
+
+.booking-policy-list li {
+  color: var(--text-muted);
+  margin: 0.2rem 0;
+}
+
 .booking-form {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

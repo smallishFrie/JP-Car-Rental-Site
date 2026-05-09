@@ -692,11 +692,19 @@ export default function CarDetailClient({ car, dropoffLocations, reviews }: CarD
       <RevealOnScroll>
       <section className="booking-panel" aria-label="Booking details">
         <h2>Booking Details</h2>
-        <p className="booking-policy-callout">
+        <div className="booking-policy-callout">
           <strong>Cancellation and refunds:</strong> Cancellations at least 48 hours before pickup may qualify for a full
           refund; within 48 hours fees may apply. No-shows are non-refundable. Read section 6 in our{" "}
           <Link href="/terms-of-service#cancellation">Terms of Service</Link>.
-        </p>
+          <p className="booking-policy-subtitle">
+            <strong>Additional policy:</strong>
+          </p>
+          <ul className="booking-policy-list">
+            <li>Minimum of 2 days for out of the city rental</li>
+            <li>An additional 400/hour of extension</li>
+            <li>If the extension exceeds 5 hours, it is considered as a whole day</li>
+          </ul>
+        </div>
         <form className="booking-form" onSubmit={handleSubmit}>
           <div className="booking-inline-fields">
             <label>
