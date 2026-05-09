@@ -57,10 +57,12 @@ export default function HomeReviewsWheel({ reviews, cars }: HomeReviewsWheelProp
   );
 
   return (
-    <section className="home-reviews-section" aria-label="Customer reviews">
+    <section className="home-reviews-section" aria-labelledby="home-reviews-heading">
       <div className="home-reviews-shell">
         <p className="home-reviews-eyebrow">Real customer reviews</p>
-        <h3 className="home-reviews-heading">Trusted rides, reviewed by real travelers.</h3>
+        <h2 className="home-section-heading" id="home-reviews-heading">
+          Trusted rides, reviewed by real travelers.
+        </h2>
         <p className="home-reviews-subline">
           Honest feedback from recent bookings, curated for a quick quality check before you reserve.
         </p>

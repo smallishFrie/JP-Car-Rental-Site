@@ -4,6 +4,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { motionEase } from "@/lib/motion";
 
+const HOME_SITE_CONTENT_ID = "home-site-content";
+
 type HomeScrollHeaderProps = {
   children: React.ReactNode;
 };
@@ -13,35 +15,34 @@ export default function HomeScrollHeader({ children }: HomeScrollHeaderProps) {
   const chromeRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const [edgeEngaged, setEdgeEngaged] = useState(false);
-  const [pastCars, setPastCars] = useState(false);
+  const [pastHero, setPastHero] = useState(false);
   const [headerBlockPx, setHeaderBlockPx] = useState(64);
 
-  const updatePastCars = useCallback(() => {
-    const header = document.getElementById("available-cars-header");
-    if (!(header instanceof HTMLElement)) {
-      setPastCars(false);
+  const updatePastHero = useCallback(() => {
+    const mainEl = document.getElementById(HOME_SITE_CONTENT_ID);
+    if (!(mainEl instanceof HTMLElement)) {
+      setPastHero(false);
       return;
     }
     const chrome = chromeRef.current;
     const threshold =
       chrome instanceof HTMLElement ? Math.ceil(chrome.getBoundingClientRect().height) : 44;
-    const { bottom } = header.getBoundingClientRect();
-    /* Stay hidden at the "Book now" scroll target (block peeking under the strip). Open only after the
-       whole title + subtitle block has scrolled up past the sticky chrome band. */
-    setPastCars(bottom <= threshold);
+    const { top } = mainEl.getBoundingClientRect();
+    /* Fixed full-viewport hero; main has margin-top: 100vh — open once site content reaches the sticky chrome band. */
+    setPastHero(top <= threshold);
   }, []);
 
   useEffect(() => {
-    updatePastCars();
-    window.addEventListener("scroll", updatePastCars, { passive: true });
-    window.addEventListener("resize", updatePastCars, { passive: true });
+    updatePastHero();
+    window.addEventListener("scroll", updatePastHero, { passive: true });
+    window.addEventListener("resize", updatePastHero, { passive: true });
     return () => {
-      window.removeEventListener("scroll", updatePastCars);
-      window.removeEventListener("resize", updatePastCars);
+      window.removeEventListener("scroll", updatePastHero);
+      window.removeEventListener("resize", updatePastHero);
     };
-  }, [updatePastCars]);
+  }, [updatePastHero]);
 
-  const open = pastCars || edgeEngaged;
+  const open = pastHero || edgeEngaged;
 
   useLayoutEffect(() => {
     const panel = panelRef.current;
@@ -63,7 +64,7 @@ export default function HomeScrollHeader({ children }: HomeScrollHeaderProps) {
   }, [children]);
 
   const handleChromeBlur = (event: React.FocusEvent) => {
-    if (pastCars) {
+    if (pastHero) {
       return;
     }
     const next = event.relatedTarget as Node | null;
@@ -88,7 +89,7 @@ export default function HomeScrollHeader({ children }: HomeScrollHeaderProps) {
       className={`home-header-chrome${open ? " home-header-chrome--open" : ""}`}
       onBlurCapture={handleChromeBlur}
       onMouseLeave={() => {
-        if (!pastCars) {
+        if (!pastHero) {
           setEdgeEngaged(false);
         }
       }}

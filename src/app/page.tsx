@@ -34,7 +34,7 @@ export default async function Home() {
           <HeroCopy />
         </section>
 
-        <main className="site-content">
+        <main className="site-content" id="home-site-content">
           <section className="content-canvas" id="cars" aria-label="Available rental cars">
             <HomeCredibilityStrip />
 
@@ -42,7 +42,6 @@ export default async function Home() {
               <div className="home-prelude">
                 <HomeTrustStrip />
                 <HomeHowItWorks />
-                <HomeReviewsWheel reviews={reviews} cars={cars} />
               </div>
             </div>
 
@@ -52,6 +51,12 @@ export default async function Home() {
 
             <div className="home-section home-section--fleet">
               <CarsBrowser cars={cars} />
+            </div>
+
+            <div className="home-section home-section--reviews">
+              <div className="home-reviews-stack">
+                <HomeReviewsWheel reviews={reviews} cars={cars} />
+              </div>
             </div>
 
             <div className="home-cars-faq-split" aria-hidden="true">
