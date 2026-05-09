@@ -81,6 +81,13 @@ export default function MyBookingsClient({ initialBookings }: { initialBookings:
           </a>{" "}
           for details.
         </p>
+        <p className="admin-empty" style={{ marginBottom: 16 }}>
+          Minimum of 2 days for out of the city rental
+          <br />
+          An additional 400/hour of extension
+          <br />
+          If the extension exceeds 5 hours -- it is considered as a whole day
+        </p>
         {!bookings.length ? <p className="admin-empty">No bookings yet.</p> : null}
       </RevealOnScroll>
       <RevealOnScroll className="auth-shell-reveal">
