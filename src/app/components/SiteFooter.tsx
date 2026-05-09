@@ -49,10 +49,10 @@ export default async function SiteFooter() {
         </div>
 
         <div className="site-footer-meta">
-          <AnalogVisitCounter />
           <p className="site-footer-copy notranslate" translate="no">
             &copy; {year} JP Car Rental. All rights reserved.
           </p>
+          <AnalogVisitCounter />
         </div>
       </div>
     </footer>
