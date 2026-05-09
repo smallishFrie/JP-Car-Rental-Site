@@ -717,6 +717,12 @@ a.header-auth-cta:focus-visible {
   }
 }
 
+@media (min-width: 920px) {
+  .site-footer-main {
+    grid-template-columns: minmax(0, 1.2fr) minmax(11rem, 0.75fr) minmax(0, 1fr);
+  }
+}
+
 .site-footer-meta {
   display: flex;
   flex-direction: column;
@@ -768,10 +774,55 @@ a.header-auth-cta:focus-visible {
   line-height: 1.45;
 }
 
+.site-footer-location {
+  margin: 0.2rem 0 0;
+  display: grid;
+  gap: 0.15rem;
+  color: var(--footer-muted);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.site-footer-location span {
+  display: block;
+}
+
 .site-footer-block {
   display: grid;
   gap: 0.45rem;
   align-content: start;
+}
+
+.site-footer-map-block {
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .site-footer-map-block {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 920px) {
+  .site-footer-map-block {
+    grid-column: auto;
+  }
+}
+
+.site-footer-map-frame {
+  width: min(100%, 21rem);
+  height: clamp(7.5rem, 16vw, 9rem);
+  border: 1px solid var(--footer-border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: #111114;
+}
+
+.site-footer-map-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
 }
 
 .site-footer-heading {
@@ -4125,6 +4176,178 @@ a.car-card:focus-visible {
   text-align: center;
 }
 
+/* Admin tabs */
+.admin-tabs {
+  border-bottom: 1px solid var(--border-subtle);
+  margin: 0 -0.5rem 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.admin-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.admin-tabs-list {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0 0.5rem;
+  margin: 0;
+  list-style: none;
+  min-width: max-content;
+}
+
+.admin-tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.65rem 0.95rem;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  font-weight: 500;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+.admin-tab:hover,
+.admin-tab:focus-visible {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  outline: none;
+}
+
+.admin-tab[aria-current="page"] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+.admin-tab[aria-current="page"]:hover,
+.admin-tab[aria-current="page"]:focus-visible {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+/* Admin analytics dashboard */
+.admin-analytics {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.admin-kpi-card {
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 1.15rem 1.25rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.admin-kpi-label {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-kpi-value {
+  margin: 0;
+  font-size: clamp(1.4rem, 2.4vw, 1.8rem);
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.admin-kpi-sublabel {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.admin-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 720px) {
+  .admin-chart-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.admin-chart-card {
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 1.15rem 1.25rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.admin-chart-card-wide {
+  grid-column: 1 / -1;
+}
+
+.admin-chart-header h3 {
+  margin: 0 0 0.15rem;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.admin-chart-header p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.admin-chart-body {
+  height: 280px;
+  width: 100%;
+}
+
+.admin-chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.admin-chart-card .recharts-default-tooltip {
+  background-color: var(--bg-elevated) !important;
+  border-color: var(--border-strong) !important;
+  color: var(--text) !important;
+  border-radius: 8px !important;
+}
+
+.admin-chart-card .recharts-tooltip-label,
+.admin-chart-card .recharts-tooltip-item {
+  color: var(--text) !important;
+}
+
 .auth-shell {
   width: min(880px, 100%);
   margin: 0 auto;
@@ -4135,6 +4358,10 @@ a.car-card:focus-visible {
   padding: 2.25rem 2rem;
   display: grid;
   gap: 1.5rem;
+}
+
+.auth-shell--admin {
+  width: min(1200px, 100%);
 }
 
 .auth-shell-reveal {

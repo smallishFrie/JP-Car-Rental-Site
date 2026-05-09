@@ -22,6 +22,11 @@ export default async function SiteFooter() {
               JP Car Rental
             </p>
             <p className="site-footer-tagline">Fast booking. Clean vehicles. Easy travel.</p>
+            <p className="site-footer-location" aria-label="Business location">
+              <span>Libis Brgy San Perdo</span>
+              <span>Puuerto Princesa City</span>
+              <span>5300 Palawan Philippines</span>
+            </p>
           </div>
 
           <div className="site-footer-block">
@@ -45,6 +50,18 @@ export default async function SiteFooter() {
                 <Link href="/terms-of-service">Terms of service</Link>
               </li>
             </ul>
+          </div>
+
+          <div className="site-footer-block site-footer-map-block">
+            <p className="site-footer-heading">Location</p>
+            <div className="site-footer-map-frame" role="presentation">
+              <iframe
+                title="JP Car Rental location map"
+                src="https://www.google.com/maps?q=Libis%20Brgy%20San%20Perdo%2C%20Puerto%20Princesa%20City%2C%20Palawan%205300%20Philippines&output=embed"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
           </div>
         </div>
 

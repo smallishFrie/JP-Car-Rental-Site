@@ -19,7 +19,7 @@ export default function AppMotionShell({ children }: AppMotionShellProps) {
   const variants = reduceMotion ? pageShellReducedVariants : pageShellVariants;
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
+    <AnimatePresence mode="wait">
       <motion.div
         key={pathname}
         className="flex min-h-full w-full flex-1 flex-col"

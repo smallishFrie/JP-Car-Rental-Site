@@ -19,6 +19,7 @@
     "react": "latest",
     "react-day-picker": "^9.14.0",
     "react-dom": "latest",
+    "recharts": "^3.8.1",
     "xendit-components-web": "^0.0.22",
     "zod": "^4.4.1"
   },
