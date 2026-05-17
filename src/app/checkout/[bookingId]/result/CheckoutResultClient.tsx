@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MotionPressableButton } from "@/app/components/MotionPressable";
 import RevealOnScroll from "@/app/components/RevealOnScroll";
+import { useCurrency } from "@/app/components/CurrencyProvider";
 
 type Outcome = "success" | "canceled" | "failed" | "unknown";
 
@@ -22,11 +23,12 @@ export default function CheckoutResultClient(props: {
   reason?: string | null;
 }) {
   const router = useRouter();
+  const { formatMoney } = useCurrency();
   const [seconds, setSeconds] = useState(6);
 
-  const formattedTotal = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(props.totalPrice);
-  const formattedBase = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(props.basePrice);
-  const formattedLocationFee = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(props.dropoffFee);
+  const formattedTotal = useMemo(() => formatMoney(props.totalPrice), [formatMoney, props.totalPrice]);
+  const formattedBase = useMemo(() => formatMoney(props.basePrice), [formatMoney, props.basePrice]);
+  const formattedLocationFee = useMemo(() => formatMoney(props.dropoffFee), [formatMoney, props.dropoffFee]);
 
   useEffect(() => {
     if (seconds <= 0) {
@@ -87,6 +89,17 @@ export default function CheckoutResultClient(props: {
           <p>
             <strong>Total:</strong> {formattedTotal}
           </p>
+          {props.outcome === "success" ? (
+            <p className="admin-empty">
+              <Link
+                href={`/auth/create-account?returnTo=${encodeURIComponent("/account/bookings")}`}
+                className="auth-back-link"
+              >
+                Create an account
+              </Link>{" "}
+              to manage bookings on any device.
+            </p>
+          ) : null}
           <p className="admin-empty" style={{ marginTop: "1rem" }}>
             Redirecting to your bookings in <strong>{Math.max(0, seconds)}</strong>s…
           </p>

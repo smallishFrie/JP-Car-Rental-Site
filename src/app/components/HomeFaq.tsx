@@ -13,7 +13,7 @@ const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
     question: "How does pricing work?",
     answer:
-      "Rates shown are per day in PHP. Your total updates when you choose pickup and return dates. Taxes or location fees, if any, are summarized before you pay.",
+      "Rates are stored in Philippine pesos (PHP). Pick another currency in the site header for an approximate conversion. Your card is charged in PHP at checkout—same totals as shown before payment.",
   },
   {
     question: "Can I change or cancel a booking?",

@@ -10,7 +10,9 @@ import { getCountries, getCountryCallingCode, type CountryCode } from "libphonen
 import * as FlagIcons from "country-flag-icons/react/3x2";
 import type { Car } from "@/lib/cars";
 import { categoryTokensWithoutTransmission, parseCategoryTokens } from "@/lib/carDisplay";
+import { BASE_CURRENCY, CURRENCY_OPTIONS, isSupportedCurrency } from "@/lib/currency";
 import CarSpecsRow from "@/app/components/CarSpecsRow";
+import { useCurrency } from "@/app/components/CurrencyProvider";
 import { beginCheckoutAction } from "@/app/cars/[id]/actions";
 import CustomSelect from "@/app/components/CustomSelect";
 import { MotionPressableButton } from "@/app/components/MotionPressable";
@@ -21,6 +23,7 @@ import "react-day-picker/style.css";
 type CarDetailClientProps = {
   car: Car;
   dropoffLocations: Array<{ id: string; name: string; extraFee: number }>;
+  userEmail: string | null;
 };
 
 const AUTOPLAY_MS = 4200;
@@ -75,8 +78,9 @@ function sameMonth(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
 }
 
-export default function CarDetailClient({ car, dropoffLocations }: CarDetailClientProps) {
+export default function CarDetailClient({ car, dropoffLocations, userEmail }: CarDetailClientProps) {
   const reduceMotion = useReducedMotion();
+  const { currency, setCurrency, formatMoney, formatPhpCharge } = useCurrency();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [autoplayTick, setAutoplayTick] = useState(0);
   const [isZooming, setIsZooming] = useState(false);
@@ -89,6 +93,7 @@ export default function CarDetailClient({ car, dropoffLocations }: CarDetailClie
   const [phoneNumber, setPhoneNumber] = useState("");
   const [driverLicenseNumber, setDriverLicenseNumber] = useState("");
   const [driverNotes, setDriverNotes] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
   const [startDate, setStartDate] = useState("");
   const [bookedRanges, setBookedRanges] = useState<BookedRange[]>([]);
   const [hoverDay, setHoverDay] = useState<Date | undefined>(undefined);
@@ -117,34 +122,19 @@ export default function CarDetailClient({ car, dropoffLocations }: CarDetailClie
     [selectedPickup, selectedDropoff],
   );
   const totalPrice = useMemo(() => basePrice + locationFee, [basePrice, locationFee]);
-  const formattedDayRate = useMemo(
-    () => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(car.dayRate),
-    [car.dayRate],
-  );
-  const formattedTotalPrice = useMemo(
-    () => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(totalPrice),
-    [totalPrice],
-  );
-  const formattedBasePrice = useMemo(
-    () => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(basePrice),
-    [basePrice],
-  );
-  const formattedLocationFee = useMemo(
-    () => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(locationFee),
-    [locationFee],
-  );
-  const formatPhp = useCallback(
-    (amount: number) => new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(amount),
-    [],
-  );
+  const needsGuestEmail = !userEmail?.trim();
+  const formattedDayRate = useMemo(() => formatMoney(car.dayRate), [formatMoney, car.dayRate]);
+  const formattedTotalPrice = useMemo(() => formatMoney(totalPrice), [formatMoney, totalPrice]);
+  const formattedBasePrice = useMemo(() => formatMoney(basePrice), [formatMoney, basePrice]);
+  const formattedLocationFee = useMemo(() => formatMoney(locationFee), [formatMoney, locationFee]);
   const renderLocationOption = useCallback(
     (name: string, fee: number) => (
       <span className="location-option-row">
         <span className="location-option-name">{name}</span>
-        {fee > 0 ? <span className="location-option-fee">{formatPhp(fee)}</span> : null}
+        {fee > 0 ? <span className="location-option-fee">{formatMoney(fee)}</span> : null}
       </span>
     ),
-    [formatPhp],
+    [formatMoney],
   );
 
   const phoneCountries = useMemo(() => getCountries(), []);
@@ -456,6 +446,11 @@ export default function CarDetailClient({ car, dropoffLocations }: CarDetailClie
         }
       }
 
+      if (needsGuestEmail && !customerEmail.trim()) {
+        setFeedback("Please enter your email address.");
+        return;
+      }
+
       const formData = new FormData();
       formData.set("carId", car.id);
       formData.set("rentalDays", String(rentalDays));
@@ -466,6 +461,9 @@ export default function CarDetailClient({ car, dropoffLocations }: CarDetailClie
       formData.set("customerPhone", `${phoneDialCode} ${phoneNumber}`.trim());
       formData.set("driverLicenseNumber", driverLicenseNumber);
       formData.set("driverNotes", driverNotes);
+      if (needsGuestEmail) {
+        formData.set("customerEmail", customerEmail.trim());
+      }
 
       const result = await beginCheckoutAction(formData);
       // #region agent log
@@ -613,6 +611,23 @@ export default function CarDetailClient({ car, dropoffLocations }: CarDetailClie
       <RevealOnScroll>
       <section className="booking-panel" aria-label="Booking details">
         <h2>Booking Details</h2>
+        <div className="booking-currency-field">
+          <label className="booking-currency-field-inner">
+            <span className="booking-currency-field-label">Display currency</span>
+            <CustomSelect
+              className="custom-select--booking-currency"
+              options={[...CURRENCY_OPTIONS]}
+              value={currency}
+              onChange={(next) => {
+                if (isSupportedCurrency(next)) {
+                  setCurrency(next);
+                }
+              }}
+              optionsAriaLabel="Choose display currency for prices"
+              placeholder="Currency"
+            />
+          </label>
+        </div>
         <div className="booking-policy-callout">
           <strong>Cancellation and refunds:</strong> Cancellations at least 48 hours before pickup may qualify for a full
           refund; within 48 hours fees may apply. No-shows are non-refundable. Read section 6 in our{" "}
@@ -757,6 +772,30 @@ export default function CarDetailClient({ car, dropoffLocations }: CarDetailClie
             </label>
           </div>
 
+          {needsGuestEmail ? (
+            <>
+              <div className="booking-inline-fields">
+                <label className="booking-full-name-field">
+                  Email
+                  <input
+                    type="email"
+                    name="customerEmail"
+                    autoComplete="email"
+                    value={customerEmail}
+                    onChange={(event) => setCustomerEmail(event.target.value)}
+                    required
+                  />
+                </label>
+              </div>
+              <p className="booking-policy-subtitle">
+                Have an account?{" "}
+                <Link href={`/auth/sign-in?returnTo=${encodeURIComponent(`/cars/${car.id}`)}`} className="auth-back-link">
+                  Sign in
+                </Link>
+              </p>
+            </>
+          ) : null}
+
           <div className="booking-inline-fields">
             <label>
               Phone number
@@ -792,15 +831,30 @@ export default function CarDetailClient({ car, dropoffLocations }: CarDetailClie
 
           <div className="booking-total booking-total-breakdown">
             <p className="booking-total-line">
-              <span>{formattedDayRate} per day x {rentalDays} days</span>
+              <span className="booking-total-line-main">
+                <span>{formattedDayRate} per day × {rentalDays} days</span>
+                {currency !== BASE_CURRENCY ? (
+                  <span className="booking-total-php-ref">Charged as {formatPhpCharge(basePrice)} rental subtotal</span>
+                ) : null}
+              </span>
               <strong>{formattedBasePrice}</strong>
             </p>
             <p className="booking-total-line">
-              <span>Location fees</span>
+              <span className="booking-total-line-main">
+                <span>Location fees</span>
+                {currency !== BASE_CURRENCY ? (
+                  <span className="booking-total-php-ref">Charged as {formatPhpCharge(locationFee)}</span>
+                ) : null}
+              </span>
               <strong>{formattedLocationFee}</strong>
             </p>
             <p className="booking-total-line booking-total-grand">
-              <span>Total</span>
+              <span className="booking-total-line-main">
+                <span>Total</span>
+                {currency !== BASE_CURRENCY ? (
+                  <span className="booking-total-php-ref">Charged as {formatPhpCharge(totalPrice)}</span>
+                ) : null}
+              </span>
               <strong>{formattedTotalPrice}</strong>
             </p>
           </div>

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import CustomSelect from "@/app/components/CustomSelect";
+import { useCurrency } from "@/app/components/CurrencyProvider";
+import { CURRENCY_OPTIONS, isSupportedCurrency } from "@/lib/currency";
 
 const THEME_STORAGE_KEY = "jp-theme";
 const LANGUAGE_STORAGE_KEY = "jp-language";
@@ -156,6 +158,7 @@ async function applyGoogleLanguage(language: string) {
 }
 
 export default function HeaderPreferences() {
+  const { currency, setCurrency } = useCurrency();
   const [theme, setTheme] = useState<Theme>("light");
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
   const [preferencesReady, setPreferencesReady] = useState(false);
@@ -165,23 +168,25 @@ export default function HeaderPreferences() {
       return;
     }
 
-    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-    const initialTheme: Theme =
-      savedTheme === "light" || savedTheme === "dark"
-        ? savedTheme
-        : window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
+    queueMicrotask(() => {
+      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+      const initialTheme: Theme =
+        savedTheme === "light" || savedTheme === "dark"
+          ? savedTheme
+          : window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
 
-    const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY) ?? DEFAULT_LANGUAGE;
-    const hasSupportedLanguage = LANGUAGE_OPTIONS.some((option) => option.value === savedLanguage);
-    const initialLanguage = hasSupportedLanguage ? savedLanguage : DEFAULT_LANGUAGE;
+      const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY) ?? DEFAULT_LANGUAGE;
+      const hasSupportedLanguage = LANGUAGE_OPTIONS.some((option) => option.value === savedLanguage);
+      const initialLanguage = hasSupportedLanguage ? savedLanguage : DEFAULT_LANGUAGE;
 
-    setTheme(initialTheme);
-    setLanguage(initialLanguage);
-    applyTheme(initialTheme);
-    applyLanguage(initialLanguage);
-    setPreferencesReady(true);
+      setTheme(initialTheme);
+      setLanguage(initialLanguage);
+      applyTheme(initialTheme);
+      applyLanguage(initialLanguage);
+      setPreferencesReady(true);
+    });
   }, []);
 
   useEffect(() => {
@@ -212,8 +217,14 @@ export default function HeaderPreferences() {
     setLanguage(nextLanguage);
   }
 
+  function handleCurrencyChange(next: string) {
+    if (isSupportedCurrency(next)) {
+      setCurrency(next);
+    }
+  }
+
   return (
-    <div className="header-preferences" aria-label="Display and language preferences">
+    <div className="header-preferences" aria-label="Display, currency, and language preferences">
       <button type="button" className="header-pref-trigger" aria-label="Open display and language preferences">
         <svg viewBox="0 0 14 10" aria-hidden="true" className="header-pref-trigger-icon">
           <path d="M9.5 1.75L4.5 5L9.5 8.25" />
@@ -235,6 +246,18 @@ export default function HeaderPreferences() {
           </span>
           <span>{theme === "dark" ? "Dark" : "Light"}</span>
         </button>
+
+        <label className="header-pref-currency-label">
+          <span className="sr-only">Currency for prices</span>
+          <CustomSelect
+            className="custom-select--header-currency"
+            options={[...CURRENCY_OPTIONS]}
+            value={currency}
+            onChange={handleCurrencyChange}
+            optionsAriaLabel="Choose display currency"
+            placeholder="Currency"
+          />
+        </label>
 
         <label className="header-pref-language-label">
           <span className="sr-only">Language</span>

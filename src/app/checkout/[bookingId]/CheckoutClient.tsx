@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { MotionPressableButton } from "@/app/components/MotionPressable";
 import RevealOnScroll from "@/app/components/RevealOnScroll";
+import { useCurrency } from "@/app/components/CurrencyProvider";
 import { initCheckoutComponentsSessionAction } from "@/app/checkout/[bookingId]/actions";
 import { XenditComponents } from "xendit-components-web";
 
@@ -19,6 +20,7 @@ export default function CheckoutClient(props: {
   customerName: string;
   customerEmail?: string | null;
 }) {
+  const { formatMoney, formatPhpCharge } = useCurrency();
   const [message, setMessage] = useState("");
   const [isPending, startTransition] = useTransition();
   const [componentsSdkKey, setComponentsSdkKey] = useState<string | null>(null);
@@ -27,9 +29,9 @@ export default function CheckoutClient(props: {
   /** null until we read window (avoids wrong loading/HTTPS message on first paint). */
   const [isHttps, setIsHttps] = useState<boolean | null>(null);
 
-  const formattedTotal = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(props.totalPrice);
-  const formattedBase = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(props.basePrice);
-  const formattedLocationFee = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(props.dropoffFee);
+  const formattedTotal = useMemo(() => formatMoney(props.totalPrice), [formatMoney, props.totalPrice]);
+  const formattedBase = useMemo(() => formatMoney(props.basePrice), [formatMoney, props.basePrice]);
+  const formattedLocationFee = useMemo(() => formatMoney(props.dropoffFee), [formatMoney, props.dropoffFee]);
 
   const payButtonLabel = useMemo(() => {
     if (!componentsSdkKey) return message ? "Payment unavailable" : "Loading…";
@@ -235,6 +237,9 @@ export default function CheckoutClient(props: {
           </p>
           <p>
             <strong>Total:</strong> {formattedTotal}
+          </p>
+          <p className="admin-empty">
+            Approximate in your chosen currency. You will be charged {formatPhpCharge(props.totalPrice)}.
           </p>
           <p>
             <strong>Customer:</strong> {props.customerName}

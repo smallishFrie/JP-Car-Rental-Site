@@ -11,8 +11,8 @@ import {
 
 const INCLUDED: { title: string; text: string; icon: ReactNode }[] = [
   {
-    title: "Daily rate in PHP",
-    text: "The price you see matches the vehicle and dates you pick—no mystery subtotal.",
+    title: "Daily rate (PHP at checkout)",
+    text: "Switch display currency in the header for a rough equivalent. Pricing updates with the vehicle and dates you pick—no mystery subtotal.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />

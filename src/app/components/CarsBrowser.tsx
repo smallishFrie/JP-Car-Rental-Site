@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Car } from "@/lib/cars";
 import { categoryTokensWithoutTransmission, parseCategoryTokens } from "@/lib/carDisplay";
 import CarSpecsRow from "@/app/components/CarSpecsRow";
+import { useCurrency } from "@/app/components/CurrencyProvider";
 import RevealOnScroll from "@/app/components/RevealOnScroll";
 import TiltSurface from "@/app/components/TiltSurface";
 import { motionSprings } from "@/lib/motion";
@@ -36,17 +37,8 @@ type CarsBrowserProps = {
   cars: Car[];
 };
 
-const dayRateFormatter = new Intl.NumberFormat("en-PH", {
-  style: "currency",
-  currency: "PHP",
-  maximumFractionDigits: 0,
-});
-
-function formatDayRate(amount: number) {
-  return dayRateFormatter.format(amount);
-}
-
 export default function CarsBrowser({ cars }: CarsBrowserProps) {
+  const { formatDayRate } = useCurrency();
   const reduceMotion = useReducedMotion();
   const [search, setSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);

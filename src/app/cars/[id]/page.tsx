@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import CarDetailClient from "@/app/components/CarDetailClient";
 import { getCarById } from "@/lib/cars";
 import { listDropoffLocations } from "@/lib/dropoff-locations";
+import { createClient } from "@/lib/supabase/server";
 
 type CarDetailPageProps = {
   params: Promise<{ id: string }>;
@@ -17,13 +18,18 @@ export default async function CarDetailPage({ params }: CarDetailPageProps) {
     notFound();
   }
 
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <main className="car-page-main car-page-main--no-site-header">
       <section className="car-page-shell">
         <p className="car-page-back">
           <Link href="/#available-cars-header">← Back to cars</Link>
         </p>
-        <CarDetailClient car={car} dropoffLocations={dropoffLocations} />
+        <CarDetailClient car={car} dropoffLocations={dropoffLocations} userEmail={user?.email ?? null} />
       </section>
     </main>
   );

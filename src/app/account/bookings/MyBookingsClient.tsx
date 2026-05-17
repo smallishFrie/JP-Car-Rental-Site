@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import RevealOnScroll from "@/app/components/RevealOnScroll";
+import { useCurrency } from "@/app/components/CurrencyProvider";
 import type { BookingRecord } from "@/lib/booking-model";
 import { formatBookingVehicleName } from "@/lib/booking-model";
 import { cancelPendingBookingAction, requestCancellationAction } from "@/app/account/bookings/actions";
@@ -10,10 +11,6 @@ type BookingWithCar = BookingRecord & { car: { id: string; name: string; categor
 
 function toDate(value: string) {
   return new Date(value).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" });
-}
-
-function toPhp(value: number) {
-  return new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(value);
 }
 
 function getActionKind(booking: BookingWithCar) {
@@ -30,6 +27,7 @@ function getActionKind(booking: BookingWithCar) {
 }
 
 export default function MyBookingsClient({ initialBookings }: { initialBookings: BookingWithCar[] }) {
+  const { formatMoney } = useCurrency();
   const [bookings, setBookings] = useState(initialBookings);
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
@@ -105,9 +103,9 @@ export default function MyBookingsClient({ initialBookings }: { initialBookings:
               </span>
               <span>Pickup: {booking.pickup_location}</span>
               <span>Drop-off: {booking.dropoff_location}</span>
-              <span>Base rental: {toPhp(Number(booking.base_price ?? booking.total_price))}</span>
-              <span>Location fees: {toPhp(Number(booking.dropoff_fee ?? 0))}</span>
-              <span>Total: {toPhp(Number(booking.total_price))}</span>
+              <span>Base rental: {formatMoney(Number(booking.base_price ?? booking.total_price))}</span>
+              <span>Location fees: {formatMoney(Number(booking.dropoff_fee ?? 0))}</span>
+              <span>Total: {formatMoney(Number(booking.total_price))}</span>
               {actionKind === "cancel" ? (
                 <button type="button" className="admin-danger-button" disabled={isPending} onClick={() => cancelPendingBooking(booking.id)}>
                   Cancel Booking

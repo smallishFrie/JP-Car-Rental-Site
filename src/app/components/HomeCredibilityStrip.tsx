@@ -20,7 +20,7 @@ export default function HomeCredibilityStrip() {
                 <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
               </svg>
             </span>
-            <span className="home-credibility-label">Straightforward PHP rates</span>
+            <span className="home-credibility-label">PHP checkout, optional currency view</span>
           </li>
           <li className="home-credibility-item">
             <span className="home-credibility-icon" aria-hidden>

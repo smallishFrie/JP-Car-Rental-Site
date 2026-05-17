@@ -1,13 +1,19 @@
 "use server";
 
+import { createHash } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
 import { getCarById } from "@/lib/cars";
 import { checkCarAvailability, createPendingBooking } from "@/lib/bookings";
 import { getDropoffLocationByName } from "@/lib/dropoff-locations";
 import { notifyAdminsPendingBookingCreated } from "@/lib/notifications/booking-admin-events";
+import { ensureAuthenticatedUser } from "@/lib/guest-session";
 import { rateLimit } from "@/lib/rate-limit";
 import { logServerWarning } from "@/lib/server-error-logger";
 import { z } from "zod";
+
+function hashEmailForRateLimit(email: string) {
+  return createHash("sha256").update(email.trim().toLowerCase()).digest("hex").slice(0, 32);
+}
 
 type CheckoutResult =
   | { ok: true; redirectTo: string }
@@ -56,17 +62,11 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
     }
 
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return {
-        ok: false,
-        message: "Please sign in to continue checkout.",
-        redirectTo: `/auth/sign-in?returnTo=${encodeURIComponent(`/cars/${carId}`)}`,
-      };
+    const authResult = await ensureAuthenticatedUser(supabase);
+    if ("error" in authResult) {
+      return { ok: false, message: authResult.error };
     }
+    const user = authResult.user;
 
     const limitResult = rateLimit(`beginCheckout:${user.id}`, 5, 60_000);
     if (!limitResult.ok) {
@@ -111,7 +111,7 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
       rentalDays: formData.get("rentalDays"),
       customerName: formData.get("customerName"),
       customerPhone: formData.get("customerPhone"),
-      customerEmail: user.email ?? formData.get("customerEmail"),
+      customerEmail: formData.get("customerEmail"),
       pickupLocation: formData.get("pickupLocation"),
       dropoffLocation: formData.get("dropoffLocation"),
       driverLicenseNumber: formData.get("driverLicenseNumber"),
@@ -150,12 +150,29 @@ export async function beginCheckoutAction(formData: FormData): Promise<CheckoutR
       rentalDays,
       customerName,
       customerPhone,
-      customerEmail,
+      customerEmail: customerEmailFromForm,
       pickupLocation,
       dropoffLocation,
       driverLicenseNumber,
       driverNotes,
     } = parsed.data;
+
+    const accountEmail = user.email?.trim() ?? "";
+    const formEmail = customerEmailFromForm?.trim() ?? "";
+    const customerEmail = accountEmail || formEmail;
+    if (!customerEmail || !z.string().email().safeParse(customerEmail).success) {
+      return { ok: false, message: "Please enter a valid email address." };
+    }
+
+    if (!accountEmail) {
+      const emailLimit = rateLimit(`beginCheckout:email:${hashEmailForRateLimit(customerEmail)}`, 5, 60_000);
+      if (!emailLimit.ok) {
+        return {
+          ok: false,
+          message: "Too many checkout attempts. Please wait a minute and try again.",
+        };
+      }
+    }
 
     const endDate = addDaysToIsoDate(startDate, Math.max(0, rentalDays - 1));
     const pickup = await getDropoffLocationByName(pickupLocation);

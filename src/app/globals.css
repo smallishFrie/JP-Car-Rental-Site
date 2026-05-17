@@ -365,7 +365,7 @@ body::-webkit-scrollbar,
 
 .header-preferences:hover,
 .header-preferences:focus-within {
-  width: 14.75rem;
+  width: 23.5rem;
 }
 
 .header-pref-trigger {
@@ -408,7 +408,8 @@ body::-webkit-scrollbar,
 }
 
 .header-pref-theme-button,
-.header-pref-language-select {
+.header-pref-language-select,
+.header-pref-currency-select {
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -531,6 +532,50 @@ body::-webkit-scrollbar,
   font-size: 0.85rem;
 }
 
+.header-pref-currency-label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.header-pref-currency-select {
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 5.2rem;
+  min-width: 5.2rem;
+  padding: 0.45rem 2rem 0.45rem 0.7rem;
+  cursor: pointer;
+  transition:
+    color 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 200ms ease,
+    background 200ms ease,
+    box-shadow 220ms ease;
+}
+
+.header-pref-currency-label .custom-select-field {
+  width: 5.2rem;
+  min-width: 5.2rem;
+}
+
+.header-pref-currency-label .booking-date-trigger {
+  min-height: 2.2rem;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-muted);
+}
+
+.header-pref-currency-label .custom-select-dropdown {
+  min-width: 5.2rem;
+}
+
+.header-pref-currency-label .custom-select-option {
+  font-size: 0.85rem;
+}
+
 .header-pref-language-caret {
   position: absolute;
   right: 0.68rem;
@@ -554,7 +599,9 @@ body::-webkit-scrollbar,
 .header-pref-theme-button:hover,
 .header-pref-theme-button:focus-visible,
 .header-pref-language-select:hover,
-.header-pref-language-select:focus-visible {
+.header-pref-language-select:focus-visible,
+.header-pref-currency-select:hover,
+.header-pref-currency-select:focus-visible {
   color: var(--text);
   border-color: var(--accent);
   background: var(--bg-elevated);
@@ -564,6 +611,15 @@ body::-webkit-scrollbar,
 
 .header-pref-language-label .booking-date-trigger:hover,
 .header-pref-language-label .booking-date-trigger:focus-visible {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--bg-elevated);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  outline: none;
+}
+
+.header-pref-currency-label .booking-date-trigger:hover,
+.header-pref-currency-label .booking-date-trigger:focus-visible {
   color: var(--text);
   border-color: var(--accent);
   background: var(--bg-elevated);
@@ -2743,6 +2799,32 @@ a.car-card:focus-visible {
   gap: 1rem;
 }
 
+.booking-currency-field {
+  grid-column: 1 / -1;
+}
+
+.booking-currency-field-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 14rem;
+}
+
+.booking-currency-field-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.booking-currency-field .custom-select--booking-currency .booking-date-trigger {
+  min-height: 2.35rem;
+  font-size: 0.9rem;
+}
+
+.booking-currency-field .custom-select--booking-currency .custom-select-dropdown {
+  min-width: 8rem;
+}
+
 .car-reviews-showcase {
   position: relative;
   display: grid;
@@ -3161,9 +3243,24 @@ a.car-card:focus-visible {
 .booking-total-line {
   margin: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
+}
+
+.booking-total-line-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.booking-total-php-ref {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.35;
 }
 
 .booking-total-grand {
