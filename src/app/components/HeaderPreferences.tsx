@@ -28,6 +28,8 @@ const LANGUAGE_OPTIONS = [
   { value: "de", label: "German" },
   { value: "ja", label: "Japanese" },
   { value: "ko", label: "Korean" },
+  { value: "zh-CN", label: "Chinese (Simplified)" },
+  { value: "ms", label: "Malay" },
   { value: "tr", label: "Turkish" },
   { value: "vi", label: "Vietnamese" },
   { value: "tl", label: "Tagalog" },

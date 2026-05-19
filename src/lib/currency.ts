@@ -5,7 +5,19 @@
 
 export const BASE_CURRENCY = "PHP" as const;
 
-export type SupportedCurrency = "PHP" | "USD" | "EUR" | "GBP" | "AUD" | "SGD" | "JPY" | "KRW" | "AED" | "CAD";
+export type SupportedCurrency =
+  | "PHP"
+  | "USD"
+  | "EUR"
+  | "GBP"
+  | "AUD"
+  | "SGD"
+  | "JPY"
+  | "KRW"
+  | "CNY"
+  | "MYR"
+  | "AED"
+  | "CAD";
 
 /** How many PHP equal one unit of foreign currency (e.g. 1 USD ≈ 58 PHP). */
 export const PHP_PER_UNIT: Record<SupportedCurrency, number> = {
@@ -17,6 +29,8 @@ export const PHP_PER_UNIT: Record<SupportedCurrency, number> = {
   SGD: 43,
   JPY: 0.38,
   KRW: 0.042,
+  CNY: 8,
+  MYR: 13,
   AED: 15.8,
   CAD: 41,
 };
@@ -30,6 +44,8 @@ export const CURRENCY_OPTIONS: ReadonlyArray<{ value: SupportedCurrency; label: 
   { value: "SGD", label: "SGD" },
   { value: "JPY", label: "JPY" },
   { value: "KRW", label: "KRW" },
+  { value: "CNY", label: "CNY" },
+  { value: "MYR", label: "MYR" },
   { value: "AED", label: "AED" },
   { value: "CAD", label: "CAD" },
 ];
@@ -56,6 +72,10 @@ function localeForCurrency(code: SupportedCurrency): string {
       return "ja-JP";
     case "KRW":
       return "ko-KR";
+    case "CNY":
+      return "zh-CN";
+    case "MYR":
+      return "ms-MY";
     case "AED":
       return "ar-AE";
     case "CAD":
