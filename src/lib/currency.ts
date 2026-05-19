@@ -12,6 +12,7 @@ export type SupportedCurrency =
   | "GBP"
   | "AUD"
   | "SGD"
+  | "TWD"
   | "JPY"
   | "KRW"
   | "CNY"
@@ -27,6 +28,7 @@ export const PHP_PER_UNIT: Record<SupportedCurrency, number> = {
   GBP: 74,
   AUD: 38,
   SGD: 43,
+  TWD: 1.94,
   JPY: 0.38,
   KRW: 0.042,
   CNY: 8,
@@ -42,6 +44,7 @@ export const CURRENCY_OPTIONS: ReadonlyArray<{ value: SupportedCurrency; label: 
   { value: "GBP", label: "GBP" },
   { value: "AUD", label: "AUD" },
   { value: "SGD", label: "SGD" },
+  { value: "TWD", label: "TWD" },
   { value: "JPY", label: "JPY" },
   { value: "KRW", label: "KRW" },
   { value: "CNY", label: "CNY" },
@@ -68,6 +71,8 @@ function localeForCurrency(code: SupportedCurrency): string {
       return "en-AU";
     case "SGD":
       return "en-SG";
+    case "TWD":
+      return "zh-TW";
     case "JPY":
       return "ja-JP";
     case "KRW":

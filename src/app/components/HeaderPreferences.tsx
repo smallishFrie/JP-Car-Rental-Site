@@ -29,6 +29,7 @@ const LANGUAGE_OPTIONS = [
   { value: "ja", label: "Japanese" },
   { value: "ko", label: "Korean" },
   { value: "zh-CN", label: "Chinese (Simplified)" },
+  { value: "zh-TW", label: "Chinese (Traditional)" },
   { value: "ms", label: "Malay" },
   { value: "tr", label: "Turkish" },
   { value: "vi", label: "Vietnamese" },
