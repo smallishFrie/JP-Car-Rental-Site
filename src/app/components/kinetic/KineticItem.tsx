@@ -15,7 +15,7 @@ import { useKineticMotion } from "./useKineticMotion";
 type KineticItemProps = {
   children: React.ReactNode;
   className?: string;
-  scope: string;
+  scope?: string;
   index?: number;
   calm?: boolean;
   preset?: KineticEnterPresetName;
@@ -45,8 +45,11 @@ export default function KineticItem({
   const variants = useMemo(() => {
     if (reduceMotion) return kineticReducedVariants;
     if (preset) return kineticEnterVariants(preset, false);
-    const pool = calm ? KINETIC_CALM_ENTER_PRESETS : KINETIC_ENTER_PRESETS;
-    return kineticEnterVariantsForScope(scope, index, false, pool);
+    if (scope) {
+      const pool = calm ? KINETIC_CALM_ENTER_PRESETS : KINETIC_ENTER_PRESETS;
+      return kineticEnterVariantsForScope(scope, index, false, pool);
+    }
+    return kineticEnterVariants("fadeUpSharp", false);
   }, [reduceMotion, scope, index, calm, preset]);
 
   const Component = motionTags[as];

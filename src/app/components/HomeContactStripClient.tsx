@@ -1,8 +1,14 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Link from "next/link";
 import type { ContactOptionPublic } from "@/lib/contact-options-types";
 import { KineticHover, KineticItem, KineticReveal, KineticStagger } from "@/app/components/kinetic";
+import {
+  HOME_CONTACT_CARD_PRESETS,
+  HOME_SECTION_PRESETS,
+  homePresetAt,
+} from "@/lib/kinetic-presets";
 import HomeContactChannels from "./HomeContactChannels";
 
 type HomeContactStripClientProps = {
@@ -29,18 +35,30 @@ export default function HomeContactStripClient({ isSignedIn, contactChannels }: 
 
   return (
     <KineticStagger>
-      <KineticReveal scope="contact-heading" index={0} preset="slideMagnetLeft">
-        <h2 className="home-section-heading" id="home-contact-heading">
-          Contact &amp; hours
-        </h2>
+      <KineticReveal
+        as="motion.h2"
+        className="home-section-heading"
+        id="home-contact-heading"
+        preset={HOME_SECTION_PRESETS.contactHeading}
+        inView={false}
+      >
+        Contact &amp; hours
       </KineticReveal>
-      <div className="home-contact-grid">
+      <motion.div
+        className="home-contact-grid"
+        variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } } }}
+      >
         {cards.map((card, i) => (
-          <KineticItem key={card.label} scope="contact-card" index={i} as="motion.div" className="home-contact-card">
+          <KineticItem
+            key={card.label}
+            as="motion.div"
+            className="home-contact-card"
+            preset={homePresetAt(HOME_CONTACT_CARD_PRESETS, i)}
+          >
             <p className="home-contact-label">{card.label}</p>
             <p className="home-contact-body">{card.body}</p>
             {card.link ? (
-              <KineticHover scope="contact-link" index={i}>
+              <KineticHover preset="underlineSweep">
                 <Link href={card.link.href} className="home-contact-link kinetic-link-sweep">
                   {card.link.label}
                 </Link>
@@ -48,7 +66,7 @@ export default function HomeContactStripClient({ isSignedIn, contactChannels }: 
             ) : null}
           </KineticItem>
         ))}
-      </div>
+      </motion.div>
       {contactChannels.length > 0 ? <HomeContactChannels channels={contactChannels} /> : null}
     </KineticStagger>
   );

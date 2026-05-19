@@ -18,7 +18,9 @@ import { useKineticMotion } from "./useKineticMotion";
 type KineticRevealProps = {
   children: React.ReactNode;
   className?: string;
-  as?: "motion.div" | "motion.section" | "motion.article" | "motion.li" | "motion.span" | "motion.p" | "motion.h2" | "motion.h3";
+  id?: string;
+  "aria-label"?: string;
+  as?: "motion.div" | "motion.section" | "motion.article" | "motion.aside" | "motion.li" | "motion.span" | "motion.p" | "motion.h2" | "motion.h3";
   preset?: KineticEnterPresetName;
   scope?: string;
   index?: number;
@@ -36,6 +38,7 @@ const motionTags = {
   "motion.div": motion.div,
   "motion.section": motion.section,
   "motion.article": motion.article,
+  "motion.aside": motion.aside,
   "motion.li": motion.li,
   "motion.span": motion.span,
   "motion.p": motion.p,
@@ -46,6 +49,8 @@ const motionTags = {
 export default function KineticReveal({
   children,
   className,
+  id,
+  "aria-label": ariaLabel,
   as = "motion.div",
   preset,
   scope,
@@ -82,10 +87,10 @@ export default function KineticReveal({
 
   const animateProps = inView
     ? { initial: reduceMotion ? false : ("hidden" as const), whileInView: "visible" as const, viewport }
-    : { initial: reduceMotion ? false : ("hidden" as const), animate: "visible" as const };
+    : {};
 
   return (
-    <Component className={className} style={style} variants={variants} {...animateProps}>
+    <Component id={id} aria-label={ariaLabel} className={className} style={style} variants={variants} {...animateProps}>
       {children}
     </Component>
   );

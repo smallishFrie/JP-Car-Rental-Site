@@ -2,7 +2,12 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useId, useState } from "react";
-import RevealOnScroll from "./RevealOnScroll";
+import { KineticItem, KineticReveal, KineticStagger } from "@/app/components/kinetic";
+import {
+  HOME_FAQ_ROW_PRESETS,
+  HOME_SECTION_PRESETS,
+  homePresetAt,
+} from "@/lib/kinetic-presets";
 
 const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
@@ -56,19 +61,30 @@ export default function HomeFaq() {
 
   return (
     <section className="home-bottom-section home-faq" aria-labelledby="home-faq-heading">
-      <RevealOnScroll>
-        <h2 className="home-section-heading" id="home-faq-heading">
+      <KineticStagger>
+        <KineticReveal
+          as="motion.h2"
+          className="home-section-heading"
+          id="home-faq-heading"
+          preset={HOME_SECTION_PRESETS.faqHeading}
+          inView={false}
+        >
           Frequently asked questions
-        </h2>
-        <div className="home-faq-list">
+        </KineticReveal>
+        <motion.div
+          className="home-faq-list"
+          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } } }}
+        >
           {FAQ_ITEMS.map((item, index) => {
             const isOpen = openRows.has(index);
             const triggerId = `${baseId}-t-${index}`;
             const panelId = `${baseId}-p-${index}`;
             return (
-              <div
+              <KineticItem
                 key={item.question}
+                as="motion.div"
                 className={`home-faq-item${isOpen ? " home-faq-item--open" : ""}`}
+                preset={homePresetAt(HOME_FAQ_ROW_PRESETS, index)}
               >
                 <button
                   type="button"
@@ -105,11 +121,11 @@ export default function HomeFaq() {
                     <p className="home-faq-answer">{item.answer}</p>
                   </div>
                 </motion.div>
-              </div>
+              </KineticItem>
             );
           })}
-        </div>
-      </RevealOnScroll>
+        </motion.div>
+      </KineticStagger>
     </section>
   );
 }

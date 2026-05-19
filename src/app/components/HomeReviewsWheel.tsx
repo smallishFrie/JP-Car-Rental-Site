@@ -1,10 +1,21 @@
+"use client";
+
 import type { CarReview } from "@/lib/reviews";
+import { KineticItem, KineticReveal, KineticStagger } from "@/app/components/kinetic";
+import { useKineticSectionLive } from "@/app/components/kinetic/useKineticSectionLive";
+import {
+  HOME_REVIEWS_HEADER_PRESETS,
+  HOME_SECTION_PRESETS,
+  homePresetAt,
+} from "@/lib/kinetic-presets";
 
 type HomeReviewsWheelProps = {
   reviews: CarReview[];
 };
 
 export default function HomeReviewsWheel({ reviews }: HomeReviewsWheelProps) {
+  const { ref, liveClass } = useKineticSectionLive<HTMLElement>();
+
   if (!reviews.length) {
     return null;
   }
@@ -52,16 +63,18 @@ export default function HomeReviewsWheel({ reviews }: HomeReviewsWheelProps) {
   );
 
   return (
-    <section className="home-reviews-section" aria-labelledby="home-reviews-heading">
-      <div className="home-reviews-shell">
-        <p className="home-reviews-eyebrow">Real customer reviews</p>
-        <h2 className="home-section-heading" id="home-reviews-heading">
+    <section ref={ref} className={`home-reviews-section kinetic-section${liveClass}`} aria-labelledby="home-reviews-heading">
+      <KineticStagger className="home-reviews-shell">
+        <KineticItem as="motion.p" className="home-reviews-eyebrow" preset={homePresetAt(HOME_REVIEWS_HEADER_PRESETS, 0)}>
+          Real customer reviews
+        </KineticItem>
+        <KineticReveal as="motion.h2" className="home-section-heading" id="home-reviews-heading" preset={HOME_SECTION_PRESETS.reviewsHeading} inView={false}>
           Trusted rides, reviewed by real travelers.
-        </h2>
-        <p className="home-reviews-subline">
+        </KineticReveal>
+        <KineticItem as="motion.p" className="home-reviews-subline" preset={homePresetAt(HOME_REVIEWS_HEADER_PRESETS, 2)}>
           Honest feedback from recent bookings, curated for a quick quality check before you reserve.
-        </p>
-      </div>
+        </KineticItem>
+      </KineticStagger>
       <div className="home-reviews-wheel-outer">
         <div className="home-reviews-wheel" aria-label="Scrolling car rental reviews">
           <div className={`home-reviews-track${hasTickerLoop ? "" : " home-reviews-track-single"}`}>

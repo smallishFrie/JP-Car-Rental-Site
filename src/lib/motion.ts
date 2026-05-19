@@ -19,6 +19,20 @@ export const motionDurations = {
 
 export const motionEase = [0.22, 1, 0.36, 1] as const;
 
+/** Kinetic scroll-enter springs (see kinetic-presets). */
+export const kineticSprings = {
+  snap: { type: "spring" as const, stiffness: 480, damping: 30, mass: 0.9 },
+  elastic: { type: "spring" as const, stiffness: 400, damping: 22, mass: 0.85 },
+  dramatic: motionSprings.grand,
+};
+
+/** Shared `whileInView` defaults for kinetic primitives. */
+export const kineticViewportDefaults = {
+  once: true,
+  amount: 0.12,
+  margin: "0px 0px -5% 0px",
+} as const;
+
 /** Container for staggerChildren lists */
 export const staggerContainerVariants: Variants = {
   hidden: {},

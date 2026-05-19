@@ -1,8 +1,10 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Link from "next/link";
 import AnalogVisitCounter from "./AnalogVisitCounter";
 import { KineticItem, KineticStagger } from "@/app/components/kinetic";
+import { HOME_FOOTER_LINK_PRESETS, homePresetAt } from "@/lib/kinetic-presets";
 
 type SiteFooterMotionProps = {
   year: number;
@@ -40,7 +42,13 @@ export default function SiteFooterMotion({ year, isSignedIn }: SiteFooterMotionP
             </KineticItem>
             <KineticStagger as="motion.ul" className="site-footer-links">
               {links.map((link, i) => (
-                <KineticItem key={link.href} scope="footer-link" index={i} preset="driftInLeft" as="motion.li">
+                <KineticItem
+                  key={link.href}
+                  scope="footer-link"
+                  index={i}
+                  preset={homePresetAt(HOME_FOOTER_LINK_PRESETS, i)}
+                  as="motion.li"
+                >
                   <Link href={link.href} className="kinetic-link-sweep">
                     {link.label}
                   </Link>
@@ -54,14 +62,14 @@ export default function SiteFooterMotion({ year, isSignedIn }: SiteFooterMotionP
               <p className="site-footer-heading">Location</p>
             </KineticItem>
             <KineticItem scope="footer-map" index={1} preset="clipWipeUp" as="motion.div">
-              <div className="site-footer-map-frame kinetic-map-frame" role="presentation">
+              <motion.div className="site-footer-map-frame kinetic-map-frame" role="presentation">
                 <iframe
                   title="JP Car Rental location map"
                   src="https://www.google.com/maps?q=Libis%20Brgy%20San%20Perdo%2C%20Puerto%20Princesa%20City%2C%20Palawan%205300%20Philippines&output=embed"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                 />
-              </div>
+              </motion.div>
             </KineticItem>
           </div>
         </div>

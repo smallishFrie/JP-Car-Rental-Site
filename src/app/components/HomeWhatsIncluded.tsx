@@ -1,13 +1,13 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { KineticItem, KineticReveal, KineticStagger } from "@/app/components/kinetic";
 import {
-  revealListContainerVariants,
-  revealListItemVariants,
-  revealReducedItem,
-  revealReducedStaggerContainer,
-} from "@/lib/motion";
+  HOME_SECTION_PRESETS,
+  KINETIC_INCLUDED_CARD_PRESETS,
+  homePresetAt,
+} from "@/lib/kinetic-presets";
 
 const INCLUDED: { title: string; text: string; icon: ReactNode }[] = [
   {
@@ -53,40 +53,42 @@ const INCLUDED: { title: string; text: string; icon: ReactNode }[] = [
 ];
 
 export default function HomeWhatsIncluded() {
-  const reduce = useReducedMotion();
-  const item = reduce ? revealReducedItem : revealListItemVariants;
-  const gridStagger = reduce ? revealReducedStaggerContainer : revealListContainerVariants;
-
   return (
     <section className="home-bottom-section home-included" aria-labelledby="home-included-heading">
-      <motion.div
-        className="home-included-reveal"
-        initial={reduce ? false : "hidden"}
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.1, margin: "0px 0px -5% 0px" }}
-        variants={{
-          hidden: {},
-          visible: { transition: { staggerChildren: 0.08, delayChildren: 0.04 } },
-        }}
-      >
-        <motion.h2 className="home-section-heading" id="home-included-heading" variants={item}>
+      <KineticStagger className="home-included-reveal">
+        <KineticReveal
+          as="motion.h2"
+          className="home-section-heading"
+          id="home-included-heading"
+          preset={HOME_SECTION_PRESETS.includedHeading}
+          inView={false}
+        >
           What&apos;s included in the rate
-        </motion.h2>
-        <motion.p className="home-included-subline" variants={item}>
+        </KineticReveal>
+        <KineticItem as="motion.p" className="home-included-subline" preset="fadeUpSharp">
           Four things you get on every quote—then the fine print lives where you book.
-        </motion.p>
+        </KineticItem>
 
-        <motion.div className="home-included-grid" variants={gridStagger}>
-          {INCLUDED.map((itemData) => (
-            <motion.article key={itemData.title} className="home-included-card" variants={item}>
+        <motion.div
+          className="home-included-grid"
+          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08, delayChildren: 0.04 } } }}
+        >
+          {INCLUDED.map((itemData, i) => (
+            <KineticItem key={itemData.title} as="motion.article" className="home-included-card" preset={homePresetAt(KINETIC_INCLUDED_CARD_PRESETS, i)}>
               <div className="home-included-icon">{itemData.icon}</div>
               <h3 className="home-included-card-title">{itemData.title}</h3>
               <p className="home-included-card-text">{itemData.text}</p>
-            </motion.article>
+            </KineticItem>
           ))}
         </motion.div>
 
-        <motion.aside className="home-included-callout" aria-label="Additional charges" variants={item}>
+        <KineticReveal
+          as="motion.aside"
+          className="home-included-callout"
+          preset={HOME_SECTION_PRESETS.includedCallout}
+          inView={false}
+          aria-label="Additional charges"
+        >
           <div className="home-included-callout-icon" aria-hidden>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
@@ -97,8 +99,8 @@ export default function HomeWhatsIncluded() {
             <strong>Mileage, fuel, tolls, and add-ons</strong> are itemized on each car page and again at checkout—nothing
             hidden for pickup day.
           </p>
-        </motion.aside>
-      </motion.div>
+        </KineticReveal>
+      </KineticStagger>
     </section>
   );
 }

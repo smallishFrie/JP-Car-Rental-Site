@@ -73,9 +73,61 @@ export const KINETIC_ENTER_PRESETS = [
 
 /** Explicit section presets (avoid identical bounce across blocks). */
 export const KINETIC_TRUST_CARD_PRESETS = ["perspectiveSlide", "clipWipeUp", "tiltReveal"] as const;
-export const KINETIC_STEPS_PRESETS = ["slideMagnetLeft", "slideMagnetLeft", "slideMagnetLeft"] as const;
+export const KINETIC_STEPS_PRESETS = ["rotateZTick", "spiralIn", "rollIn"] as const;
 export const KINETIC_INCLUDED_CARD_PRESETS = ["driftInLeft", "fadeUpSharp", "glowFade", "slideUpFade"] as const;
 export const KINETIC_CREDIBILITY_PRESETS = ["glowFade", "driftInLeft", "peekUp"] as const;
+
+/** Home page — transform/opacity only (no blur) for fleet cards. */
+export const HOME_FLEET_CARD_PRESETS = [
+  "slideMagnetLeft",
+  "slideMagnetRight",
+  "fadeUpSharp",
+  "snapScale",
+  "driftInLeft",
+  "driftInRight",
+  "rotateZTick",
+  "scaleOvershoot",
+  "tiltReveal",
+  "wobbleIn",
+] as const;
+
+export const HOME_FLEET_INTRO_PRESETS = ["slideMagnetLeft", "expandWidth", "rotateZTick"] as const;
+
+export const HOME_CONTACT_CARD_PRESETS = ["driftInLeft", "fadeUpSharp", "glowFade"] as const;
+
+export const HOME_FAQ_ROW_PRESETS = [
+  "elasticRise",
+  "skewSnap",
+  "wobbleIn",
+  "foldOpen",
+  "swingIn",
+  "liquidRise",
+] as const;
+
+export const HOME_REVIEWS_HEADER_PRESETS = ["slideDown", "shearReveal", "fadeUpSharp"] as const;
+
+export const HOME_TRUST_HOVER_PRESETS = ["tiltNudge", "liftGlow", "glowPulse"] as const;
+
+export const HOME_FOOTER_LINK_PRESETS = [
+  "driftInLeft",
+  "slideMagnetRight",
+  "fadeUpSharp",
+  "peekUp",
+  "snapScale",
+] as const;
+
+/** Home section-level enter presets (headings / shells). */
+export const HOME_SECTION_PRESETS = {
+  credibility: "maskReveal",
+  trustHeading: "flipUp3d",
+  stepsHeading: "hardSnapUp",
+  fleetShell: "clipWipeUp",
+  reviewsHeading: "shearReveal",
+  faqHeading: "unfoldY",
+  contactHeading: "slideMagnetLeft",
+  includedHeading: "snapScale",
+  includedCallout: "perspectiveSlide",
+} as const;
 
 /** Calm subset for forms / checkout. */
 export const KINETIC_CALM_ENTER_PRESETS = [
@@ -106,6 +158,14 @@ export const KINETIC_HOVER_PRESETS = [
 export type KineticEnterPresetName = (typeof KINETIC_ALL_ENTER_PRESET_NAMES)[number];
 export type KineticCalmEnterPresetName = (typeof KINETIC_CALM_ENTER_PRESETS)[number];
 export type KineticHoverPresetName = (typeof KINETIC_HOVER_PRESETS)[number];
+
+export function homeFleetCardPreset(carIndex: number): KineticEnterPresetName {
+  return pickKineticPreset("fleet-card", carIndex, HOME_FLEET_CARD_PRESETS);
+}
+
+export function homePresetAt<T extends KineticEnterPresetName>(pool: readonly T[], index: number): T {
+  return pool[index % pool.length]!;
+}
 
 function hashSeed(scope: string, index: number): number {
   const s = `${scope}:${index}`;
@@ -377,6 +437,17 @@ export const kineticStaggerContainer: Variants = {
     transition: {
       staggerChildren: 0.08,
       delayChildren: 0.05,
+    },
+  },
+};
+
+/** Faster stagger for long lists (fleet grid). */
+export const kineticFleetStaggerContainer: Variants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.05,
+      delayChildren: 0.04,
     },
   },
 };

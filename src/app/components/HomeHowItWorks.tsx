@@ -1,12 +1,12 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { KineticHover, KineticItem, KineticReveal, KineticStagger } from "@/app/components/kinetic";
 import {
-  revealListContainerVariants,
-  revealListItemVariants,
-  revealReducedItem,
-  revealReducedStaggerContainer,
-} from "@/lib/motion";
+  HOME_SECTION_PRESETS,
+  KINETIC_STEPS_PRESETS,
+  homePresetAt,
+} from "@/lib/kinetic-presets";
 
 const steps = [
   {
@@ -47,40 +47,38 @@ const steps = [
 ] as const;
 
 export default function HomeHowItWorks() {
-  const reduce = useReducedMotion();
-  const item = reduce ? revealReducedItem : revealListItemVariants;
-  const listContainer = reduce ? revealReducedStaggerContainer : revealListContainerVariants;
-
   return (
     <section className="home-steps" aria-labelledby="home-steps-heading">
-      <motion.div
-        className="home-steps-reveal"
-        initial={reduce ? false : "hidden"}
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.12, margin: "0px 0px -5% 0px" }}
-        variants={{
-          hidden: {},
-          visible: { transition: { staggerChildren: 0.09, delayChildren: 0.06 } },
-        }}
-      >
-        <motion.h2 className="home-steps-heading" id="home-steps-heading" variants={item}>
+      <KineticStagger className="home-steps-reveal">
+        <KineticReveal
+          as="motion.h2"
+          className="home-steps-heading"
+          id="home-steps-heading"
+          preset={HOME_SECTION_PRESETS.stepsHeading}
+          inView={false}
+        >
           How it works
-        </motion.h2>
-        <motion.ol className="home-steps-grid" variants={listContainer}>
-          {steps.map((step) => (
-            <motion.li key={step.n} className="home-step" variants={item}>
-              <span className="home-step-badge" aria-hidden>
-                {step.n}
-              </span>
-              <div className="home-step-icon" aria-hidden>
+        </KineticReveal>
+        <motion.ol
+          className="home-steps-grid"
+          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.09, delayChildren: 0.06 } } }}
+        >
+          {steps.map((step, i) => (
+            <KineticItem key={step.n} as="motion.li" className="home-step" preset={homePresetAt(KINETIC_STEPS_PRESETS, i)}>
+              <KineticHover preset="iconWiggle">
+                <span className="home-step-badge" aria-hidden>
+                  {step.n}
+                </span>
+              </KineticHover>
+              <motion.div className="home-step-icon" aria-hidden>
                 {step.icon}
-              </div>
+              </motion.div>
               <h3 className="home-step-title">{step.title}</h3>
               <p className="home-step-text">{step.text}</p>
-            </motion.li>
+            </KineticItem>
           ))}
         </motion.ol>
-      </motion.div>
+      </KineticStagger>
     </section>
   );
 }
