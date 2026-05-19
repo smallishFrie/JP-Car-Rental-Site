@@ -236,62 +236,6 @@ body::-webkit-scrollbar,
   overflow-x: clip;
 }
 
-/* Homepage: sticky slot stays one height in document flow so opening the bar does not reflow / scroll-anchoring the page. */
-.home-header-chrome {
-  position: sticky;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
-  pointer-events: auto;
-  height: 2.75rem;
-  overflow: hidden;
-}
-
-.home-header-chrome--open {
-  overflow: visible;
-}
-
-/* Motion uses transform; compositing can leave a 1px hairline above the bar—nudge the panel up slightly. */
-.home-header-chrome--open .home-header-motion-panel {
-  top: -1px;
-}
-
-.home-header-chrome-stack {
-  position: relative;
-  height: 100%;
-}
-
-.home-header-edge-hit {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2.75rem;
-  z-index: 2;
-  background: transparent;
-  cursor: default;
-}
-
-.home-header-motion-panel {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 0;
-  transform-origin: top center;
-  will-change: transform;
-}
-
-/* Sticky is on the chrome wrapper; header paints over the hero when open without growing layout height. */
-.home-header-chrome .site-header {
-  position: relative;
-  top: auto;
-  /* Kill subpixel seam above the hero */
-  margin-bottom: -1px;
-  padding-bottom: 1px;
-}
-
 .site-header {
   --header-text-color: var(--header-text-on-solid);
   position: sticky;
@@ -732,7 +676,7 @@ a.header-auth-cta:focus-visible {
   box-shadow: 0 -1px 0 var(--footer-highlight);
 }
 
-/* Home (`ScrollHero`): fixed footer only at true document bottom; motion matches `HomeScrollHeader` (0.34s, motionEase). */
+/* Home (`ScrollHero`): fixed footer only at true document bottom (0.34s, motionEase). */
 @media (min-width: 781px) {
   .scroll-hero[data-footer-reveal="0"] .site-footer {
     transform: translate3d(0, 110%, 0);

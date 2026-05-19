@@ -6,7 +6,6 @@ import HomeFaq from "./components/HomeFaq";
 import HomeHowItWorks from "./components/HomeHowItWorks";
 import HomeTrustStrip from "./components/HomeTrustStrip";
 import HomeWhatsIncluded from "./components/HomeWhatsIncluded";
-import HomeScrollHeader from "./components/HomeScrollHeader";
 import HomeReviewsWheel from "./components/HomeReviewsWheel";
 import ScrollHero from "./components/ScrollHero";
 import SiteFooter from "./components/SiteFooter";
@@ -24,9 +23,7 @@ export default async function Home() {
     <ScrollHero>
       <div className="site-shell">
         <HomeAvailableCarsHashScroll />
-        <HomeScrollHeader>
-          <SiteHeader />
-        </HomeScrollHeader>
+        <SiteHeader />
 
         <section className="hero-image-section">
           <HeroParallaxBg />
