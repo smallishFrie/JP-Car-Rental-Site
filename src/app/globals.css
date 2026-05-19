@@ -22,7 +22,11 @@
   --radius-md: 14px;
   --radius-lg: 20px;
   --radius-pill: 980px;
-  /* Bottom scroll pad: clears fixed desktop footer (slim bar: brand + links + visits + copyright). */
+  /* Spacing: rate cards → callout (grid gap + callout offset); callout → footer uses the same total. */
+  --home-included-block-gap: 1.25rem;
+  --home-included-callout-offset: 1.5rem;
+  --home-included-trailing-gap: 7rem;
+  /* Bottom scroll pad: clears fixed desktop footer only (not the callout→footer gap). */
   --site-content-scroll-pad: clamp(14rem, 26vh, 22rem);
   --background: var(--bg-page);
   --foreground: var(--text);
@@ -1776,8 +1780,8 @@ html[data-theme="dark"] .home-cars-faq-split-line::before {
 .home-bottom-stack {
   width: min(1100px, 100%);
   margin: 0 auto;
-  /* Tighter top so FAQ starts higher; keep room at the bottom above the footer */
-  padding: clamp(1.15rem, 2.8vh, 1.75rem) 1.25rem clamp(2.75rem, 8vh, 5.5rem);
+  /* Tighter top so FAQ starts higher */
+  padding: clamp(1.15rem, 2.8vh, 1.75rem) 1.25rem 0;
   display: grid;
   gap: 3.25rem;
 }
@@ -2227,9 +2231,13 @@ html[data-theme="dark"] .home-cars-faq-split-line::before {
   max-width: 38rem;
 }
 
+.home-included {
+  padding-bottom: var(--home-included-trailing-gap);
+}
+
 .home-included-reveal {
   display: grid;
-  gap: 1.25rem;
+  gap: var(--home-included-block-gap);
   width: 100%;
 }
 
@@ -2294,7 +2302,8 @@ html[data-theme="dark"] .home-cars-faq-split-line::before {
 }
 
 .home-included-callout {
-  margin-top: 1.5rem;
+  margin-top: var(--home-included-callout-offset);
+  margin-bottom: 0;
   display: flex;
   align-items: flex-start;
   gap: 1rem;
@@ -4967,7 +4976,7 @@ a.car-card:focus-visible {
 
   .home-bottom-stack {
     gap: 2.5rem;
-    padding: 0.85rem 1.25rem 1.5rem;
+    padding: 0.85rem 10.25rem 0;
   }
 
   .home-prelude {
