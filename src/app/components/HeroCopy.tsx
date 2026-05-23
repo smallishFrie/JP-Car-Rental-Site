@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { KineticHover } from "@/app/components/kinetic";
 import { kineticEnterVariants } from "@/lib/kinetic-presets";
+import { motionStagger } from "@/lib/motion";
 import { useHeroMotion } from "./hero-motion-context";
 import { MotionPressableLink } from "./MotionPressable";
 import { scrollToAvailableCarsHeader } from "@/lib/scrollToAvailableCars";
@@ -19,15 +20,12 @@ function scrollToCars(event: React.MouseEvent<HTMLAnchorElement>) {
 const heroContainer = {
   hidden: {},
   visible: {
-    transition: {
-      staggerChildren: 0.06,
-      delayChildren: 0.05,
-    },
+    transition: motionStagger.hero,
   },
 };
 
 function SplitWords({ text, reduce }: { text: string; reduce: boolean | null }) {
-  const wv = useMemo(() => kineticEnterVariants("blurStaggerIn", reduce === true), [reduce]);
+  const wv = useMemo(() => kineticEnterVariants("fadeUpSharp", reduce === true), [reduce]);
   const words = text.split(/\s+/).filter(Boolean);
   return (
     <>
@@ -49,9 +47,9 @@ export default function HeroCopy() {
   const heroMotion = useHeroMotion();
   const [user, setUser] = useState<User | null | undefined>(() => (hasSupabaseEnv() ? undefined : null));
 
-  const eyebrowVariants = useMemo(() => kineticEnterVariants("dropBounce", reduce === true), [reduce]);
+  const eyebrowVariants = useMemo(() => kineticEnterVariants("maskReveal", reduce === true), [reduce]);
   const sublineVariants = useMemo(() => kineticEnterVariants("driftInRight", reduce === true), [reduce]);
-  const ctaVariants = useMemo(() => kineticEnterVariants("elasticRise", reduce === true), [reduce]);
+  const ctaVariants = useMemo(() => kineticEnterVariants("glowFade", reduce === true), [reduce]);
 
   useEffect(() => {
     if (!hasSupabaseEnv()) return;
@@ -87,7 +85,7 @@ export default function HeroCopy() {
           translate="no"
           variants={{
             hidden: {},
-            visible: { transition: { staggerChildren: 0.07, delayChildren: 0.06 } },
+            visible: { transition: motionStagger.words },
           }}
         >
           <SplitWords text="JP Car Rental" reduce={reduce} />
@@ -95,7 +93,7 @@ export default function HeroCopy() {
 
         <motion.div
           className="hero-sublines"
-          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.1, delayChildren: 0.12 } } }}
+          variants={{ hidden: {}, visible: { transition: motionStagger.section } }}
         >
           <motion.p className="hero-subline" variants={sublineVariants}>
             Clean cars. Clear rates. Booking that takes minutes.
@@ -112,7 +110,7 @@ export default function HeroCopy() {
             </MotionPressableLink>
           </KineticHover>
           {showSignInCta ? (
-            <KineticHover preset="scalePop">
+            <KineticHover preset="liftGlow">
               <MotionPressableLink href="/auth/sign-in" className="hero-cta-secondary">
                 Sign in
               </MotionPressableLink>

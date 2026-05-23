@@ -7,7 +7,7 @@ import {
   kineticHoverWhileForScope,
   type KineticHoverPresetName,
 } from "@/lib/kinetic-presets";
-import { motionSprings } from "@/lib/motion";
+import { motionTweens } from "@/lib/motion";
 import { useKineticMotion } from "./useKineticMotion";
 
 type KineticHoverProps = HTMLMotionProps<"div"> & {
@@ -38,8 +38,8 @@ export default function KineticHover({
     <motion.div
       className={className}
       whileHover={whileHover}
-      whileTap={hoverEnabled ? { scale: 0.98 } : undefined}
-      transition={motionSprings.snappy}
+      whileTap={hoverEnabled ? { scale: 0.99 } : undefined}
+      transition={motionTweens.hover}
       {...rest}
     >
       {children}

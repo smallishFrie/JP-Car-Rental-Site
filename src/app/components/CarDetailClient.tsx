@@ -17,7 +17,7 @@ import { beginCheckoutAction } from "@/app/cars/[id]/actions";
 import CustomSelect from "@/app/components/CustomSelect";
 import { MotionPressableButton } from "@/app/components/MotionPressable";
 import RevealOnScroll from "@/app/components/RevealOnScroll";
-import { motionSprings } from "@/lib/motion";
+import { motionTweens } from "@/lib/motion";
 import "react-day-picker/style.css";
 
 type CarDetailClientProps = {
@@ -692,7 +692,7 @@ export default function CarDetailClient({ car, dropoffLocations, userEmail }: Ca
                     initial={{ opacity: 0, y: -8, scale: 0.98, visibility: "hidden" }}
                     animate={{ opacity: 1, y: 0, scale: 1, visibility: "visible" }}
                     exit={{ opacity: 0, y: -6, scale: 0.98, visibility: "hidden" }}
-                    transition={reduceMotion ? { duration: 0 } : motionSprings.snappy}
+                    transition={reduceMotion ? { duration: 0 } : motionTweens.hover}
                     onMouseLeave={() => setHoverDay(undefined)}
                   >
                     <DayPicker

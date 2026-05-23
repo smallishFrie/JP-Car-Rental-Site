@@ -8,6 +8,7 @@ import {
   HOME_SECTION_PRESETS,
   homePresetAt,
 } from "@/lib/kinetic-presets";
+import { motionDurations, motionEase, motionStagger } from "@/lib/motion";
 
 const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
@@ -73,7 +74,7 @@ export default function HomeFaq() {
         </KineticReveal>
         <motion.div
           className="home-faq-list"
-          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } } }}
+          variants={{ hidden: {}, visible: { transition: motionStagger.section } }}
         >
           {FAQ_ITEMS.map((item, index) => {
             const isOpen = openRows.has(index);
@@ -111,8 +112,8 @@ export default function HomeFaq() {
                     reduce
                       ? { duration: 0 }
                       : {
-                          height: { type: "tween", duration: 0.38, ease: [0.22, 1, 0.36, 1] },
-                          opacity: { duration: 0.2, ease: [0.22, 1, 0.36, 1] },
+                          height: { type: "tween", duration: motionDurations.reveal, ease: motionEase.out },
+                          opacity: { duration: motionDurations.micro, ease: motionEase.out },
                         }
                   }
                   style={{ overflow: "hidden" }}

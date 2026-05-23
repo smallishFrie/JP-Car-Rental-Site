@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { CONTACT_TYPE_LABELS, type ContactOptionPublic, type ContactType } from "@/lib/contact-options-types";
+import { motionStagger, motionTweens } from "@/lib/motion";
 
 function ContactChannelIcon({ type }: { type: ContactType }) {
   const common = { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", "aria-hidden": true as const };
@@ -100,7 +101,9 @@ export default function HomeContactChannels({ channels }: { channels: ContactOpt
   const container = {
     hidden: {},
     show: {
-      transition: { staggerChildren: reduce ? 0 : 0.07, delayChildren: reduce ? 0 : 0.08 },
+      transition: reduce
+        ? { staggerChildren: 0, delayChildren: 0 }
+        : motionStagger.section,
     },
   };
 
@@ -109,7 +112,7 @@ export default function HomeContactChannels({ channels }: { channels: ContactOpt
     show: {
       opacity: 1,
       y: 0,
-      transition: reduce ? { duration: 0 } : { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const },
+      transition: reduce ? { duration: 0 } : motionTweens.reveal,
     },
   };
 

@@ -9,6 +9,7 @@ import {
   KINETIC_TRUST_CARD_PRESETS,
   homePresetAt,
 } from "@/lib/kinetic-presets";
+import { motionStagger } from "@/lib/motion";
 import TiltSurface from "./TiltSurface";
 
 const TRUST_CARDS = [
@@ -57,7 +58,7 @@ export default function HomeTrustStrip() {
         </KineticReveal>
         <motion.div
           className="home-trust-grid"
-          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.09, delayChildren: 0.06 } } }}
+          variants={{ hidden: {}, visible: { transition: motionStagger.section } }}
         >
           {TRUST_CARDS.map((card, i) => (
             <KineticItem

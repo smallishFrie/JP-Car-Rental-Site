@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { motionSprings } from "@/lib/motion";
+import { motionTweens } from "@/lib/motion";
 
 export type CustomSelectOption = { value: string; label: React.ReactNode };
 
@@ -80,7 +80,7 @@ export default function CustomSelect({
     });
   }, [open]);
 
-  const panelTransition = reduce ? { duration: 0 } : motionSprings.snappy;
+  const panelTransition = reduce ? { duration: 0 } : motionTweens.press;
 
   return (
     <div className={`custom-select-field${className ? ` ${className}` : ""}`} ref={containerRef}>

@@ -6,7 +6,7 @@ import {
   kineticEnterVariantsForScope,
   kineticReducedVariants,
 } from "@/lib/kinetic-presets";
-import { kineticSprings } from "@/lib/motion";
+import { motionStagger } from "@/lib/motion";
 import { useKineticMotion } from "./useKineticMotion";
 
 type KineticTextProps = {
@@ -44,7 +44,7 @@ export default function KineticText({
         : {
             hidden: {},
             visible: {
-              transition: { staggerChildren: 0.04, delayChildren: 0.02 },
+              transition: motionStagger.words,
             },
           },
     [reduceMotion],
@@ -71,7 +71,6 @@ export default function KineticText({
             key={`${scope}-${i}-${token}`}
             variants={itemVariants}
             style={{ display: "inline-block", marginRight: split === "words" ? "0.22em" : undefined }}
-            transition={kineticSprings.snap}
           >
             {token}
             {split === "chars" ? null : null}

@@ -1,11 +1,7 @@
 import type { Transition, Variants } from "framer-motion";
-import { kineticSprings, motionSprings } from "@/lib/motion";
+import { motionDurations, motionStagger, motionTweens } from "@/lib/motion";
 
-/**
- * Spring usage: scroll-enter uses `kineticSprings.snap` / `dramatic` / `motionSprings.reveal`.
- * Reserve `kineticSprings.elastic` for badges and micro accents only.
- * `motionSprings.snappy` is for hover/press — not section reveals.
- */
+/** Scroll-enter and hover use `motionTweens` — slow premium tweens, no spring overshoot. */
 
 /** Full preset name union (all variant builders remain available). */
 export const KINETIC_ALL_ENTER_PRESET_NAMES = [
@@ -73,7 +69,7 @@ export const KINETIC_ENTER_PRESETS = [
 
 /** Explicit section presets (avoid identical bounce across blocks). */
 export const KINETIC_TRUST_CARD_PRESETS = ["perspectiveSlide", "clipWipeUp", "tiltReveal"] as const;
-export const KINETIC_STEPS_PRESETS = ["rotateZTick", "spiralIn", "rollIn"] as const;
+export const KINETIC_STEPS_PRESETS = ["fadeUpSharp", "driftInLeft", "slideUpFade", "perspectiveSlide"] as const;
 export const KINETIC_INCLUDED_CARD_PRESETS = ["driftInLeft", "fadeUpSharp", "glowFade", "slideUpFade"] as const;
 export const KINETIC_CREDIBILITY_PRESETS = ["glowFade", "driftInLeft", "peekUp"] as const;
 
@@ -85,23 +81,23 @@ export const HOME_FLEET_CARD_PRESETS = [
   "snapScale",
   "driftInLeft",
   "driftInRight",
-  "rotateZTick",
-  "scaleOvershoot",
+  "maskReveal",
+  "glowFade",
+  "clipWipeUp",
   "tiltReveal",
-  "wobbleIn",
 ] as const;
 
-export const HOME_FLEET_INTRO_PRESETS = ["slideMagnetLeft", "expandWidth", "rotateZTick"] as const;
+export const HOME_FLEET_INTRO_PRESETS = ["slideMagnetLeft", "expandWidth", "fadeUpSharp"] as const;
 
 export const HOME_CONTACT_CARD_PRESETS = ["driftInLeft", "fadeUpSharp", "glowFade"] as const;
 
 export const HOME_FAQ_ROW_PRESETS = [
-  "elasticRise",
-  "skewSnap",
-  "wobbleIn",
+  "fadeUpSharp",
+  "slideUpFade",
+  "peekUp",
+  "maskReveal",
   "foldOpen",
-  "swingIn",
-  "liquidRise",
+  "glowFade",
 ] as const;
 
 export const HOME_REVIEWS_HEADER_PRESETS = ["slideDown", "shearReveal", "fadeUpSharp"] as const;
@@ -120,12 +116,12 @@ export const HOME_FOOTER_LINK_PRESETS = [
 export const HOME_SECTION_PRESETS = {
   credibility: "maskReveal",
   trustHeading: "flipUp3d",
-  stepsHeading: "hardSnapUp",
+  stepsHeading: "fadeUpSharp",
   fleetShell: "clipWipeUp",
   reviewsHeading: "shearReveal",
-  faqHeading: "unfoldY",
+  faqHeading: "maskReveal",
   contactHeading: "slideMagnetLeft",
-  includedHeading: "snapScale",
+  includedHeading: "fadeUpSharp",
   includedCallout: "perspectiveSlide",
 } as const;
 
@@ -134,11 +130,10 @@ export const KINETIC_CALM_ENTER_PRESETS = [
   "fadeUpSharp",
   "slideUpFade",
   "softBlurUp",
-  "scaleOvershoot",
   "slideMagnetLeft",
   "driftInLeft",
   "glowFade",
-  "snapScale",
+  "peekUp",
 ] as const;
 
 /** Hover presets (fine pointer only). */
@@ -146,9 +141,7 @@ export const KINETIC_HOVER_PRESETS = [
   "liftGlow",
   "tiltNudge",
   "underlineSweep",
-  "iconWiggle",
   "magneticPull",
-  "scalePop",
   "liftSoft",
   "tiltLeft",
   "tiltRight",
@@ -193,15 +186,15 @@ type BuildOpts = {
   delay?: number;
 };
 
-function enterTransition(reduceMotion: boolean, spring: Transition, delay = 0): Transition {
+function enterTransition(reduceMotion: boolean, tween: Transition, delay = 0): Transition {
   if (reduceMotion) return { duration: 0 };
-  return { ...spring, ...(delay > 0 ? { delay } : {}) };
+  return { ...tween, ...(delay > 0 ? { delay } : {}) };
 }
 
 function baseEnter(preset: KineticEnterPresetName, { reduceMotion, delay = 0 }: BuildOpts): Variants {
-  const t = enterTransition(reduceMotion, kineticSprings.snap, delay);
-  const tElastic = enterTransition(reduceMotion, kineticSprings.elastic, delay);
-  const tGrand = enterTransition(reduceMotion, kineticSprings.dramatic, delay);
+  const t = enterTransition(reduceMotion, motionTweens.reveal, delay);
+  const tElastic = enterTransition(reduceMotion, motionTweens.reveal, delay);
+  const tGrand = enterTransition(reduceMotion, motionTweens.grand, delay);
   const instant = reduceMotion;
 
   const hidden = { opacity: instant ? 1 : 0 };
@@ -258,7 +251,7 @@ function baseEnter(preset: KineticEnterPresetName, { reduceMotion, delay = 0 }: 
     },
     slideUpFade: {
       hidden: { ...hidden, y: instant ? 0 : 22, opacity: instant ? 1 : 0 },
-      visible: { ...visible, y: 0, opacity: 1, transition: motionSprings.reveal },
+      visible: { ...visible, y: 0, opacity: 1, transition: t },
     },
     rotateZTick: {
       hidden: { ...hidden, rotate: instant ? 0 : -4, y: instant ? 0 : 12 },
@@ -311,7 +304,12 @@ function baseEnter(preset: KineticEnterPresetName, { reduceMotion, delay = 0 }: 
     },
     glowFade: {
       hidden: { ...hidden, y: instant ? 0 : 10, opacity: instant ? 1 : 0 },
-      visible: { ...visible, y: 0, opacity: 1, transition: { ...t, duration: reduceMotion ? 0 : 0.5 } },
+      visible: {
+        ...visible,
+        y: 0,
+        opacity: 1,
+        transition: { ...t, duration: reduceMotion ? 0 : motionDurations.reveal },
+      },
     },
     bounceLeft: {
       hidden: { ...hidden, x: instant ? 0 : 40 },
@@ -359,7 +357,7 @@ function baseEnter(preset: KineticEnterPresetName, { reduceMotion, delay = 0 }: 
     },
     hardSnapUp: {
       hidden: { ...hidden, y: instant ? 0 : 20 },
-      visible: { ...visible, y: 0, transition: { ...t, type: "spring", stiffness: 620, damping: 24 } },
+      visible: { ...visible, y: 0, transition: tGrand },
     },
     swingIn: {
       hidden: { ...hidden, rotate: instant ? 0 : -6, x: instant ? 0 : -8 },
@@ -434,10 +432,7 @@ export const kineticReducedVariants: Variants = {
 export const kineticStaggerContainer: Variants = {
   hidden: {},
   visible: {
-    transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.05,
-    },
+    transition: motionStagger.section,
   },
 };
 
@@ -445,10 +440,7 @@ export const kineticStaggerContainer: Variants = {
 export const kineticFleetStaggerContainer: Variants = {
   hidden: {},
   visible: {
-    transition: {
-      staggerChildren: 0.05,
-      delayChildren: 0.04,
-    },
+    transition: motionStagger.fleet,
   },
 };
 
@@ -463,16 +455,14 @@ export function kineticHoverWhile(preset: KineticHoverPresetName, opts: HoverBui
   if (opts.reduceMotion) return undefined;
 
   const map: Record<KineticHoverPresetName, Record<string, number>> = {
-    liftGlow: { y: -4, scale: 1.02 },
-    tiltNudge: { rotateX: -4, rotateY: 4, y: -2 },
+    liftGlow: { y: -2, scale: 1.012 },
+    tiltNudge: { rotateX: -2, rotateY: 2, y: -1 },
     underlineSweep: { y: -1 },
-    iconWiggle: { rotate: 8, scale: 1.06 },
-    magneticPull: { scale: 1.02 },
-    scalePop: { scale: 1.04 },
-    liftSoft: { y: -3 },
-    tiltLeft: { rotate: -2, y: -2 },
-    tiltRight: { rotate: 2, y: -2 },
-    glowPulse: { scale: 1.02 },
+    magneticPull: { scale: 1.01 },
+    liftSoft: { y: -2 },
+    tiltLeft: { rotate: -1, y: -1 },
+    tiltRight: { rotate: 1, y: -1 },
+    glowPulse: { scale: 1.01 },
   };
 
   return map[preset];

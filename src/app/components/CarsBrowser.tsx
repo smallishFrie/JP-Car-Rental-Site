@@ -16,7 +16,7 @@ import {
   homePresetAt,
   kineticFleetStaggerContainer,
 } from "@/lib/kinetic-presets";
-import { motionSprings } from "@/lib/motion";
+import { motionStagger, motionTweens } from "@/lib/motion";
 
 const MotionLink = motion(Link);
 
@@ -222,7 +222,7 @@ export default function CarsBrowser({ cars }: CarsBrowserProps) {
 
       <motion.div
         className="cars-browser-controls"
-        variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } } }}
+        variants={{ hidden: {}, visible: { transition: motionStagger.fleet } }}
       >
         <KineticItem as="motion.div" preset={homePresetAt(HOME_FLEET_INTRO_PRESETS, 1)}>
           <label>
@@ -251,7 +251,7 @@ export default function CarsBrowser({ cars }: CarsBrowserProps) {
                 aria-labelledby={`car-card-title-${car.id}`}
                 whileHover={{ y: -5 }}
                 whileTap={{ scale: 0.99 }}
-                transition={motionSprings.snappy}
+                transition={motionTweens.hover}
               >
                 <CarCardContent car={car} formatDayRate={formatDayRate} />
               </MotionLink>

@@ -2,13 +2,13 @@
 
 import { motion, useReducedMotion, type HTMLMotionProps } from "framer-motion";
 import Link from "next/link";
-import { motionSprings } from "@/lib/motion";
+import { motionTweens } from "@/lib/motion";
 
 const MotionLink = motion(Link);
 
 export type MotionPressableButtonProps = HTMLMotionProps<"button">;
 
-/** Primary CTAs: spring hover/tap; respects reduced motion. */
+/** Primary CTAs: tween hover/tap; respects reduced motion. */
 export function MotionPressableButton({ className, disabled, type = "button", ...rest }: MotionPressableButtonProps) {
   const reduce = useReducedMotion();
   return (
@@ -16,9 +16,9 @@ export function MotionPressableButton({ className, disabled, type = "button", ..
       type={type}
       className={className}
       disabled={disabled}
-      whileHover={reduce || disabled ? undefined : { scale: 1.02 }}
-      whileTap={reduce || disabled ? undefined : { scale: 0.97 }}
-      transition={motionSprings.snappy}
+      whileHover={reduce || disabled ? undefined : { scale: 1.01 }}
+      whileTap={reduce || disabled ? undefined : { scale: 0.99 }}
+      transition={motionTweens.hover}
       {...rest}
     />
   );
@@ -34,9 +34,9 @@ export function MotionPressableLink({ className, href, ...rest }: MotionPressabl
     <MotionLink
       href={href}
       className={className}
-      whileHover={reduce ? undefined : { scale: 1.02 }}
-      whileTap={reduce ? undefined : { scale: 0.97 }}
-      transition={motionSprings.snappy}
+      whileHover={reduce ? undefined : { scale: 1.01 }}
+      whileTap={reduce ? undefined : { scale: 0.99 }}
+      transition={motionTweens.hover}
       {...rest}
     />
   );

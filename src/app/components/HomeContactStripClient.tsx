@@ -9,6 +9,7 @@ import {
   HOME_SECTION_PRESETS,
   homePresetAt,
 } from "@/lib/kinetic-presets";
+import { motionStagger } from "@/lib/motion";
 import HomeContactChannels from "./HomeContactChannels";
 
 type HomeContactStripClientProps = {
@@ -46,7 +47,7 @@ export default function HomeContactStripClient({ isSignedIn, contactChannels }: 
       </KineticReveal>
       <motion.div
         className="home-contact-grid"
-        variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } } }}
+        variants={{ hidden: {}, visible: { transition: motionStagger.section } }}
       >
         {cards.map((card, i) => (
           <KineticItem

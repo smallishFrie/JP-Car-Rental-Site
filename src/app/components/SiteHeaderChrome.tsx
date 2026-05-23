@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import HeaderPreferences from "@/app/components/HeaderPreferences";
-import { motionSprings } from "@/lib/motion";
+import { motionTweens } from "@/lib/motion";
 
 type SiteHeaderChromeProps = {
   isSignedIn: boolean;
@@ -18,7 +18,7 @@ export default function SiteHeaderChrome({ isSignedIn, isAdmin, signOutAction }:
         className="site-header-inner"
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={motionSprings.reveal}
+        transition={motionTweens.reveal}
       >
         <Link href="/" className="site-header-brand">
           <h1 className="site-header-title notranslate" translate="no">

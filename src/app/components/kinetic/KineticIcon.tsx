@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useMemo } from "react";
 import { kineticEnterVariantsForScope, kineticReducedVariants } from "@/lib/kinetic-presets";
-import { motionSprings } from "@/lib/motion";
+import { motionTweens } from "@/lib/motion";
 import { useKineticMotion } from "./useKineticMotion";
 
 type KineticIconProps = {
@@ -39,7 +39,7 @@ export default function KineticIcon({ children, className, scope, index = 0, inV
           : {
               rotate: 8,
               scale: 1.08,
-              transition: motionSprings.snappy,
+              transition: motionTweens.hover,
             }
       }
       style={{ display: "inline-flex" }}

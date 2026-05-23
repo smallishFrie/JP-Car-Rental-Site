@@ -74,7 +74,7 @@ export default function HomeScrollHeader({ children }: HomeScrollHeaderProps) {
   };
 
   /* Tween avoids spring overshoot (felt like the hero “jumped” with the bar when layout reflowed). */
-  const transition = reduceMotion === true ? { duration: 0 } : { duration: 0.34, ease: motionEase };
+  const transition = reduceMotion === true ? { duration: 0 } : { duration: 0.55, ease: motionEase.out };
 
   const hideOffset = headerBlockPx + 2;
 

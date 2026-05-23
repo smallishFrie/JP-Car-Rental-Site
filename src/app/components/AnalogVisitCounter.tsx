@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { motionTweens } from "@/lib/motion";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 const DISPLAY_LEN = 7;
@@ -34,7 +35,7 @@ function DigitSlot({
               initial={{ y: "75%" }}
               animate={{ y: 0 }}
               exit={{ y: "-75%" }}
-              transition={{ type: "spring", stiffness: 420, damping: 32 }}
+              transition={motionTweens.reveal}
             >
               {symbol}
             </motion.span>

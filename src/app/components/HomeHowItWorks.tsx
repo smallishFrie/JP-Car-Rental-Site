@@ -7,6 +7,7 @@ import {
   KINETIC_STEPS_PRESETS,
   homePresetAt,
 } from "@/lib/kinetic-presets";
+import { motionStagger } from "@/lib/motion";
 
 const steps = [
   {
@@ -61,11 +62,11 @@ export default function HomeHowItWorks() {
         </KineticReveal>
         <motion.ol
           className="home-steps-grid"
-          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.09, delayChildren: 0.06 } } }}
+          variants={{ hidden: {}, visible: { transition: motionStagger.section } }}
         >
           {steps.map((step, i) => (
             <KineticItem key={step.n} as="motion.li" className="home-step" preset={homePresetAt(KINETIC_STEPS_PRESETS, i)}>
-              <KineticHover preset="iconWiggle">
+              <KineticHover preset="liftSoft">
                 <span className="home-step-badge" aria-hidden>
                   {step.n}
                 </span>

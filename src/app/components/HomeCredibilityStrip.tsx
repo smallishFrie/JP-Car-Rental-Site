@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { KineticIcon, KineticItem, KineticStagger } from "@/app/components/kinetic";
 import { KINETIC_CREDIBILITY_PRESETS, homePresetAt } from "@/lib/kinetic-presets";
+import { motionStagger } from "@/lib/motion";
 
 const CREDIBILITY_ITEMS = [
   {
@@ -39,7 +40,7 @@ export default function HomeCredibilityStrip() {
       <KineticStagger className="home-credibility-reveal">
         <motion.ul
           className="home-credibility-row"
-          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } } }}
+          variants={{ hidden: {}, visible: { transition: motionStagger.section } }}
         >
           {CREDIBILITY_ITEMS.map((item, i) => (
             <KineticItem

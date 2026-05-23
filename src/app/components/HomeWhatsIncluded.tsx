@@ -8,6 +8,7 @@ import {
   KINETIC_INCLUDED_CARD_PRESETS,
   homePresetAt,
 } from "@/lib/kinetic-presets";
+import { motionStagger } from "@/lib/motion";
 
 const INCLUDED: { title: string; text: string; icon: ReactNode }[] = [
   {
@@ -71,7 +72,7 @@ export default function HomeWhatsIncluded() {
 
         <motion.div
           className="home-included-grid"
-          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08, delayChildren: 0.04 } } }}
+          variants={{ hidden: {}, visible: { transition: motionStagger.section } }}
         >
           {INCLUDED.map((itemData, i) => (
             <KineticItem key={itemData.title} as="motion.article" className="home-included-card" preset={homePresetAt(KINETIC_INCLUDED_CARD_PRESETS, i)}>

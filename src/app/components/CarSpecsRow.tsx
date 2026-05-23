@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { parseCategoryTokens, transmissionFromCategoryTokens, type TransmissionKind } from "@/lib/carDisplay";
-import { motionSprings } from "@/lib/motion";
+import { motionTweens } from "@/lib/motion";
 
 type CarSpecsRowProps = {
   category: string;
@@ -79,7 +79,7 @@ export default function CarSpecsRow({ category, passengerCapacity, className = "
     hover: {
       scale: 1.12,
       rotate: reduce ? 0 : -5,
-      transition: motionSprings.snappy,
+      transition: motionTweens.hover,
     },
   };
 
@@ -99,7 +99,7 @@ export default function CarSpecsRow({ category, passengerCapacity, className = "
             initial="rest"
             whileHover="hover"
             whileTap={reduce ? undefined : { scale: 0.97 }}
-            transition={motionSprings.snappy}
+            transition={motionTweens.hover}
           >
             <span className="car-spec-chip-value">{passengerCapacity}</span>
             <motion.span className="car-spec-chip-icon-wrap" aria-hidden variants={iconChild}>
@@ -117,7 +117,7 @@ export default function CarSpecsRow({ category, passengerCapacity, className = "
             initial="rest"
             whileHover="hover"
             whileTap={reduce ? undefined : { scale: 0.97 }}
-            transition={motionSprings.snappy}
+            transition={motionTweens.hover}
           >
             <motion.span className="car-spec-chip-icon-wrap" aria-hidden variants={iconChild}>
               {transmission === "manual" ? (
