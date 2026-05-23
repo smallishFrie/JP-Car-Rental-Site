@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { KineticHover, KineticItem, KineticReveal, KineticStagger } from "@/app/components/kinetic";
 import {
@@ -79,6 +80,33 @@ export default function HomeTrustStrip() {
             </KineticItem>
           ))}
         </motion.div>
+        <KineticReveal
+          as="motion.div"
+          className="home-trust-spotlight"
+          preset="driftInLeft"
+          inView={false}
+        >
+          <div className="home-trust-spotlight-inner">
+            <div className="home-trust-spotlight-copy">
+              <p className="home-trust-spotlight-text">
+                Experience convenience, comfort, and confidence every time you rent with us. From compact city cars to
+                luxury SUVs, we provide vehicles that match your lifestyle and travel needs. With quick booking,
+                flexible rental plans, and dependable customer support, your perfect drive is always just a few clicks
+                away.
+              </p>
+            </div>
+            <figure className="home-trust-spotlight-media">
+              <Image
+                src="/images/rental-luggage.png"
+                alt="Traveler loading luggage into a rental car"
+                width={800}
+                height={530}
+                className="home-trust-spotlight-img"
+                sizes="(max-width: 768px) 100vw, min(520px, 46vw)"
+              />
+            </figure>
+          </div>
+        </KineticReveal>
       </KineticStagger>
     </section>
   );
