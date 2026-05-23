@@ -90,10 +90,10 @@ export default function HomeTrustStrip() {
           <div className="home-trust-spotlight-inner">
             <div className="home-trust-spotlight-copy">
               <p className="home-trust-spotlight-text">
-                Experience convenience, comfort, and confidence every time you rent with us. From compact city cars to
+                &ldquo;Experience convenience, comfort, and confidence every time you rent with us. From compact city cars to
                 luxury SUVs, we provide vehicles that match your lifestyle and travel needs. With quick booking,
                 flexible rental plans, and dependable customer support, your perfect drive is always just a few clicks
-                away.
+                away.&rdquo;
               </p>
             </div>
             <figure className="home-trust-spotlight-media">
