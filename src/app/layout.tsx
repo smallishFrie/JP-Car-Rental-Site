@@ -33,6 +33,13 @@ export const metadata: Metadata = {
   },
   description:
     "Book a clean vehicle in minutes. JP Car Rental offers simple online booking, flexible pickup locations, and straightforward pricing.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
   openGraph: {
     title: "JP Car Rental",
     description:
